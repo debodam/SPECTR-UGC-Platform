@@ -3,6 +3,7 @@ import { Sparkles, BarChart3, CalendarDays, Settings as SettingsIcon, LogOut } f
 import { type ReactNode, useEffect } from "react";
 import { useApp } from "@/lib/spectr-store";
 import { SpectrLogo } from "./Logo";
+import supabase from "@/lib/supabase";
 
 const NAV = [
   { to: "/transform", label: "Transform", icon: Sparkles },
@@ -12,19 +13,25 @@ const NAV = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { state, update } = useApp();
+  const { state } = useApp();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   useEffect(() => {
+    if (state.authLoading) return;
     if (!state.isAuthenticated) navigate({ to: "/login" });
+    else if (!state.workspace?.companyId) navigate({ to: "/companies" });
     else if (!state.setupComplete) navigate({ to: "/setup" });
-  }, [state.isAuthenticated, state.setupComplete, navigate]);
+  }, [state.authLoading, state.isAuthenticated, state.setupComplete, navigate]);
+
+  if (state.authLoading) {
+    return <div className="min-h-screen" style={{ background: "var(--color-surface)" }} />;
+  }
 
   if (!state.isAuthenticated || !state.setupComplete) return null;
 
-  const logout = () => {
-    update({ isAuthenticated: false, user: null });
+  const logout = async () => {
+    await supabase.auth.signOut();
     navigate({ to: "/login" });
   };
 
@@ -37,10 +44,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-5 border-b" style={{ borderColor: "var(--color-border)" }}>
           <SpectrLogo size={28} showTag />
           {state.workspace.companyName && (
-            <div className="mt-4 px-3 py-2 rounded-md text-sm font-semibold"
-              style={{ background: "var(--color-surface)", color: "var(--color-foreground)" }}>
-              {state.workspace.companyName}
-            </div>
+            <Link
+              to="/companies"
+              className="mt-4 px-3 py-2 rounded-md text-sm font-semibold flex items-center justify-between group"
+              style={{ background: "var(--color-surface)", color: "var(--color-foreground)" }}
+            >
+              <span className="truncate">{state.workspace.companyName}</span>
+              <span className="text-xs ml-2 opacity-0 group-hover:opacity-60 transition-opacity">switch</span>
+            </Link>
           )}
         </div>
         <nav className="flex-1 py-3">

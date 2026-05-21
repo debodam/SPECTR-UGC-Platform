@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { SpectrLogo } from "@/components/spectr/Logo";
+import supabase from "@/lib/supabase";
 
 export const Route = createFileRoute("/setup")({ component: SetupPage });
 
@@ -12,11 +13,13 @@ function SetupPage() {
   const { state, update, setWorkspace } = useApp();
   const navigate = useNavigate();
   const [step, setStep] = useState<number>(state.setupStep || 1);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (state.authLoading) return;
     if (!state.isAuthenticated) navigate({ to: "/login" });
     else if (state.setupComplete) navigate({ to: "/transform" });
-  }, [state.isAuthenticated, state.setupComplete, navigate]);
+  }, [state.authLoading, state.isAuthenticated, state.setupComplete, navigate]);
 
   useEffect(() => { update({ setupStep: step }); /* eslint-disable-next-line */ }, [step]);
 
@@ -38,7 +41,44 @@ function SetupPage() {
     setStep(n);
   };
 
-  const finish = () => {
+  const finish = async () => {
+    setSaving(true);
+
+    let companyId = ws.companyId;
+
+    // If user reached setup without going through /companies, create the company now
+    if (!companyId && ws.companyName.trim() && state.user?.id) {
+      const { data } = await supabase
+        .from("companies")
+        .insert([{ name: ws.companyName.trim(), created_by: state.user.id }])
+        .select()
+        .limit(1)
+        .single();
+      if (data) {
+        companyId = data.id;
+        setWorkspace({ companyId: data.id });
+      }
+    }
+
+    if (state.user?.id && companyId) {
+      await supabase.from("workspaces").upsert(
+        {
+          company_id: companyId,
+          user_id: state.user.id,
+          industry: ws.industry,
+          primary_platform: ws.primaryPlatform,
+          starting_from_scratch: ws.startingFromScratch,
+          baseline: ws.baseline,
+          targets: ws.targets,
+          goal_description: ws.goalDescription,
+          audience: ws.audience,
+          setup_complete: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "company_id,user_id" }
+      );
+    }
+
     update({ setupComplete: true });
     navigate({ to: "/transform" });
   };
@@ -58,7 +98,7 @@ function SetupPage() {
         {step === 2 && !skipBaseline && <Step2 ws={ws} setWorkspace={setWorkspace} onNext={next} onBack={back} />}
         {step === 3 && <Step3 ws={ws} setWorkspace={setWorkspace} onNext={next} onBack={back} />}
         {step === 4 && <Step4 ws={ws} setWorkspace={setWorkspace} onNext={() => setStep(5)} onBack={back} />}
-        {step === 5 && <Complete ws={ws} onLaunch={finish} />}
+        {step === 5 && <Complete ws={ws} onLaunch={finish} saving={saving} />}
       </div>
     </div>
   );
@@ -238,7 +278,7 @@ function Step4({ ws, setWorkspace, onNext, onBack }: any) {
   );
 }
 
-function Complete({ ws, onLaunch }: { ws: any; onLaunch: () => void }) {
+function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; saving?: boolean }) {
   const rows: [string, string][] = [
     ["Company", ws.companyName],
     ["Industry", ws.industry],
@@ -267,7 +307,9 @@ function Complete({ ws, onLaunch }: { ws: any; onLaunch: () => void }) {
           </div>
         ))}
       </div>
-      <button onClick={onLaunch} className="spectr-btn-primary w-full mt-6">Launch SPECTR</button>
+      <button onClick={onLaunch} disabled={saving} className="spectr-btn-primary w-full mt-6">
+        {saving ? "Saving…" : "Launch SPECTR"}
+      </button>
     </div>
   );
 }
