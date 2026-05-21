@@ -9,8 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TransformRouteImport } from './routes/transform'
+import { Route as TrackRouteImport } from './routes/track'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as DistributeRouteImport } from './routes/distribute'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TransformRoute = TransformRouteImport.update({
+  id: '/transform',
+  path: '/transform',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DistributeRoute = DistributeRouteImport.update({
+  id: '/distribute',
+  path: '/distribute',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +61,130 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/distribute': typeof DistributeRoute
+  '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
+  '/signup': typeof SignupRoute
+  '/track': typeof TrackRoute
+  '/transform': typeof TransformRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/distribute': typeof DistributeRoute
+  '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
+  '/signup': typeof SignupRoute
+  '/track': typeof TrackRoute
+  '/transform': typeof TransformRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/distribute': typeof DistributeRoute
+  '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
+  '/signup': typeof SignupRoute
+  '/track': typeof TrackRoute
+  '/transform': typeof TransformRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/distribute'
+    | '/login'
+    | '/settings'
+    | '/setup'
+    | '/signup'
+    | '/track'
+    | '/transform'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/distribute'
+    | '/login'
+    | '/settings'
+    | '/setup'
+    | '/signup'
+    | '/track'
+    | '/transform'
+  id:
+    | '__root__'
+    | '/'
+    | '/distribute'
+    | '/login'
+    | '/settings'
+    | '/setup'
+    | '/signup'
+    | '/track'
+    | '/transform'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DistributeRoute: typeof DistributeRoute
+  LoginRoute: typeof LoginRoute
+  SettingsRoute: typeof SettingsRoute
+  SetupRoute: typeof SetupRoute
+  SignupRoute: typeof SignupRoute
+  TrackRoute: typeof TrackRoute
+  TransformRoute: typeof TransformRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/transform': {
+      id: '/transform'
+      path: '/transform'
+      fullPath: '/transform'
+      preLoaderRoute: typeof TransformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/distribute': {
+      id: '/distribute'
+      path: '/distribute'
+      fullPath: '/distribute'
+      preLoaderRoute: typeof DistributeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +197,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DistributeRoute: DistributeRoute,
+  LoginRoute: LoginRoute,
+  SettingsRoute: SettingsRoute,
+  SetupRoute: SetupRoute,
+  SignupRoute: SignupRoute,
+  TrackRoute: TrackRoute,
+  TransformRoute: TransformRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
