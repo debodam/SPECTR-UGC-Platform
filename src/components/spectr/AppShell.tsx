@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Sparkles, BarChart3, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Sparkles, BarChart3, CalendarDays, Settings as SettingsIcon, LogOut, Building2, ChevronsUpDown } from "lucide-react";
 import { type ReactNode, useEffect } from "react";
 import { useApp } from "@/lib/spectr-store";
 import { SpectrLogo } from "./Logo";
@@ -43,16 +43,18 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className="p-5 border-b" style={{ borderColor: "var(--color-border)" }}>
           <SpectrLogo size={28} showTag />
-          {state.workspace.companyName && (
-            <Link
-              to="/companies"
-              className="mt-4 px-3 py-2 rounded-md text-sm font-semibold flex items-center justify-between group"
-              style={{ background: "var(--color-surface)", color: "var(--color-foreground)" }}
-            >
-              <span className="truncate">{state.workspace.companyName}</span>
-              <span className="text-xs ml-2 opacity-0 group-hover:opacity-60 transition-opacity">switch</span>
-            </Link>
-          )}
+          <Link
+            to="/companies"
+            className="mt-4 flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold group transition-colors"
+            style={{ background: "var(--color-surface)", color: "var(--color-foreground)" }}
+            title="Switch company"
+          >
+            <Building2 size={14} style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
+            <span className="truncate flex-1">
+              {state.workspace.companyName || "My Company"}
+            </span>
+            <ChevronsUpDown size={13} className="shrink-0 transition-opacity opacity-40 group-hover:opacity-100" style={{ color: "var(--color-primary)" }} />
+          </Link>
         </div>
         <nav className="flex-1 py-3">
           {NAV.map(({ to, label, icon: Icon }) => {
