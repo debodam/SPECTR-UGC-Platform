@@ -7,6 +7,9 @@ export interface ParsedMetrics {
   engagementRate?: string;
   monthlyVisitors?: string;
   followers?: string;
+  // Internal marker: file is valid but contains no auto-fillable fields.
+  // Strip this before writing to workspace state.
+  _info?: string;
 }
 
 type Row = (string | number | boolean | null | undefined)[];
@@ -123,20 +126,16 @@ function parseVisitors(dataRows: Row[], headers: Row): ParsedMetrics {
 }
 
 function parseLeads(dataRows: Row[], headers: Row): ParsedMetrics {
-  const m: ParsedMetrics = {};
+  // LinkedIn Followers export contains growth trend data (new followers per period),
+  // not the cumulative current follower count. Validate the file looks right, then
+  // return an info marker so the component can show a neutral acknowledgement without
+  // auto-filling anything.
+  const hasFollowerCol = findCol(headers, "follower") >= 0;
+  if (!hasFollowerCol) return {};
 
-  let col = findCol(headers, "total followers");
-  if (col < 0) col = findCol(headers, "organic followers");
-  if (col < 0) col = findCol(headers, "follower");
-
-  if (col >= 0) {
-    const vs = toNums(dataRows, col);
-    // Take the last non-zero value as the most recent follower count
-    const recent = [...vs].reverse().find((v) => v > 0);
-    if (recent !== undefined) m.followers = String(Math.round(recent));
-  }
-
-  return m;
+  return {
+    _info: "Growth trend data only — the Followers export does not include a current total. Enter your follower count manually in the field below.",
+  };
 }
 
 export async function parseLinkedInFile(
@@ -164,7 +163,9 @@ export async function parseLinkedInFile(
           type === "visitors" ? parseVisitors(dataRows, headers) :
           parseLeads(dataRows, headers);
 
-        if (!Object.keys(metrics).length) {
+        const hasFields = Object.keys(metrics).some((k) => k !== "_info");
+        const hasInfo = !!metrics._info;
+        if (!hasFields && !hasInfo) {
           reject(
             new Error(
               `Expected columns not found. Make sure this is the ${type} analytics export from LinkedIn.`

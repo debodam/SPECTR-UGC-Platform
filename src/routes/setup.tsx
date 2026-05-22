@@ -201,7 +201,7 @@ function Step1({ ws, setWorkspace, onNext }: any) {
 
 function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind: "baseline" | "targets" }) {
   const fields = [
-    { key: "followers", label: kind === "baseline" ? "Current Followers" : "Followers Target", hint: "Total followers on your company page" },
+    { key: "followers", label: kind === "baseline" ? "Current Followers" : "Followers Target", hint: "Total followers on your company page", required: kind === "baseline" },
     {
       key: "weeklyImpressions",
       label: kind === "baseline" ? "Avg Weekly Impressions" : "Weekly Impressions Target",
@@ -218,7 +218,10 @@ function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind:
       {fields.map((f) => (
         <div key={f.key}>
           <label className="spectr-label flex items-center gap-2">
-            {f.label}
+            <span className="flex items-center gap-1">
+              {f.label}
+              {f.required && <span style={{ color: "var(--color-destructive)" }}>*</span>}
+            </span>
             {f.optional && (
               <span className="text-[11px] font-medium px-1.5 py-px rounded"
                 style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
