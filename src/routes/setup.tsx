@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronLeft } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { SpectrLogo } from "@/components/spectr/Logo";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
@@ -88,6 +88,11 @@ function SetupPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--color-surface)" }}>
+      <div className="w-full max-w-[600px] mb-4">
+        <Link to="/companies" className="inline-flex items-center gap-1 text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: "var(--color-text-secondary)" }}>
+          <ChevronLeft size={16} /> Companies
+        </Link>
+      </div>
       <div className="mb-6"><SpectrLogo size={36} /></div>
 
       {step <= 4 && (
