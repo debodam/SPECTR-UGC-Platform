@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useApp } from "@/lib/spectr-store";
 import { AppShell } from "@/components/spectr/AppShell";
+import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
 
 export const Route = createFileRoute("/settings")({ component: () => <AppShell><Settings /></AppShell> });
 
@@ -74,6 +75,9 @@ function Settings() {
           <label className="spectr-label">Goal Description</label>
           <textarea className="spectr-textarea" rows={3} value={ws.goalDescription}
             onChange={(e) => setWorkspace({ goalDescription: e.target.value })} />
+        </div>
+        <div className="mt-6">
+          <LinkedInUploadSlots ws={ws} setWorkspace={setWorkspace} />
         </div>
         <div className="grid grid-cols-2 gap-4 mt-4">
           {num("baseline", "followers", "Followers Baseline")}

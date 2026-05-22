@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { SpectrLogo } from "@/components/spectr/Logo";
+import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
 import supabase from "@/lib/supabase";
 
 export const Route = createFileRoute("/setup")({ component: SetupPage });
@@ -226,7 +227,8 @@ function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind:
 function Step2({ ws, setWorkspace, onNext, onBack }: any) {
   return (
     <>
-      <H title="Where are you starting from?" sub="Find these numbers in LinkedIn Analytics under your company page." />
+      <H title="Where are you starting from?" sub="Upload your LinkedIn analytics exports to auto-fill, or enter numbers manually." />
+      <LinkedInUploadSlots ws={ws} setWorkspace={setWorkspace} />
       <NumGrid ws={ws} setWorkspace={setWorkspace} kind="baseline" />
       <Nav onBack={onBack} onNext={onNext} onSkip={onNext} />
     </>
