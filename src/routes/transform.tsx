@@ -34,6 +34,117 @@ function TransformPage() {
   return <AppShell><Transform /></AppShell>;
 }
 
+// --- Content renderers ---
+
+function safeExtract(text: string, tab: TabKey): string {
+  const key = JSON_KEY[tab];
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") || trimmed.startsWith("```")) {
+    try {
+      const cleaned = trimmed.replace(/^```(?:json)?\s*\n?|\n?```\s*$/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      if (parsed && typeof parsed === "object" && key in parsed && typeof parsed[key] === "string") {
+        return parsed[key];
+      }
+    } catch {}
+    const m = trimmed.match(/\{[\s\S]*\}/);
+    if (m) {
+      try {
+        const parsed = JSON.parse(m[0]);
+        if (parsed && typeof parsed === "object" && key in parsed && typeof parsed[key] === "string") {
+          return parsed[key];
+        }
+      } catch {}
+    }
+  }
+  return text;
+}
+
+function ArticleView({ text }: { text: string }) {
+  const nl = text.indexOf("\n");
+  const headline = nl >= 0 ? text.slice(0, nl).trim() : text.trim();
+  const body = nl >= 0 ? text.slice(nl + 1).trim() : "";
+  const paragraphs = body.split(/\n\n+/).filter(Boolean);
+  return (
+    <div>
+      {headline && (
+        <h2 className="text-lg font-bold mb-5 leading-snug">{headline}</h2>
+      )}
+      {paragraphs.map((para, i) => (
+        <p key={i} className="mb-4 text-sm leading-7 whitespace-pre-wrap">
+          {para.trim()}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function PostsView({ text }: { text: string }) {
+  const posts = text.split(/\n\s*---\s*\n|(?:^|\n)---(?:\n|$)/m).map((p) => p.trim()).filter(Boolean);
+  return (
+    <div className="flex flex-col gap-4">
+      {posts.map((post, i) => (
+        <div
+          key={i}
+          className="p-4 rounded-lg border"
+          style={{ borderColor: "var(--color-border)", background: "white" }}
+        >
+          <div
+            className="text-xs font-bold uppercase tracking-wide mb-2"
+            style={{ color: "var(--color-primary)" }}
+          >
+            Post {i + 1}
+          </div>
+          <p className="text-sm leading-6 whitespace-pre-wrap">{post}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VideoScriptView({ text }: { text: string }) {
+  const sectionRe = /(\[[A-Z][A-Z\s0-9]*\d+:\d+\])/g;
+  const parts = text.split(sectionRe).filter((p) => p.trim());
+  const labelRe = /^\[[A-Z][A-Z\s0-9]*\d+:\d+\]$/;
+
+  if (parts.length <= 1) {
+    return <p className="text-sm leading-7 whitespace-pre-wrap">{text}</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      {parts.map((part, i) => {
+        const clean = part.trim();
+        if (!clean) return null;
+        if (labelRe.test(clean)) {
+          return (
+            <div key={i} className="mt-4 first:mt-0">
+              <span
+                className="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide"
+                style={{ background: "var(--color-primary)", color: "white" }}
+              >
+                {clean.slice(1, -1)}
+              </span>
+            </div>
+          );
+        }
+        return (
+          <p key={i} className="text-sm leading-7 whitespace-pre-wrap ml-1">
+            {clean}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function ContentRenderer({ tab, text }: { tab: TabKey; text: string }) {
+  const clean = safeExtract(text, tab);
+  if (tab === "Article") return <ArticleView text={clean} />;
+  if (tab === "Post") return <PostsView text={clean} />;
+  return <VideoScriptView text={clean} />;
+}
+
 async function readFile(file: File): Promise<{ text?: string; pdfBase64?: string }> {
   const name = file.name.toLowerCase();
   const isPdf = name.endsWith(".pdf") || file.type === "application/pdf";
@@ -108,15 +219,19 @@ function Transform() {
 
   const [inputType, setInputType] = useState<InputType>("Transcript");
   const [context, setContext] = useState("");
+  const [instructions, setInstructions] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [outputs, setOutputs] = useState<Record<TabKey, string> | null>(null);
+  const [outputs, setOutputs] = useState<Partial<Record<TabKey, string>>>({});
   const [tab, setTab] = useState<TabKey>("Article");
   const [refineInput, setRefineInput] = useState<Partial<Record<TabKey, string>>>({});
   const [source, setSource] = useState<Source | null>(null);
   const [tabBusy, setTabBusy] = useState<TabKey | null>(null);
+
+  const hasAnyOutput = Object.keys(outputs).length > 0;
+  const showOutput = hasAnyOutput || loading;
 
   const wsPayload = useMemo(
     () => ({
@@ -155,13 +270,9 @@ function Transform() {
       const src: Source = { content, pdfBase64, context, inputType };
       setSource(src);
 
-      const data = await callTransform({ content, pdfBase64, context, inputType, workspace: wsPayload });
-      setOutputs({
-        Article: data.article ?? "",
-        Post: data.posts ?? "",
-        "Video Script": data.videoScript ?? "",
-      });
-      setTab("Article");
+      const data = await callTransform({ format: tab, content, pdfBase64, context, instructions, inputType, workspace: wsPayload });
+      const jk = JSON_KEY[tab];
+      setOutputs((o) => ({ ...o, [tab]: data[jk as keyof typeof data] ?? "" }));
     } catch (err: any) {
       setError(err.message ?? "Generation failed. Please try again.");
     } finally {
@@ -175,9 +286,11 @@ function Transform() {
     try {
       const data = await callTransform({
         format: key,
+        regenerate: true,
         content: source.content,
         pdfBase64: source.pdfBase64,
         context: source.context,
+        instructions,
         inputType: source.inputType,
         workspace: wsPayload,
       });
@@ -202,6 +315,7 @@ function Transform() {
         existingContent: outputs[key],
         note,
         context,
+        instructions,
         inputType,
         workspace: wsPayload,
       });
@@ -217,8 +331,8 @@ function Transform() {
   };
 
   const copy = (key: TabKey) => {
-    if (!outputs) return;
-    navigator.clipboard.writeText(outputs[key]);
+    if (!outputs[key]) return;
+    navigator.clipboard.writeText(outputs[key]!);
     toast.success("Copied to clipboard");
   };
 
@@ -226,252 +340,248 @@ function Transform() {
 
   return (
     <div className="flex h-screen">
-      {/* LEFT PANEL */}
+      {/* LEFT PANEL — full width before any output, 2/5 once output exists */}
       <div
-        className="w-2/5 border-r overflow-y-auto p-6 flex flex-col"
+        className={`${showOutput ? "w-2/5 border-r" : "w-full"} overflow-y-auto`}
         style={{ borderColor: "var(--color-border)", background: "white" }}
       >
-        <h1 className="text-xl font-bold mb-1">Transform</h1>
-        <p className="text-sm mb-4" style={{ color: "var(--color-text-secondary)" }}>
-          Drop in raw material — get a full content ecosystem.
-        </p>
+        <div className="p-6 pb-8">
+          <h1 className="text-xl font-bold mb-1">Transform</h1>
+          <p className="text-sm mb-6" style={{ color: "var(--color-text-secondary)" }}>
+            Drop in raw material — get a full content ecosystem.
+          </p>
 
-        <label className="spectr-label">Input Type</label>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {(["Transcript", "Notes", "Draft", "Document"] as InputType[]).map((t) => {
-            const active = inputType === t;
-            return (
-              <button
-                key={t}
-                onClick={() => setInputType(t)}
-                className="px-4 h-8 text-xs font-semibold rounded-full"
-                style={{
-                  background: active ? "var(--color-primary)" : "white",
-                  color: active ? "white" : "var(--color-primary)",
-                  border: `1px solid var(--color-primary)`,
-                }}
-              >
-                {t}
-              </button>
-            );
-          })}
-        </div>
-
-        <label className="spectr-label">Add context (optional)</label>
-        <input
-          className="spectr-input mb-4"
-          placeholder="e.g. 45-min CEO session on carbon capture economics, targeting VP-level O&G audience"
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-        />
-
-        <label className="cursor-pointer mb-3">
-          <div
-            className="rounded-md p-6 text-center"
-            style={{ border: `2px dashed var(--color-border)`, background: "var(--color-surface)" }}
-          >
-            {!file ? (
-              <>
-                <Upload size={24} className="mx-auto mb-2" style={{ color: "var(--color-text-secondary)" }} />
-                <div className="text-sm font-semibold">Upload a document</div>
-                <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                  PDF, DOCX, or TXT
-                </div>
-              </>
-            ) : (
-              <div
-                className="flex items-center justify-between p-2 rounded bg-white border"
-                style={{ borderColor: "var(--color-border)" }}
-              >
-                <div className="flex items-center gap-2 text-sm truncate">
-                  <FileText size={16} style={{ color: "var(--color-primary)" }} />
-                  <span className="truncate">{file.name}</span>
-                </div>
-                <button onClick={(e) => { e.preventDefault(); setFile(null); }}>
-                  <X size={16} />
+          <label className="spectr-label">Input Type</label>
+          <div className="flex flex-wrap gap-2 mb-5">
+            {(["Transcript", "Notes", "Draft", "Document"] as InputType[]).map((t) => {
+              const active = inputType === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setInputType(t)}
+                  className="px-4 h-8 text-xs font-semibold rounded-full"
+                  style={{
+                    background: active ? "var(--color-primary)" : "white",
+                    color: active ? "white" : "var(--color-primary)",
+                    border: `1px solid var(--color-primary)`,
+                  }}
+                >
+                  {t}
                 </button>
-              </div>
-            )}
+              );
+            })}
           </div>
-          <input
-            type="file"
-            accept=".pdf,.docx,.txt"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+
+          <label className="spectr-label">Output Type</label>
+          <div className="flex gap-2 mb-5">
+            {TABS.map((t) => {
+              const active = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className="flex-1 py-2 text-xs font-semibold rounded-md transition-colors"
+                  style={{
+                    background: active ? "var(--color-primary)" : "var(--color-surface)",
+                    color: active ? "white" : "var(--color-text-secondary)",
+                    border: `1.5px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
+                  }}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <label className="spectr-label">Add context (optional)</label>
+          <textarea
+            rows={3}
+            className="spectr-textarea mb-5"
+            placeholder="e.g. 45-min CEO session on carbon capture economics, targeting VP-level O&G audience"
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
           />
-        </label>
 
-        <div className="flex items-center gap-3 my-3">
-          <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
-          <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>or</span>
-          <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
-        </div>
+          <label className="spectr-label">Content Instructions (optional)</label>
+          <p className="text-xs mb-1" style={{ color: "var(--color-text-secondary)" }}>
+            Control the shape and length of the output — e.g. <em>5 minutes long</em>, <em>1500 words</em>, <em>5 posts</em>, <em>include a case study</em>
+          </p>
+          <textarea
+            rows={4}
+            className="spectr-textarea mb-5"
+            placeholder="e.g. Make the article 1500 words · 5 posts · Video script should be 3 minutes long"
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+          />
 
-        <textarea
-          rows={10}
-          className="spectr-textarea"
-          placeholder="Paste your transcript, notes, or draft here..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          disabled={!!file}
-          style={{ opacity: file ? 0.4 : 1 }}
-        />
+          <label className="cursor-pointer mb-3 block">
+            <div
+              className="rounded-md p-6 text-center"
+              style={{ border: `2px dashed var(--color-border)`, background: "var(--color-surface)" }}
+            >
+              {!file ? (
+                <>
+                  <Upload size={24} className="mx-auto mb-2" style={{ color: "var(--color-text-secondary)" }} />
+                  <div className="text-sm font-semibold">Upload a document</div>
+                  <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                    PDF, DOCX, or TXT
+                  </div>
+                </>
+              ) : (
+                <div
+                  className="flex items-center justify-between p-2 rounded bg-white border"
+                  style={{ borderColor: "var(--color-border)" }}
+                >
+                  <div className="flex items-center gap-2 text-sm truncate">
+                    <FileText size={16} style={{ color: "var(--color-primary)" }} />
+                    <span className="truncate">{file.name}</span>
+                  </div>
+                  <button onClick={(e) => { e.preventDefault(); setFile(null); }}>
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              accept=".pdf,.docx,.txt"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
 
-        {error && <p className="field-error mt-2">{error}</p>}
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
+            <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>or</span>
+            <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
+          </div>
 
-        <div className="mt-4">
+          <textarea
+            rows={10}
+            className="spectr-textarea mb-5"
+            placeholder="Paste your transcript, notes, or draft here..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            disabled={!!file}
+            style={{ opacity: file ? 0.4 : 1 }}
+          />
+
+          {error && <p className="field-error mb-3">{error}</p>}
+
           <button onClick={transform} disabled={loading} className="spectr-btn-primary w-full">
-            {loading ? "Generating…" : "Transform Content"}
+            {loading ? "Generating…" : `Generate ${tab === "Post" ? "Posts" : tab}`}
           </button>
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
-      <div className="w-3/5 flex flex-col overflow-hidden">
-        <div
-          className="px-6 py-2 text-xs font-semibold border-b"
-          style={{
-            background: "var(--color-surface)",
-            color: "var(--color-primary)",
-            borderColor: "var(--color-border)",
-          }}
-        >
-          {banner}
-        </div>
-
-        {loading ? (
+      {/* RIGHT PANEL — only mounts after first generate */}
+      {showOutput && (
+        <div className="w-3/5 flex flex-col overflow-hidden">
           <div
-            className="flex-1 flex flex-col items-center justify-center gap-3"
-            style={{ background: "var(--color-surface)" }}
+            className="px-6 py-2 text-xs font-semibold border-b"
+            style={{
+              background: "var(--color-surface)",
+              color: "var(--color-primary)",
+              borderColor: "var(--color-border)",
+            }}
           >
-            <div
-              className="animate-spin rounded-full"
-              style={{
-                width: 32,
-                height: 32,
-                border: "3px solid var(--color-border)",
-                borderTopColor: "var(--color-primary)",
-              }}
-            />
-            <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-              Generating your content…
-            </p>
+            {banner}
           </div>
-        ) : !outputs ? (
-          <div
-            className="flex-1 flex flex-col items-center justify-center"
-            style={{ background: "var(--color-surface)" }}
-          >
-            <Upload size={36} style={{ color: "var(--color-text-secondary)" }} />
-            <p className="mt-3 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-              Drop in your content to generate your content ecosystem.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div
-              className="flex border-b px-6"
-              style={{ borderColor: "var(--color-border)", background: "white" }}
-            >
-              {TABS.map((t) => {
-                const active = tab === t.key;
-                return (
-                  <button
-                    key={t.key}
-                    onClick={() => setTab(t.key)}
-                    className="px-4 py-3 text-sm font-semibold flex items-center gap-2"
-                    style={{
-                      color: active ? "var(--color-primary)" : "var(--color-text-secondary)",
-                      borderBottom: `2px solid ${active ? "var(--color-primary)" : "transparent"}`,
-                    }}
-                  >
-                    {t.label}
-                    {tabBusy === t.key && (
-                      <span
-                        className="inline-block rounded-full animate-spin"
-                        style={{
-                          width: 10,
-                          height: 10,
-                          border: "2px solid var(--color-border)",
-                          borderTopColor: "var(--color-primary)",
-                        }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
 
-            <div className="flex-1 overflow-y-auto p-6" style={{ background: "var(--color-surface)" }}>
+          <div
+            className="flex border-b px-6"
+            style={{ borderColor: "var(--color-border)", background: "white" }}
+          >
+            {TABS.map((t) => {
+              const active = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className="px-4 py-3 text-sm font-semibold flex items-center gap-2"
+                  style={{
+                    color: active ? "var(--color-primary)" : "var(--color-text-secondary)",
+                    borderBottom: `2px solid ${active ? "var(--color-primary)" : "transparent"}`,
+                  }}
+                >
+                  {t.label}
+                  {tabBusy === t.key && (
+                    <span
+                      className="inline-block rounded-full animate-spin"
+                      style={{
+                        width: 10,
+                        height: 10,
+                        border: "2px solid var(--color-border)",
+                        borderTopColor: "var(--color-primary)",
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6" style={{ background: "var(--color-surface)" }}>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-20">
+                <div
+                  className="animate-spin rounded-full"
+                  style={{ width: 32, height: 32, border: "3px solid var(--color-border)", borderTopColor: "var(--color-primary)" }}
+                />
+                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                  Generating {tab === "Post" ? "Posts" : tab}…
+                </p>
+              </div>
+            ) : outputs[tab] ? (
               <div className="spectr-card p-5">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <h2 className="font-bold">{tab === "Post" ? "Posts" : tab}</h2>
                   <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => copy(tab)}
-                      className="spectr-btn-secondary"
-                      style={{ height: 32 }}
-                    >
+                    <button onClick={() => copy(tab)} className="spectr-btn-secondary" style={{ height: 32 }}>
                       <Copy size={14} className="inline mr-1" />Copy
                     </button>
-                    <button
-                      onClick={() => regen(tab)}
-                      disabled={activeTabBusy}
-                      className="spectr-btn-secondary"
-                      style={{ height: 32 }}
-                    >
-                      <RefreshCw
-                        size={14}
-                        className={`inline mr-1 ${activeTabBusy ? "animate-spin" : ""}`}
-                      />
+                    <button onClick={() => regen(tab)} disabled={activeTabBusy} className="spectr-btn-secondary" style={{ height: 32 }}>
+                      <RefreshCw size={14} className={`inline mr-1 ${activeTabBusy ? "animate-spin" : ""}`} />
                       Regenerate
                     </button>
                     <button
-                      onClick={() =>
-                        dlDocx(outputs[tab], `spectr-${tab.toLowerCase().replace(/\s+/g, "-")}.docx`)
-                      }
-                      className="spectr-btn-secondary"
-                      style={{ height: 32 }}
+                      onClick={() => dlDocx(outputs[tab]!, `spectr-${tab.toLowerCase().replace(/\s+/g, "-")}.docx`)}
+                      className="spectr-btn-secondary" style={{ height: 32 }}
                     >
                       <Download size={14} className="inline mr-1" />DOCX
                     </button>
                     <button
-                      onClick={() =>
-                        dlPdf(outputs[tab], `spectr-${tab.toLowerCase().replace(/\s+/g, "-")}.pdf`)
-                      }
-                      className="spectr-btn-secondary"
-                      style={{ height: 32 }}
+                      onClick={() => dlPdf(outputs[tab]!, `spectr-${tab.toLowerCase().replace(/\s+/g, "-")}.pdf`)}
+                      className="spectr-btn-secondary" style={{ height: 32 }}
                     >
                       <Download size={14} className="inline mr-1" />PDF
                     </button>
                   </div>
                 </div>
-
-                <pre className="whitespace-pre-wrap text-sm leading-6 font-sans">{outputs[tab]}</pre>
-
-                <div
-                  className="mt-5 pt-4 border-t flex gap-2"
-                  style={{ borderColor: "var(--color-border)" }}
-                >
+                <ContentRenderer tab={tab} text={outputs[tab]!} />
+                <div className="mt-5 pt-4 border-t flex gap-2" style={{ borderColor: "var(--color-border)" }}>
                   <input
                     className="spectr-input flex-1"
                     placeholder="e.g. Make the hook more aggressive"
                     value={refineInput[tab] ?? ""}
                     onChange={(e) => setRefineInput((r) => ({ ...r, [tab]: e.target.value }))}
                   />
-                  <button
-                    onClick={() => refine(tab)}
-                    disabled={activeTabBusy}
-                    className="spectr-btn-primary"
-                  >
+                  <button onClick={() => refine(tab)} disabled={activeTabBusy} className="spectr-btn-primary">
                     Refine
                   </button>
                 </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
+            ) : (
+              <div className="spectr-card p-5 flex flex-col items-center justify-center py-16">
+                <p className="text-sm font-semibold mb-1">{tab === "Post" ? "Posts" : tab} not generated yet</p>
+                <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                  Switch to <strong>{tab === "Post" ? "Posts" : tab}</strong> on the left and click Generate.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

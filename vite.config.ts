@@ -5,10 +5,16 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 
 export default defineConfig(async ({ command, mode }) => {
-  const loadedEnv = loadEnv(mode, process.cwd(), "VITE_");
+  const loadedEnv = loadEnv(mode, process.cwd(), "");
   const envDefine: Record<string, string> = {};
   for (const [key, value] of Object.entries(loadedEnv)) {
-    envDefine[`import.meta.env.${key}`] = JSON.stringify(value);
+    if (key.startsWith("VITE_")) {
+      envDefine[`import.meta.env.${key}`] = JSON.stringify(value);
+    }
+  }
+  // Inject server-only vars into process.env for server functions
+  if (loadedEnv.ANTHROPIC_API_KEY) {
+    envDefine["process.env.ANTHROPIC_API_KEY"] = JSON.stringify(loadedEnv.ANTHROPIC_API_KEY);
   }
 
   const plugins = [

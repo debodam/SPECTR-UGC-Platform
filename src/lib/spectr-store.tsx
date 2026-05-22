@@ -4,7 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 
 const KEY = "spectr-state-v1";
 
-export type Format = "Article" | "Post" | "Video Script" | "Carousel";
+export type Format = "Article" | "Post" | "Video Script";
 
 export interface User { id: string; name: string; email: string; }
 
