@@ -14,12 +14,13 @@ function Settings() {
 
   const save = () => toast.success("Workspace saved.");
 
-  const num = (kind: "baseline" | "targets", key: string, label: string) => (
+  const num = (kind: "baseline" | "targets", key: string, label: string, hint?: string) => (
     <div>
       <label className="spectr-label">{label}</label>
       <input className="spectr-input" type="number"
         value={(ws as any)[kind][key]}
         onChange={(e) => setWorkspace({ [kind]: { ...(ws as any)[kind], [key]: e.target.value } } as any)} />
+      {hint && <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>{hint}</p>}
     </div>
   );
 
@@ -82,13 +83,13 @@ function Settings() {
         <div className="grid grid-cols-2 gap-4 mt-4">
           {num("baseline", "followers", "Followers Baseline")}
           {num("targets", "followers", "Followers Target")}
-          {num("baseline", "weeklyImpressions", "Weekly Impressions Baseline")}
+          {num("baseline", "weeklyImpressions", "Weekly Impressions Baseline", "Company page → Analytics → Content. Pick a date range, take the total impressions, and divide by the number of weeks.")}
           {num("targets", "weeklyImpressions", "Weekly Impressions Target")}
           {num("baseline", "engagementRate", "Engagement Rate Baseline (%)")}
           {num("targets", "engagementRate", "Engagement Rate Target (%)")}
           {num("baseline", "monthlyVisitors", "Monthly Visitors Baseline")}
           {num("targets", "monthlyVisitors", "Monthly Visitors Target")}
-          {num("baseline", "weeklyPageSearches", "Weekly Page Searches Baseline")}
+          {num("baseline", "weeklyPageSearches", "Weekly Page Searches Baseline", "Company page → Analytics → Overview → Search Appearances.")}
           {num("targets", "weeklyPageSearches", "Weekly Page Searches Target")}
         </div>
       </Section>

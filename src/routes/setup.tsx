@@ -202,7 +202,14 @@ function Step1({ ws, setWorkspace, onNext }: any) {
 function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind: "baseline" | "targets" }) {
   const fields = [
     { key: "followers", label: kind === "baseline" ? "Current Followers" : "Followers Target", hint: "Total followers on your company page" },
-    { key: "weeklyImpressions", label: kind === "baseline" ? "Avg Weekly Impressions" : "Weekly Impressions Target", hint: "Average impressions across all posts per week" },
+    {
+      key: "weeklyImpressions",
+      label: kind === "baseline" ? "Avg Weekly Impressions" : "Weekly Impressions Target",
+      hint: kind === "baseline"
+        ? "Company page → Analytics → Content. Pick a date range, take the total impressions, and divide by the number of weeks."
+        : "Average impressions across all posts per week",
+      optional: kind === "baseline",
+    },
     { key: "engagementRate", label: kind === "baseline" ? "Avg Engagement Rate (%)" : "Engagement Rate Target (%)", hint: "Likes + comments + shares / impressions" },
     { key: "monthlyVisitors", label: kind === "baseline" ? "Monthly Profile Visitors" : "Monthly Visitors Target", hint: "Unique visitors to your company page" },
   ];
@@ -210,15 +217,35 @@ function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind:
     <div className="grid grid-cols-2 gap-4">
       {fields.map((f) => (
         <div key={f.key}>
-          <label className="spectr-label">{f.label}</label>
+          <label className="spectr-label flex items-center gap-2">
+            {f.label}
+            {f.optional && (
+              <span className="text-[11px] font-medium px-1.5 py-px rounded"
+                style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
+                Optional
+              </span>
+            )}
+          </label>
           <input type="number" className="spectr-input" value={ws[kind][f.key]} onChange={(e) => setWorkspace({ [kind]: { ...ws[kind], [f.key]: e.target.value } })} />
           <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>{f.hint}</p>
         </div>
       ))}
       <div className="col-span-2">
-        <label className="spectr-label">{kind === "baseline" ? "Weekly Page Searches" : "Weekly Page Searches Target"}</label>
+        <label className="spectr-label flex items-center gap-2">
+          {kind === "baseline" ? "Weekly Page Searches" : "Weekly Page Searches Target"}
+          {kind === "baseline" && (
+            <span className="text-[11px] font-medium px-1.5 py-px rounded"
+              style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
+              Optional
+            </span>
+          )}
+        </label>
         <input type="number" className="spectr-input" value={ws[kind].weeklyPageSearches} onChange={(e) => setWorkspace({ [kind]: { ...ws[kind], weeklyPageSearches: e.target.value } })} />
-        <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>How many times your page surfaces in LinkedIn search per week</p>
+        <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
+          {kind === "baseline"
+            ? "Company page → Analytics → Overview → Search Appearances."
+            : "How many times your page surfaces in LinkedIn search per week"}
+        </p>
       </div>
     </div>
   );
