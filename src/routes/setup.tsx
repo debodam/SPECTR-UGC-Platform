@@ -204,7 +204,37 @@ function Step1({ ws, setWorkspace, onNext }: any) {
   );
 }
 
-function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind: "baseline" | "targets" }) {
+const KEYWORD_CATEGORIES: { keywords: string[]; fields: string[] }[] = [
+  {
+    keywords: ["grow", "followers", "audience", "reach", "awareness", "brand", "visibility"],
+    fields: ["followers", "followerGrowth", "weeklyImpressions"],
+  },
+  {
+    keywords: ["engagement", "content", "posts", "comments", "likes", "shares", "interact", "community"],
+    fields: ["engagementRate", "weeklyImpressions"],
+  },
+  {
+    keywords: ["leads", "traffic", "visitors", "pipeline", "clients", "sales", "conversions", "drive", "website"],
+    fields: ["monthlyVisitors", "engagementRate"],
+  },
+  {
+    keywords: ["search", "searchability", "discoverability", "surfaces", "appear", "found"],
+    fields: ["weeklyPageSearches"],
+  },
+];
+
+function getRequiredTargets(goal: string): Set<string> {
+  const lower = goal.toLowerCase();
+  const required = new Set<string>();
+  for (const cat of KEYWORD_CATEGORIES) {
+    if (cat.keywords.some((kw) => lower.includes(kw))) {
+      cat.fields.forEach((f) => required.add(f));
+    }
+  }
+  return required;
+}
+
+function NumGrid({ ws, setWorkspace, kind, requiredTargets }: { ws: any; setWorkspace: any; kind: "baseline" | "targets"; requiredTargets?: Set<string> }) {
   const fields = [
     { key: "followers", label: kind === "baseline" ? "Current Followers" : "Followers Target", hint: "Total followers on your company page", required: kind === "baseline" },
     { key: "followerGrowth", label: kind === "baseline" ? "Avg Weekly Follower Growth" : "Weekly Follower Growth Target", hint: kind === "baseline" ? "Auto-filled from your Followers export. Average new followers gained per week." : "Target average new followers per week" },
@@ -219,6 +249,30 @@ function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind:
     { key: "engagementRate", label: kind === "baseline" ? "Avg Engagement Rate (%)" : "Engagement Rate Target (%)", hint: "Likes + comments + shares / impressions" },
     { key: "monthlyVisitors", label: kind === "baseline" ? "Monthly Profile Visitors" : "Monthly Visitors Target", hint: "Unique visitors to your company page" },
   ];
+
+  function fieldBadge(key: string, baseOptional?: boolean) {
+    if (kind === "targets" && requiredTargets) {
+      if (requiredTargets.has(key)) {
+        return <span style={{ color: "var(--color-destructive)" }}>*</span>;
+      }
+      return (
+        <span className="text-[11px] font-medium px-1.5 py-px rounded"
+          style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
+          Optional
+        </span>
+      );
+    }
+    if (baseOptional) {
+      return (
+        <span className="text-[11px] font-medium px-1.5 py-px rounded"
+          style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
+          Optional
+        </span>
+      );
+    }
+    return null;
+  }
+
   return (
     <div className="grid grid-cols-2 gap-4">
       {fields.map((f) => (
@@ -228,12 +282,7 @@ function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind:
               {f.label}
               {f.required && <span style={{ color: "var(--color-destructive)" }}>*</span>}
             </span>
-            {f.optional && (
-              <span className="text-[11px] font-medium px-1.5 py-px rounded"
-                style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
-                Optional
-              </span>
-            )}
+            {!f.required && fieldBadge(f.key, f.optional)}
           </label>
           <input type="number" className="spectr-input" value={ws[kind][f.key]} onChange={(e) => setWorkspace({ [kind]: { ...ws[kind], [f.key]: e.target.value } })} />
           <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>{f.hint}</p>
@@ -242,12 +291,12 @@ function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind:
       <div className="col-span-2">
         <label className="spectr-label flex items-center gap-2">
           {kind === "baseline" ? "Weekly Page Searches" : "Weekly Page Searches Target"}
-          {kind === "baseline" && (
+          {kind === "baseline" ? (
             <span className="text-[11px] font-medium px-1.5 py-px rounded"
               style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
               Optional
             </span>
-          )}
+          ) : fieldBadge("weeklyPageSearches")}
         </label>
         <input type="number" className="spectr-input" value={ws[kind].weeklyPageSearches} onChange={(e) => setWorkspace({ [kind]: { ...ws[kind], weeklyPageSearches: e.target.value } })} />
         <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
@@ -273,19 +322,26 @@ function Step2({ ws, setWorkspace, onNext, onBack }: any) {
 
 function Step3({ ws, setWorkspace, onNext, onBack }: any) {
   const can = ws.goalDescription.trim();
+  const requiredTargets = getRequiredTargets(ws.goalDescription);
   return (
     <>
       <H title="What does success look like?" sub="Set your 12-week targets. SPECTR will track your progress against these." />
       <div className="space-y-4">
         <div>
-          <label className="spectr-label">Goal Description</label>
+          <label className="spectr-label flex items-center gap-1">
+            Goal Description
+            <span style={{ color: "var(--color-destructive)" }}>*</span>
+          </label>
           <textarea className="spectr-textarea" rows={3} placeholder="e.g. Connect with decision makers in oil & gas and energy companies to build credibility and generate client pipeline"
             value={ws.goalDescription} onChange={(e) => setWorkspace({ goalDescription: e.target.value })} />
+          <p className="text-xs mt-2 px-3 py-2 rounded-md" style={{ background: "rgba(10,102,194,0.06)", color: "var(--color-text-secondary)", border: "1px solid rgba(10,102,194,0.15)" }}>
+            Your goal determines which targets are required. Be as specific as possible about what you want to achieve on LinkedIn.
+          </p>
         </div>
         <h3 className="text-sm font-bold mt-4">12-Week Targets</h3>
-        <NumGrid ws={ws} setWorkspace={setWorkspace} kind="targets" />
+        <NumGrid ws={ws} setWorkspace={setWorkspace} kind="targets" requiredTargets={requiredTargets} />
       </div>
-      <Nav onBack={onBack} onNext={onNext} disabled={!can} />
+      <Nav onBack={onBack} onNext={onNext} disabled={!can} onSkip={onNext} />
     </>
   );
 }
@@ -307,9 +363,17 @@ function Step4({ ws, setWorkspace, onNext, onBack }: any) {
             <option value="">Select size...</option>
             {COMPANY_SIZES.map((s) => <option key={s}>{s}</option>)}
           </select></div>
-        <div><label className="spectr-label">Audience Description</label>
+        <div>
+          <label className="spectr-label flex items-center gap-2">
+            Audience Description
+            <span className="text-[11px] font-medium px-1.5 py-px rounded"
+              style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
+              Optional
+            </span>
+          </label>
           <textarea className="spectr-textarea" rows={3} placeholder="e.g. Decision makers at mid-market energy companies evaluating carbon capture solutions"
-            value={ws.audience.description} onChange={(e) => setWorkspace({ audience: { ...ws.audience, description: e.target.value } })} /></div>
+            value={ws.audience.description} onChange={(e) => setWorkspace({ audience: { ...ws.audience, description: e.target.value } })} />
+        </div>
       </div>
       <Nav onBack={onBack} onNext={onNext} nextLabel="Review" />
     </>
@@ -317,15 +381,13 @@ function Step4({ ws, setWorkspace, onNext, onBack }: any) {
 }
 
 function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; saving?: boolean }) {
-  const rows: [string, string][] = [
+  const rows: [string, string, boolean?][] = [
     ["Company", ws.companyName],
     ["Industry", ws.industry],
     ["Primary Platform", ws.primaryPlatform],
-    ["Goal", ws.goalDescription || "—"],
     ["Job Titles", ws.audience.jobTitles || "—"],
     ["Seniority", ws.audience.seniority || "—"],
     ["Company Size", ws.audience.companySize || "—"],
-    ["Followers Target", ws.targets.followers || "—"],
   ];
   return (
     <div>
@@ -337,13 +399,19 @@ function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; sav
         <h2 className="text-2xl font-bold">You're all set</h2>
         <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>Review your workspace and launch SPECTR.</p>
       </div>
-      <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 p-4 rounded-md" style={{ background: "var(--color-surface)" }}>
-        {rows.map(([k, v]) => (
-          <div key={k}>
-            <div className="text-xs font-semibold uppercase" style={{ color: "var(--color-text-secondary)" }}>{k}</div>
-            <div className="text-sm mt-0.5 truncate">{v}</div>
-          </div>
-        ))}
+      <div className="mt-6 p-4 rounded-md space-y-3" style={{ background: "var(--color-surface)" }}>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+          {rows.map(([k, v]) => (
+            <div key={k}>
+              <div className="text-xs font-semibold uppercase" style={{ color: "var(--color-text-secondary)" }}>{k}</div>
+              <div className="text-sm mt-0.5 truncate">{v}</div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className="text-xs font-semibold uppercase" style={{ color: "var(--color-text-secondary)" }}>Goal</div>
+          <div className="text-sm mt-0.5 leading-relaxed">{ws.goalDescription || "—"}</div>
+        </div>
       </div>
       <button onClick={onLaunch} disabled={saving} className="spectr-btn-primary w-full mt-6">
         {saving ? "Saving…" : "Launch SPECTR"}

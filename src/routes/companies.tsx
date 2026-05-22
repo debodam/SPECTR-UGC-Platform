@@ -100,7 +100,7 @@ function CompaniesPage() {
     if (state.workspace.companyId === id) {
       update({
         setupComplete: false,
-        workspace: { companyId: undefined, companyName: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false, baseline: { followers: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" }, targets: { followers: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" }, goalDescription: "", audience: { jobTitles: "", seniority: "", companySize: "", description: "" } },
+        workspace: { companyId: undefined, companyName: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false, baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" }, targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" }, goalDescription: "", audience: { jobTitles: "", seniority: "", companySize: "", description: "" } },
       });
     }
   }
