@@ -181,29 +181,6 @@ async function readFile(file: File): Promise<{ text?: string; pdfBase64?: string
   });
 }
 
-async function dlDocx(content: string, filename: string) {
-  const { Document, Packer, Paragraph, TextRun } = await import("docx");
-  const paragraphs = content
-    .split("\n")
-    .map((line) => new Paragraph({ children: [new TextRun(line || " ")] }));
-  const doc = new Document({ sections: [{ children: paragraphs }] });
-  const blob = await Packer.toBlob(doc);
-  triggerDl(blob, filename);
-}
-
-async function dlPdf(content: string, filename: string) {
-  const { jsPDF } = await import("jspdf");
-  const doc = new jsPDF();
-  const lines = doc.splitTextToSize(content, 180) as string[];
-  let y = 15;
-  for (const line of lines) {
-    if (y > 280) { doc.addPage(); y = 15; }
-    doc.text(line, 15, y);
-    y += 7;
-  }
-  doc.save(filename);
-}
-
 function triggerDl(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -211,6 +188,181 @@ function triggerDl(blob: Blob, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function buildFilename(companyName: string, userName: string, tab: TabKey, ext: string): string {
+  const co = (companyName || "Company").replace(/[^a-zA-Z0-9]/g, "").slice(0, 20);
+  const user = (userName || "User").split(/\s+/)[0].replace(/[^a-zA-Z0-9]/g, "").slice(0, 20);
+  const type = tab === "Post" ? "Posts" : tab.replace(/\s+/g, "");
+  const now = new Date();
+  const month = now.toLocaleString("en-US", { month: "short" });
+  return `${co}-${user}-${type}-${month}${now.getDate()}.${ext}`;
+}
+
+async function dlPdf(tab: TabKey, content: string, filename: string) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const ML = 20, MT = 25, CW = 170;
+  let y = MT;
+
+  const ensureSpace = (n: number) => { if (y + n > 282) { doc.addPage(); y = MT; } };
+
+  if (tab === "Article") {
+    const nl = content.indexOf("\n");
+    const headline = (nl >= 0 ? content.slice(0, nl) : content).trim();
+    const body = (nl >= 0 ? content.slice(nl + 1) : "").trim();
+
+    // Title
+    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(10, 102, 194);
+    for (const line of doc.splitTextToSize(headline, CW) as string[]) {
+      ensureSpace(13); doc.text(line, ML, y); y += 13;
+    }
+    y += 1;
+    doc.setDrawColor(10, 102, 194); doc.setLineWidth(0.6); doc.line(ML, y, ML + CW, y); y += 9;
+
+    // Body paragraphs
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(30, 30, 30);
+    for (const para of body.split(/\n\n+/).filter(Boolean)) {
+      for (const line of doc.splitTextToSize(para.trim(), CW) as string[]) {
+        ensureSpace(7); doc.text(line, ML, y); y += 7;
+      }
+      y += 5;
+    }
+
+  } else if (tab === "Post") {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(10, 102, 194);
+    doc.text("Posts", ML, y); y += 5;
+    doc.setDrawColor(10, 102, 194); doc.setLineWidth(0.6); doc.line(ML, y, ML + CW, y); y += 10;
+
+    const posts = content.split(/\n\s*---\s*\n|(?:^|\n)---(?:\n|$)/m).map((p) => p.trim()).filter(Boolean);
+    for (let i = 0; i < posts.length; i++) {
+      const bodyLines = doc.splitTextToSize(posts[i].trim(), CW - 10) as string[];
+      const boxH = 10 + bodyLines.length * 7 + 8;
+      ensureSpace(boxH);
+
+      doc.setDrawColor(200, 218, 240); doc.setLineWidth(0.4); doc.rect(ML, y, CW, boxH);
+      doc.setFillColor(10, 102, 194); doc.rect(ML, y, CW, 9, "F");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+      doc.text(`POST ${i + 1}`, ML + 4, y + 6.2);
+
+      doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(30, 30, 30);
+      let ty = y + 17;
+      for (const line of bodyLines) { doc.text(line, ML + 5, ty); ty += 7; }
+      y += boxH + 6;
+    }
+
+  } else {
+    // Video Script
+    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(10, 102, 194);
+    doc.text("Video Script", ML, y); y += 5;
+    doc.setDrawColor(10, 102, 194); doc.setLineWidth(0.6); doc.line(ML, y, ML + CW, y); y += 12;
+
+    const sectionRe = /(\[[A-Z][A-Z\s0-9]*\d+:\d+\])/g;
+    const labelRe = /^\[[A-Z][A-Z\s0-9]*\d+:\d+\]$/;
+
+    for (const part of content.split(sectionRe).filter((p) => p.trim())) {
+      const clean = part.trim(); if (!clean) continue;
+      if (labelRe.test(clean)) {
+        const label = clean.slice(1, -1);
+        ensureSpace(14);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+        const tw = label.length * 2.2 + 10;
+        doc.setFillColor(10, 102, 194); doc.roundedRect(ML, y - 5.5, tw, 8, 2, 2, "F");
+        doc.setTextColor(255, 255, 255); doc.text(label, ML + 5, y);
+        doc.setTextColor(30, 30, 30); y += 11;
+      } else {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(30, 30, 30);
+        for (const line of doc.splitTextToSize(clean, CW - 8) as string[]) {
+          ensureSpace(7); doc.text(line, ML + 4, y); y += 7;
+        }
+        y += 5;
+      }
+    }
+  }
+
+  doc.save(filename);
+}
+
+async function dlDocx(tab: TabKey, content: string, filename: string) {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, ShadingType } = await import("docx");
+  const children: InstanceType<typeof Paragraph>[] = [];
+
+  if (tab === "Article") {
+    const nl = content.indexOf("\n");
+    const headline = (nl >= 0 ? content.slice(0, nl) : content).trim();
+    const body = (nl >= 0 ? content.slice(nl + 1) : "").trim();
+
+    children.push(new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      children: [new TextRun({ text: headline, bold: true, color: "0A66C2" })],
+      spacing: { after: 320 },
+    }));
+    for (const para of body.split(/\n\n+/).filter(Boolean)) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: para.trim(), size: 24 })],
+        spacing: { after: 160, line: 352 },
+      }));
+    }
+
+  } else if (tab === "Post") {
+    children.push(new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      children: [new TextRun({ text: "Posts", bold: true, color: "0A66C2" })],
+      spacing: { after: 400 },
+    }));
+
+    const posts = content.split(/\n\s*---\s*\n|(?:^|\n)---(?:\n|$)/m).map((p) => p.trim()).filter(Boolean);
+    posts.forEach((post, i) => {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: `Post ${i + 1}`, bold: true, color: "0A66C2", size: 22 })],
+        spacing: { before: i > 0 ? 500 : 0, after: 100 },
+        border: { left: { style: BorderStyle.THICK, size: 20, color: "0A66C2" } },
+        indent: { left: 280 },
+      }));
+      for (const line of post.split("\n")) {
+        children.push(new Paragraph({
+          children: [new TextRun({ text: line || " ", size: 24 })],
+          spacing: { after: 80, line: 330 },
+          border: { left: { style: BorderStyle.THICK, size: 20, color: "0A66C2" } },
+          indent: { left: 280 },
+        }));
+      }
+    });
+
+  } else {
+    // Video Script
+    children.push(new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      children: [new TextRun({ text: "Video Script", bold: true, color: "0A66C2" })],
+      spacing: { after: 400 },
+    }));
+
+    const sectionRe = /(\[[A-Z][A-Z\s0-9]*\d+:\d+\])/g;
+    const labelRe = /^\[[A-Z][A-Z\s0-9]*\d+:\d+\]$/;
+
+    for (const part of content.split(sectionRe).filter((p) => p.trim())) {
+      const clean = part.trim(); if (!clean) continue;
+      if (labelRe.test(clean)) {
+        children.push(new Paragraph({
+          children: [new TextRun({ text: clean.slice(1, -1), bold: true, color: "FFFFFF", size: 20 })],
+          shading: { type: ShadingType.CLEAR, fill: "0A66C2", color: "auto" },
+          spacing: { before: 360, after: 140 },
+        }));
+      } else {
+        for (const line of clean.split("\n").filter(Boolean)) {
+          children.push(new Paragraph({
+            children: [new TextRun({ text: line, size: 24 })],
+            spacing: { after: 100, line: 340 },
+            indent: { left: 360 },
+          }));
+        }
+        children.push(new Paragraph({ children: [], spacing: { after: 80 } }));
+      }
+    }
+  }
+
+  const blob = await Packer.toBlob(new Document({ sections: [{ children }] }));
+  triggerDl(blob, filename);
 }
 
 function Transform() {
@@ -545,13 +697,19 @@ function Transform() {
                       Regenerate
                     </button>
                     <button
-                      onClick={() => dlDocx(outputs[tab]!, `spectr-${tab.toLowerCase().replace(/\s+/g, "-")}.docx`)}
+                      onClick={() => {
+                        const clean = safeExtract(outputs[tab]!, tab);
+                        dlDocx(tab, clean, buildFilename(ws.companyName, state.user?.name ?? "", tab, "docx"));
+                      }}
                       className="spectr-btn-secondary" style={{ height: 32 }}
                     >
                       <Download size={14} className="inline mr-1" />DOCX
                     </button>
                     <button
-                      onClick={() => dlPdf(outputs[tab]!, `spectr-${tab.toLowerCase().replace(/\s+/g, "-")}.pdf`)}
+                      onClick={() => {
+                        const clean = safeExtract(outputs[tab]!, tab);
+                        dlPdf(tab, clean, buildFilename(ws.companyName, state.user?.name ?? "", tab, "pdf"));
+                      }}
                       className="spectr-btn-secondary" style={{ height: 32 }}
                     >
                       <Download size={14} className="inline mr-1" />PDF
