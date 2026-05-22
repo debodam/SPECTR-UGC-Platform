@@ -83,6 +83,8 @@ function Settings() {
         <div className="grid grid-cols-2 gap-4 mt-4">
           {num("baseline", "followers", "Followers Baseline")}
           {num("targets", "followers", "Followers Target")}
+          {num("baseline", "followerGrowth", "Follower Growth Baseline", "Auto-filled from your Followers export. Average new followers gained per week.")}
+          {num("targets", "followerGrowth", "Follower Growth Target")}
           {num("baseline", "weeklyImpressions", "Weekly Impressions Baseline", "Company page → Analytics → Content. Pick a date range, take the total impressions, and divide by the number of weeks.")}
           {num("targets", "weeklyImpressions", "Weekly Impressions Target")}
           {num("baseline", "engagementRate", "Engagement Rate Baseline (%)")}

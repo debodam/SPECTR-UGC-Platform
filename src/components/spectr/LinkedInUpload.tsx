@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Upload, X, CheckCircle2, AlertCircle, Loader2, Info } from "lucide-react";
+import { Upload, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import {
   parseLinkedInFile,
   type LinkedInFileType,
@@ -31,9 +31,9 @@ const SLOTS: SlotDef[] = [
   },
   {
     type: "leads",
-    title: "Followers",
-    hint: "Analytics → Followers export — growth trends only, not current count",
-    fields: [],
+    title: "Follower Growth",
+    hint: "Analytics → Followers export",
+    fields: [{ key: "followerGrowth", label: "Avg Weekly Growth" }],
   },
 ];
 
@@ -74,11 +74,7 @@ export function LinkedInUploadSlots({ ws, setWorkspace }: Props) {
     patch(type, { status: "parsing", message: "", parsed: {} });
     try {
       const metrics = await parseLinkedInFile(file, type);
-      // Strip the internal _info marker before writing field values to the workspace
-      const { _info, ...fieldValues } = metrics;
-      if (Object.keys(fieldValues).length) {
-        setWorkspace({ baseline: { ...ws.baseline, ...fieldValues } });
-      }
+      setWorkspace({ baseline: { ...ws.baseline, ...metrics } });
       patch(type, { status: "done", parsed: metrics });
     } catch (err: any) {
       patch(type, { status: "error", message: err.message ?? "Parse failed." });
@@ -138,23 +134,18 @@ function Slot({
   onFile: (f: File | undefined) => void;
   onClear: () => void;
 }) {
-  const hasFieldValues = Object.keys(state.parsed).some((k) => k !== "_info");
-  const infoMessage = state.parsed._info;
-
-  // Border colour: green when fields were filled, blue-tinted when info-only, red on error
-  const borderColor =
-    state.status === "done"
-      ? hasFieldValues
-        ? "var(--color-success)"
-        : "var(--color-primary)"
-      : state.status === "error"
-      ? "var(--color-destructive)"
-      : "var(--color-border)";
-
   return (
     <div
       className="rounded-lg p-3 flex flex-col gap-2 min-h-[100px]"
-      style={{ border: `1px solid ${borderColor}`, background: "var(--color-surface)", transition: "border-color 0.15s" }}
+      style={{
+        border: `1px solid ${state.status === "done"
+          ? "var(--color-success)"
+          : state.status === "error"
+          ? "var(--color-destructive)"
+          : "var(--color-border)"}`,
+        background: "var(--color-surface)",
+        transition: "border-color 0.15s",
+      }}
     >
       <div className="text-xs font-bold">{def.title}</div>
       <div className="text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
@@ -182,7 +173,7 @@ function Slot({
           </div>
         )}
 
-        {state.status === "done" && hasFieldValues && (
+        {state.status === "done" && (
           <div>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-1 text-xs font-semibold"
@@ -210,28 +201,6 @@ function Slot({
                   </span>
                 </div>
               ))}
-          </div>
-        )}
-
-        {state.status === "done" && !hasFieldValues && infoMessage && (
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1 text-xs font-semibold"
-                style={{ color: "var(--color-primary)" }}>
-                <Info size={12} />
-                File read
-              </div>
-              <button type="button" onClick={onClear}
-                className="text-xs rounded p-0.5 hover:opacity-70"
-                style={{ color: "var(--color-text-secondary)" }}
-                title="Clear and re-upload">
-                <X size={12} />
-              </button>
-            </div>
-            <div className="text-[11px] leading-snug"
-              style={{ color: "var(--color-text-secondary)" }}>
-              {infoMessage}
-            </div>
           </div>
         )}
 

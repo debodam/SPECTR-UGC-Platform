@@ -6,10 +6,7 @@ export interface ParsedMetrics {
   weeklyImpressions?: string;
   engagementRate?: string;
   monthlyVisitors?: string;
-  followers?: string;
-  // Internal marker: file is valid but contains no auto-fillable fields.
-  // Strip this before writing to workspace state.
-  _info?: string;
+  followerGrowth?: string;
 }
 
 type Row = (string | number | boolean | null | undefined)[];
@@ -126,16 +123,23 @@ function parseVisitors(dataRows: Row[], headers: Row): ParsedMetrics {
 }
 
 function parseLeads(dataRows: Row[], headers: Row): ParsedMetrics {
-  // LinkedIn Followers export contains growth trend data (new followers per period),
-  // not the cumulative current follower count. Validate the file looks right, then
-  // return an info marker so the component can show a neutral acknowledgement without
-  // auto-filling anything.
-  const hasFollowerCol = findCol(headers, "follower") >= 0;
-  if (!hasFollowerCol) return {};
+  // LinkedIn Followers export contains new-followers-per-period growth data.
+  // Column name priority: most-specific first to avoid picking up cumulative "Total Followers".
+  let col = findCol(headers, "new organic follower");
+  if (col < 0) col = findCol(headers, "new paid follower");
+  if (col < 0) col = findCol(headers, "new follower");
+  if (col < 0) col = findCol(headers, "organic follower");
+  if (col < 0) col = findCol(headers, "follower");
 
-  return {
-    _info: "Growth trend data only — the Followers export does not include a current total. Enter your follower count manually in the field below.",
-  };
+  if (col < 0) return {};
+
+  const vs = toNums(dataRows, col);
+  if (!vs.length) return {};
+
+  // Average new followers per period; scale daily data up to weekly
+  const avg = mean(vs);
+  const weeklyGrowth = vs.length > 20 ? Math.round(avg * 7) : Math.round(avg);
+  return { followerGrowth: String(weeklyGrowth) };
 }
 
 export async function parseLinkedInFile(
@@ -163,9 +167,7 @@ export async function parseLinkedInFile(
           type === "visitors" ? parseVisitors(dataRows, headers) :
           parseLeads(dataRows, headers);
 
-        const hasFields = Object.keys(metrics).some((k) => k !== "_info");
-        const hasInfo = !!metrics._info;
-        if (!hasFields && !hasInfo) {
+        if (!Object.keys(metrics).length) {
           reject(
             new Error(
               `Expected columns not found. Make sure this is the ${type} analytics export from LinkedIn.`

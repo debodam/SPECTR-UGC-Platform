@@ -15,12 +15,12 @@ export interface Workspace {
   primaryPlatform: "LinkedIn";
   startingFromScratch: boolean;
   baseline: {
-    followers: string; weeklyImpressions: string; engagementRate: string;
-    monthlyVisitors: string; weeklyPageSearches: string;
+    followers: string; followerGrowth: string; weeklyImpressions: string;
+    engagementRate: string; monthlyVisitors: string; weeklyPageSearches: string;
   };
   targets: {
-    followers: string; weeklyImpressions: string; engagementRate: string;
-    monthlyVisitors: string; weeklyPageSearches: string;
+    followers: string; followerGrowth: string; weeklyImpressions: string;
+    engagementRate: string; monthlyVisitors: string; weeklyPageSearches: string;
   };
   goalDescription: string;
   audience: {
@@ -53,8 +53,8 @@ export interface AppState {
 const emptyWorkspace: Workspace = {
   companyId: undefined,
   companyName: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false,
-  baseline: { followers: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
-  targets: { followers: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
+  baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
+  targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
   goalDescription: "",
   audience: { jobTitles: "", seniority: "", companySize: "", description: "" },
 };
@@ -82,8 +82,17 @@ function load(): StoredState {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fallback;
     const p = JSON.parse(raw);
+    const w = p.workspace || {};
     return {
-      workspace: p.workspace || emptyWorkspace,
+      // Deep-merge with emptyWorkspace so new fields are always initialised,
+      // even when loading a workspace saved before those fields existed.
+      workspace: {
+        ...emptyWorkspace,
+        ...w,
+        baseline: { ...emptyWorkspace.baseline, ...(w.baseline || {}) },
+        targets:  { ...emptyWorkspace.targets,  ...(w.targets  || {}) },
+        audience: { ...emptyWorkspace.audience, ...(w.audience || {}) },
+      },
       setupComplete: p.setupComplete ?? false,
       setupStep: p.setupStep ?? 1,
       entries: p.entries || [],

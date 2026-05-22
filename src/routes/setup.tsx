@@ -202,6 +202,7 @@ function Step1({ ws, setWorkspace, onNext }: any) {
 function NumGrid({ ws, setWorkspace, kind }: { ws: any; setWorkspace: any; kind: "baseline" | "targets" }) {
   const fields = [
     { key: "followers", label: kind === "baseline" ? "Current Followers" : "Followers Target", hint: "Total followers on your company page", required: kind === "baseline" },
+    { key: "followerGrowth", label: kind === "baseline" ? "Avg Weekly Follower Growth" : "Weekly Follower Growth Target", hint: kind === "baseline" ? "Auto-filled from your Followers export. Average new followers gained per week." : "Target average new followers per week" },
     {
       key: "weeklyImpressions",
       label: kind === "baseline" ? "Avg Weekly Impressions" : "Weekly Impressions Target",
