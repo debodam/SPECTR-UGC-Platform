@@ -234,10 +234,28 @@ async function dlPdf(tab: TabKey, content: string, filename: string) {
     doc.text("Posts", ML, y); y += 5;
     doc.setDrawColor(10, 102, 194); doc.setLineWidth(0.6); doc.line(ML, y, ML + CW, y); y += 10;
 
+    // Unicode bullets (→ • ▸ ◦ etc.) are outside Helvetica's Latin encoding — replace with ASCII
+    const bulletRe = /^[→•▪◦‣⁃●▸∙*]\s*/;
+
     const posts = content.split(/\n\s*---\s*\n|(?:^|\n)---(?:\n|$)/m).map((p) => p.trim()).filter(Boolean);
     for (let i = 0; i < posts.length; i++) {
-      const bodyLines = doc.splitTextToSize(posts[i].trim(), CW - 10) as string[];
-      const boxH = 10 + bodyLines.length * 7 + 8;
+      const rows: { text: string; x: number }[] = [];
+      for (const raw of posts[i].split('\n')) {
+        const t = raw.trim();
+        const m = t.match(bulletRe);
+        if (m) {
+          const rest = t.slice(m[0].length).trim();
+          const wrapped = doc.splitTextToSize(rest, CW - 18) as string[];
+          rows.push({ text: '- ' + wrapped[0], x: ML + 5 });
+          for (let wi = 1; wi < wrapped.length; wi++) rows.push({ text: wrapped[wi], x: ML + 11 });
+        } else if (t) {
+          for (const wl of doc.splitTextToSize(t, CW - 10) as string[]) rows.push({ text: wl, x: ML + 5 });
+        } else {
+          rows.push({ text: '', x: ML + 5 });
+        }
+      }
+
+      const boxH = 10 + rows.length * 7 + 8;
       ensureSpace(boxH);
 
       doc.setDrawColor(200, 218, 240); doc.setLineWidth(0.4); doc.rect(ML, y, CW, boxH);
@@ -247,7 +265,7 @@ async function dlPdf(tab: TabKey, content: string, filename: string) {
 
       doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(30, 30, 30);
       let ty = y + 17;
-      for (const line of bodyLines) { doc.text(line, ML + 5, ty); ty += 7; }
+      for (const row of rows) { doc.text(row.text, row.x, ty); ty += 7; }
       y += boxH + 6;
     }
 
