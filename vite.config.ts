@@ -4,7 +4,7 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 
-export default defineConfig(async ({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   const loadedEnv = loadEnv(mode, process.cwd(), "");
   const envDefine: Record<string, string> = {};
   for (const [key, value] of Object.entries(loadedEnv)) {
@@ -12,35 +12,30 @@ export default defineConfig(async ({ command, mode }) => {
       envDefine[`import.meta.env.${key}`] = JSON.stringify(value);
     }
   }
-  // Inject server-only vars into process.env for server functions
+  // Inject server-only vars into process.env for local dev
   if (loadedEnv.ANTHROPIC_API_KEY) {
     envDefine["process.env.ANTHROPIC_API_KEY"] = JSON.stringify(loadedEnv.ANTHROPIC_API_KEY);
   }
 
-  const plugins = [
-    tailwindcss(),
-    tsConfigPaths({ projects: ["./tsconfig.json"] }),
-    tanstackStart({
-      importProtection: {
-        behavior: "error",
-        client: {
-          files: ["**/server/**"],
-          specifiers: ["server-only"],
-        },
-      },
-      server: { entry: "server" },
-    }),
-    viteReact(),
-  ];
-
-  if (command === "build") {
-    const { cloudflare } = await import("@cloudflare/vite-plugin");
-    plugins.push(cloudflare({ viteEnvironment: { name: "ssr" } }));
-  }
-
   return {
     define: envDefine,
-    plugins,
+    plugins: [
+      tailwindcss(),
+      tsConfigPaths({ projects: ["./tsconfig.json"] }),
+      tanstackStart({
+        importProtection: {
+          behavior: "error",
+          client: {
+            files: ["**/server/**"],
+            specifiers: ["server-only"],
+          },
+        },
+        server: {
+          preset: "vercel",
+        },
+      }),
+      viteReact(),
+    ],
     resolve: {
       alias: {
         "@": `${process.cwd()}/src`,
