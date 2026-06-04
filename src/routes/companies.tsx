@@ -3,6 +3,16 @@ import { useEffect, useState } from "react";
 import { Plus, Building2, Trash2, LogOut } from "lucide-react";
 import supabase from "@/lib/supabase";
 import { useApp } from "@/lib/spectr-store";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/companies")({ component: CompaniesPage });
 
@@ -15,7 +25,7 @@ function CompaniesPage() {
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -63,7 +73,6 @@ function CompaniesPage() {
       });
       navigate({ to: "/transform" });
     } else {
-      // Reset setup state so the wizard starts fresh for this company
       setWorkspace({ companyId: c.id, companyName: c.name });
       update({ setupComplete: false, setupStep: 1 });
       navigate({ to: "/setup" });
@@ -83,7 +92,6 @@ function CompaniesPage() {
     setCreating(false);
     if (error) { setCreateError(error.message); return; }
     if (data) {
-      // Reset setup state so the wizard starts fresh
       setWorkspace({ companyId: data.id, companyName: data.name });
       update({ setupComplete: false, setupStep: 1 });
       navigate({ to: "/setup" });
@@ -100,7 +108,14 @@ function CompaniesPage() {
     if (state.workspace.companyId === id) {
       update({
         setupComplete: false,
-        workspace: { companyId: undefined, companyName: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false, baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" }, targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" }, goalDescription: "", audience: { jobTitles: "", seniority: "", companySize: "", description: "" } },
+        workspace: {
+          companyId: undefined, companyName: "", industry: "", primaryPlatform: "LinkedIn",
+          startingFromScratch: false,
+          baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
+          targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
+          goalDescription: "",
+          audience: { jobTitles: "", seniority: "", companySize: "", description: "" },
+        },
       });
     }
   }
@@ -110,111 +125,148 @@ function CompaniesPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--color-surface)" }}>
-      <div className="w-full max-w-2xl">
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-bold">Your companies</h1>
-          <button
-            onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); }}
-            className="flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            <LogOut size={15} /> Log out
-          </button>
-        </div>
-        <p className="text-sm mb-8" style={{ color: "var(--color-text-secondary)" }}>
-          Select a company to enter its workspace.
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-6 py-12"
+      style={{ background: "var(--color-surface)" }}
+    >
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h1 className="text-2xl font-bold tracking-tight">Select your workspace</h1>
+        <p className="text-sm mt-2" style={{ color: "var(--color-text-secondary)" }}>
+          Choose a company to enter its content workspace.
         </p>
+      </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-[56px] rounded-lg animate-pulse" style={{ background: "var(--color-border)" }} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {companies.map((c) => (
-              <div key={c.id} className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)", background: "white" }}>
-                {confirmDelete === c.id ? (
-                  <div className="p-4">
-                    <p className="text-sm font-semibold mb-1">Delete "{c.name}"?</p>
-                    <p className="text-xs mb-4" style={{ color: "var(--color-text-secondary)" }}>
-                      This removes the company and all its data permanently.
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => deleteCompany(c.id)}
-                        disabled={deleting}
-                        className="spectr-btn-primary text-xs px-3 py-1.5"
-                        style={{ background: "#dc2626" }}
-                      >
-                        {deleting ? "Deleting…" : "Yes, delete"}
-                      </button>
-                      <button onClick={() => setConfirmDelete(null)} className="spectr-btn text-xs px-3 py-1.5">
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
+      {/* Cards */}
+      {loading ? (
+        <div className="flex gap-5">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-[148px] h-[188px] rounded-2xl animate-pulse"
+              style={{ background: "var(--color-border)" }}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-wrap justify-center items-center gap-5">
+          {companies.map((c) => (
+            <div
+              key={c.id}
+              onClick={() => selectCompany(c)}
+              className="group relative w-[148px] flex flex-col items-center pt-7 pb-5 px-3 rounded-2xl cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
+              style={{
+                background: "white",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)",
+              }}
+            >
+              {/* Logo or icon */}
+              <div className="w-[76px] h-[76px] flex items-center justify-center mb-3 shrink-0">
+                {c.logo_url ? (
+                  <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
                 ) : (
-                  <div className="flex items-stretch">
-                    <button
-                      onClick={() => selectCompany(c)}
-                      className="flex-1 flex items-center gap-3 p-4 text-left hover:bg-[var(--color-surface)] transition-colors"
-                    >
-                      <div className="shrink-0 w-8 h-8 rounded-md flex items-center justify-center"
-                        style={{ background: "rgba(10,102,194,0.1)" }}>
-                        <Building2 size={16} style={{ color: "var(--color-primary)" }} />
-                      </div>
-                      <span className="text-sm font-semibold truncate">{c.name}</span>
-                    </button>
-                    <button
-                      onClick={() => setConfirmDelete(c.id)}
-                      className="px-3 border-l hover:bg-red-50 transition-colors"
-                      style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)" }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  <Building2 size={32} style={{ color: "var(--color-primary)" }} />
                 )}
               </div>
-            ))}
 
-            {!showNew && (
-              <button
-                onClick={() => setShowNew(true)}
-                className="h-[56px] rounded-lg border-2 border-dashed flex items-center justify-center gap-2 text-sm font-medium transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
-                style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)" }}
+              {/* Name */}
+              <span
+                className="text-sm font-semibold text-center leading-snug mb-4 line-clamp-2 w-full"
+                style={{ color: "var(--color-foreground)" }}
               >
-                <Plus size={16} /> New company
-              </button>
-            )}
-          </div>
-        )}
+                {c.name}
+              </span>
 
-        {showNew && (
-          <div className="mt-4 p-5 rounded-lg border" style={{ background: "white", borderColor: "var(--color-border)" }}>
-            <h3 className="text-sm font-semibold mb-3">Create new company</h3>
-            <input
-              className="spectr-input"
-              placeholder="Company name"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setCreateError(""); }}
-              onKeyDown={(e) => e.key === "Enter" && createCompany()}
-              autoFocus
-            />
-            {createError && <p className="text-xs mt-2" style={{ color: "#dc2626" }}>{createError}</p>}
-            <div className="flex gap-2 mt-3">
-              <button onClick={createCompany} disabled={creating || !name.trim()} className="spectr-btn-primary">
-                {creating ? "Creating…" : "Create & set up"}
-              </button>
-              <button onClick={() => { setShowNew(false); setName(""); setCreateError(""); }} className="spectr-btn">
-                Cancel
+              {/* Trash */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(c); }}
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-red-50"
+                style={{ color: "var(--color-text-secondary)" }}
+                title="Delete company"
+              >
+                <Trash2 size={14} />
               </button>
             </div>
+          ))}
+
+          {/* Add new */}
+          <button
+            onClick={() => setShowNew(true)}
+            className="w-[60px] h-[60px] rounded-full flex items-center justify-center transition-all hover:scale-105"
+            style={{
+              background: "white",
+              border: "2px solid var(--color-border)",
+              color: "var(--color-text-secondary)",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            }}
+            title="Add company"
+          >
+            <Plus size={22} />
+          </button>
+        </div>
+      )}
+
+      {/* Create form */}
+      {showNew && (
+        <div
+          className="mt-8 w-full max-w-sm p-6 rounded-2xl"
+          style={{ background: "white", boxShadow: "0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)" }}
+        >
+          <h3 className="text-sm font-semibold mb-4">New company</h3>
+          <input
+            className="spectr-input"
+            placeholder="Company name"
+            value={name}
+            onChange={(e) => { setName(e.target.value); setCreateError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && createCompany()}
+            autoFocus
+          />
+          {createError && <p className="text-xs mt-2" style={{ color: "#dc2626" }}>{createError}</p>}
+          <div className="flex gap-2 mt-4">
+            <button onClick={createCompany} disabled={creating || !name.trim()} className="spectr-btn-primary flex-1">
+              {creating ? "Creating..." : "Create & set up"}
+            </button>
+            <button
+              onClick={() => { setShowNew(false); setName(""); setCreateError(""); }}
+              className="spectr-btn-secondary"
+            >
+              Cancel
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Logout */}
+      <button
+        onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); }}
+        className="mt-12 flex items-center gap-2 text-sm transition-opacity hover:opacity-60"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        <LogOut size={14} /> Log out
+      </button>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{confirmDelete?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this company? All workspace details, goals, and tracking data will be permanently lost and cannot be recovered.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmDelete && deleteCompany(confirmDelete.id)}
+              disabled={deleting}
+              className="hover:opacity-90"
+              style={{ background: "#dc2626", color: "white" }}
+            >
+              {deleting ? "Deleting..." : "Delete company"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

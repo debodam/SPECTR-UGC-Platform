@@ -49,7 +49,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             style={{ background: "var(--color-surface)", color: "var(--color-foreground)" }}
             title="Switch company"
           >
-            <Building2 size={14} style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
+            {state.workspace.companyLogoUrl ? (
+              <img
+                src={state.workspace.companyLogoUrl}
+                alt=""
+                className="shrink-0 object-contain"
+                style={{ width: 20, height: 20 }}
+              />
+            ) : (
+              <Building2 size={14} style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
+            )}
             <span className="truncate flex-1">
               {state.workspace.companyName || "My Company"}
             </span>

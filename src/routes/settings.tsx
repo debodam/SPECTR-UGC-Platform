@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Building2, Upload, X } from "lucide-react";
 import { useApp, type Workspace } from "@/lib/spectr-store";
 import { AppShell } from "@/components/spectr/AppShell";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
@@ -10,6 +11,26 @@ export const Route = createFileRoute("/settings")({ component: () => <AppShell><
 
 const SIZES = ["Startup", "SMB", "Mid-Market", "Enterprise", "All Sizes"];
 
+function resizeToDataUrl(file: File, size: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d")!;
+      const scale = Math.max(size / img.width, size / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Failed to load image")); };
+    img.src = url;
+  });
+}
+
 function Settings() {
   const { state, update } = useApp();
   const ws = state.workspace;
@@ -17,13 +38,15 @@ function Settings() {
   const userId = state.user?.id;
 
   const [saving, setSaving] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // ── On mount: re-hydrate from Supabase so the form always shows persisted data ──
   useEffect(() => {
     if (!companyId || !userId) return;
 
     Promise.all([
-      supabase.from("companies").select("name").eq("id", companyId).single(),
+      supabase.from("companies").select("name, logo_url").eq("id", companyId).single(),
       supabase.from("workspaces")
         .select("industry, baseline, targets, goal_description, audience")
         .eq("company_id", companyId)
@@ -35,6 +58,7 @@ function Settings() {
         workspace: {
           ...ws,
           companyName: co?.name ?? ws.companyName,
+          companyLogoUrl: co?.logo_url ?? ws.companyLogoUrl ?? "",
           industry: wsd?.industry ?? ws.industry,
           baseline: { ...ws.baseline, ...(wsd?.baseline ?? {}) },
           targets: { ...ws.targets, ...(wsd?.targets ?? {}) },
@@ -63,6 +87,31 @@ function Settings() {
       {hint && <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>{hint}</p>}
     </div>
   );
+
+  // ── Logo upload ───────────────────────────────────────────────────────────────
+
+  const uploadLogo = async (file: File) => {
+    if (!companyId) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file."); return; }
+
+    setLogoUploading(true);
+
+    const dataUrl = await resizeToDataUrl(file, 256);
+
+    const { error } = await supabase.from("companies").update({ logo_url: dataUrl }).eq("id", companyId);
+    if (error) { toast.error("Failed to save logo."); setLogoUploading(false); return; }
+
+    setWs({ companyLogoUrl: dataUrl });
+    setLogoUploading(false);
+    toast.success("Logo updated.");
+  };
+
+  const removeLogo = async () => {
+    if (!companyId) return;
+    await supabase.from("companies").update({ logo_url: null }).eq("id", companyId);
+    setWs({ companyLogoUrl: "" });
+    toast.success("Logo removed.");
+  };
 
   // ── Save to Supabase ──────────────────────────────────────────────────────────
 
@@ -118,6 +167,66 @@ function Settings() {
       <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
       <Section title="Company & Workspace">
+        {/* Logo uploader */}
+        <div className="flex items-center gap-5 mb-6 pb-6" style={{ borderBottom: "1px solid var(--color-border)" }}>
+          <button
+            type="button"
+            onClick={() => logoInputRef.current?.click()}
+            disabled={logoUploading}
+            className="relative w-[72px] h-[72px] rounded-full flex items-center justify-center overflow-hidden shrink-0 transition-opacity hover:opacity-80"
+            style={{ background: "rgba(10,102,194,0.09)", border: "2px dashed var(--color-border)" }}
+            title="Upload logo"
+          >
+            {logoUploading ? (
+              <span className="text-[10px] font-medium" style={{ color: "var(--color-text-secondary)" }}>...</span>
+            ) : ws.companyLogoUrl ? (
+              <img src={ws.companyLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <Building2 size={28} style={{ color: "var(--color-primary)" }} />
+            )}
+            <div
+              className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-full"
+              style={{ background: "rgba(0,0,0,0.35)" }}
+            >
+              <Upload size={16} color="white" />
+            </div>
+          </button>
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = ""; }}
+          />
+          <div>
+            <p className="text-sm font-semibold mb-1">Company Logo</p>
+            <p className="text-xs mb-2" style={{ color: "var(--color-text-secondary)" }}>
+              Shown on the workspace selector and companies page. Any image — auto-resized.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={logoUploading}
+                className="spectr-btn-secondary text-xs"
+                style={{ height: 30, padding: "0 12px", fontSize: 12 }}
+              >
+                {ws.companyLogoUrl ? "Change" : "Upload"}
+              </button>
+              {ws.companyLogoUrl && (
+                <button
+                  type="button"
+                  onClick={removeLogo}
+                  className="flex items-center gap-1 text-xs hover:opacity-70 transition-opacity"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  <X size={12} /> Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="spectr-label">Company Name</label>

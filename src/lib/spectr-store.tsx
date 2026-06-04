@@ -11,6 +11,7 @@ export interface User { id: string; name: string; email: string; }
 export interface Workspace {
   companyId?: string;
   companyName: string;
+  companyLogoUrl?: string;
   industry: string;
   primaryPlatform: "LinkedIn";
   startingFromScratch: boolean;
@@ -52,7 +53,7 @@ export interface AppState {
 
 const emptyWorkspace: Workspace = {
   companyId: undefined,
-  companyName: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false,
+  companyName: "", companyLogoUrl: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false,
   baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
   targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
   goalDescription: "",

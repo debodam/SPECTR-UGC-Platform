@@ -257,11 +257,11 @@ function Track() {
                 <div className="mt-3 space-y-1.5">
                   <Stat
                     label="Avg Impressions"
-                    value={t.count ? Math.round(t.imp / t.count).toLocaleString() : "—"}
+                    value={t.count ? Math.round(t.imp / t.count).toLocaleString() : "-"}
                   />
                   <Stat
                     label="Avg Engagement"
-                    value={t.count ? `${(t.eng / t.count).toFixed(1)}%` : "—"}
+                    value={t.count ? `${(t.eng / t.count).toFixed(1)}%` : "-"}
                   />
                   <Stat label="Entries Logged" value={String(t.count)} />
                 </div>
@@ -273,7 +273,7 @@ function Track() {
 
       {/* Trend chart */}
       <section className="spectr-card p-5">
-        <h2 className="font-bold mb-3">Weekly Trend — Followers</h2>
+        <h2 className="font-bold mb-3">Weekly Trend - Followers</h2>
         <TrendChart entries={entries} baseline={Number(ws.baseline.followers || 0)} />
       </section>
     </div>
@@ -331,6 +331,12 @@ function EditRow({
   saving: boolean;
 }) {
   const inp = "border rounded px-2 py-1 text-sm w-full";
+
+  // String state lets the field be fully cleared while draft keeps a numeric fallback
+  const [rawImp, setRawImp] = useState(draft.impressions ? String(draft.impressions) : "");
+  const [rawEng, setRawEng] = useState(draft.engagementRate ? String(draft.engagementRate) : "");
+  const [rawFol, setRawFol] = useState(draft.followersGained ? String(draft.followersGained) : "");
+
   return (
     <tr className="border-t" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
       <td className="py-2 pr-2">
@@ -354,16 +360,16 @@ function EditRow({
         </select>
       </td>
       <td className="py-2 pr-2">
-        <input className={inp} type="number" value={draft.impressions}
-          onChange={(e) => setDraft({ ...draft, impressions: Number(e.target.value) })} />
+        <input className={inp} type="number" value={rawImp} placeholder="0"
+          onChange={(e) => { setRawImp(e.target.value); setDraft({ ...draft, impressions: e.target.value === "" ? 0 : Number(e.target.value) }); }} />
       </td>
       <td className="py-2 pr-2">
-        <input className={inp} type="number" step="0.1" value={draft.engagementRate}
-          onChange={(e) => setDraft({ ...draft, engagementRate: Number(e.target.value) })} />
+        <input className={inp} type="number" step="0.1" value={rawEng} placeholder="0"
+          onChange={(e) => { setRawEng(e.target.value); setDraft({ ...draft, engagementRate: e.target.value === "" ? 0 : Number(e.target.value) }); }} />
       </td>
       <td className="py-2 pr-2">
-        <input className={inp} type="number" value={draft.followersGained}
-          onChange={(e) => setDraft({ ...draft, followersGained: Number(e.target.value) })} />
+        <input className={inp} type="number" value={rawFol} placeholder="0"
+          onChange={(e) => { setRawFol(e.target.value); setDraft({ ...draft, followersGained: e.target.value === "" ? 0 : Number(e.target.value) }); }} />
       </td>
       <td className="py-2 pr-2">
         <input className={inp} value={draft.notes}
@@ -418,7 +424,7 @@ function KpiCard({
         {Math.round(current).toLocaleString()}{suffix}
       </div>
       <div className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
-        Target: {target ? target.toLocaleString() : "—"}{suffix}
+        Target: {target ? target.toLocaleString() : "-"}{suffix}
       </div>
       <div className="h-1.5 rounded-full mt-3 overflow-hidden" style={{ background: "var(--color-surface)" }}>
         <div className="h-full" style={{ width: `${pct}%`, background: "var(--color-primary)" }} />
