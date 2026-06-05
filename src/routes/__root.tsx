@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -69,12 +70,17 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function PageTransition() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return <div key={pathname} className="spectr-page-in"><Outlet /></div>;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <SpectrProvider>
-        <Outlet />
+        <PageTransition />
         <Toaster position="bottom-right" />
       </SpectrProvider>
     </QueryClientProvider>

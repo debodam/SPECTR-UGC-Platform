@@ -144,6 +144,7 @@
     gap: 8px;
   }
   .spectr-btn-primary:hover { background: var(--color-primary-hover); }
+  .spectr-btn-primary:active { transform: scale(0.97); transition: background 0.15s, transform 0.1s; }
   .spectr-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
   .spectr-btn-secondary {
     background: white;
@@ -155,9 +156,10 @@
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.15s, transform 0.1s;
   }
   .spectr-btn-secondary:hover { background: rgba(10,102,194,0.08); }
+  .spectr-btn-secondary:active { transform: scale(0.97); }
   .field-error { color: oklch(0.55 0.22 27); font-size: 12px; margin-top: 4px; }
 }
 
@@ -166,3 +168,15 @@
   to { opacity: 1; transform: translateX(0); }
 }
 .spectr-step-enter { animation: spectr-slide-in-right 0.3s ease; }
+
+@keyframes spectr-page-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.spectr-page-in { animation: spectr-page-in 0.22s ease forwards; }
+
+@keyframes spectr-content-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.spectr-content-in { animation: spectr-content-in 0.28s ease forwards; }

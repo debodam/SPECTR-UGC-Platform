@@ -577,6 +577,52 @@ function HistoryPanel({ entries, onLoad, onClose }: { entries: HistoryEntry[]; o
 
 interface SavedCtx { id: string; name: string; text: string; }
 
+function TabBar({ tab, setTab, tabBusy }: { tab: TabKey; setTab: (t: TabKey) => void; tabBusy: TabKey | null }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const el = containerRef.current?.querySelector(`[data-tab="${tab}"]`) as HTMLElement | null;
+    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [tab]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative flex px-6"
+      style={{ borderBottom: "1px solid var(--color-border)", background: "white" }}
+    >
+      {TABS.map((t) => (
+        <button
+          key={t.key}
+          data-tab={t.key}
+          onClick={() => setTab(t.key)}
+          className="px-4 py-3 text-sm font-semibold flex items-center gap-2 transition-colors duration-150"
+          style={{ color: tab === t.key ? "var(--color-primary)" : "var(--color-text-secondary)" }}
+        >
+          {t.label}
+          {tabBusy === t.key && (
+            <span
+              className="inline-block rounded-full animate-spin"
+              style={{ width: 10, height: 10, border: "2px solid var(--color-border)", borderTopColor: "var(--color-primary)" }}
+            />
+          )}
+        </button>
+      ))}
+      {/* Sliding indicator */}
+      <div
+        className="absolute bottom-0 h-0.5"
+        style={{
+          left: indicator.left,
+          width: indicator.width,
+          background: "var(--color-primary)",
+          transition: "left 0.2s cubic-bezier(0.4,0,0.2,1), width 0.2s cubic-bezier(0.4,0,0.2,1)",
+        }}
+      />
+    </div>
+  );
+}
+
 function Transform() {
   const { state } = useApp();
   const ws = state.workspace;
@@ -1078,44 +1124,13 @@ function Transform() {
             {banner}
           </div>
 
-          <div
-            className="flex border-b px-6"
-            style={{ borderColor: "var(--color-border)", background: "white" }}
-          >
-            {TABS.map((t) => {
-              const active = tab === t.key;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className="px-4 py-3 text-sm font-semibold flex items-center gap-2"
-                  style={{
-                    color: active ? "var(--color-primary)" : "var(--color-text-secondary)",
-                    borderBottom: `2px solid ${active ? "var(--color-primary)" : "transparent"}`,
-                  }}
-                >
-                  {t.label}
-                  {tabBusy === t.key && (
-                    <span
-                      className="inline-block rounded-full animate-spin"
-                      style={{
-                        width: 10,
-                        height: 10,
-                        border: "2px solid var(--color-border)",
-                        borderTopColor: "var(--color-primary)",
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <TabBar tab={tab} setTab={setTab} tabBusy={tabBusy} />
 
           <div ref={outputScrollRef} className="flex-1 overflow-y-auto p-6" style={{ background: "var(--color-surface)" }}>
             {loading ? (
               <SkeletonOutput tab={tab} />
             ) : outputs[tab] ? (
-              <div className="spectr-card p-5">
+              <div key={tab + outputs[tab]!.slice(0, 40)} className="spectr-card p-5 spectr-content-in">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <h2 className="font-bold">{tab === "Post" ? "Posts" : tab}</h2>
                   <div className="flex gap-2 flex-wrap">
