@@ -30,9 +30,6 @@ export default defineConfig(({ mode }) => {
             specifiers: ["server-only"],
           },
         },
-        server: {
-          preset: "vercel",
-        },
       }),
       viteReact(),
     ],
