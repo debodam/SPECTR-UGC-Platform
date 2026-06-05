@@ -54,8 +54,9 @@ module.exports = async (req, res) => {
   }
   try {
     const proto = req.headers['x-forwarded-proto'] || 'https'
-    const host = req.headers['x-forwarded-host'] || req.headers.host
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost'
     const url = new URL(req.url, \`\${proto}://\${host}\`)
+    console.log('[spectr] →', req.method, url.toString())
 
     const chunks = []
     await new Promise((ok, err) => {
@@ -80,6 +81,11 @@ module.exports = async (req, res) => {
     })
 
     const webRes = await handler.fetch(webReq)
+    console.log('[spectr] ←', webRes.status, url.toString())
+    if (webRes.status >= 500) {
+      const bodyText = await webRes.clone().text()
+      console.error('[spectr] 5xx body:', bodyText.slice(0, 1000))
+    }
     res.statusCode = webRes.status
     webRes.headers.forEach((v, k) => res.setHeader(k, v))
     res.end(Buffer.from(await webRes.arrayBuffer()))
