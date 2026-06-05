@@ -29,6 +29,9 @@ await build({
   format: 'cjs',
   outfile: `${funcDir}/server.cjs`,
   external: ['node:*'],
+  // Packages declare sideEffects:false but their bare imports in the server
+  // bundle DO matter (h3-v2 event handlers, router registration, etc.)
+  ignoreAnnotations: true,
 })
 
 // 4. Vercel Node.js function wrapper

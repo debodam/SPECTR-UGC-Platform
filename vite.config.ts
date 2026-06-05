@@ -12,8 +12,10 @@ export default defineConfig(({ mode }) => {
       envDefine[`import.meta.env.${key}`] = JSON.stringify(value);
     }
   }
-  // Inject server-only vars into process.env for local dev
-  if (loadedEnv.ANTHROPIC_API_KEY) {
+  // In local dev, inject ANTHROPIC_API_KEY from .env so server functions work.
+  // In production (Vercel), process.env.ANTHROPIC_API_KEY is available at
+  // runtime from dashboard env vars — no need to bake it in at build time.
+  if (loadedEnv.ANTHROPIC_API_KEY && mode === "development") {
     envDefine["process.env.ANTHROPIC_API_KEY"] = JSON.stringify(loadedEnv.ANTHROPIC_API_KEY);
   }
 
