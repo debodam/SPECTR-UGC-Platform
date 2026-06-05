@@ -575,16 +575,7 @@ function HistoryPanel({ entries, onLoad, onClose }: { entries: HistoryEntry[]; o
 
 // --- Saved contexts ---
 
-const CTX_KEY = "spectr-saved-contexts";
-
 interface SavedCtx { id: string; name: string; text: string; }
-
-function loadCtxs(): SavedCtx[] {
-  try { return JSON.parse(localStorage.getItem(CTX_KEY) || "[]"); } catch { return []; }
-}
-function persistCtxs(list: SavedCtx[]) {
-  localStorage.setItem(CTX_KEY, JSON.stringify(list.slice(0, 30)));
-}
 
 function Transform() {
   const { state } = useApp();
@@ -614,7 +605,18 @@ function Transform() {
   const [showHistory, setShowHistory] = useState(false);
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
 
-  useEffect(() => { setSavedCtxs(loadCtxs()); }, []);
+  // Load saved contexts from Supabase on mount
+  useEffect(() => {
+    const userId = state.user?.id;
+    if (!userId) return;
+    supabase
+      .from("saved_contexts")
+      .select("id, name, text")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(30)
+      .then(({ data }) => { if (data) setSavedCtxs(data as SavedCtx[]); });
+  }, [state.user?.id]);
 
   // Reload history when active company changes
   useEffect(() => {
@@ -648,20 +650,25 @@ function Transform() {
     setHistoryEntries((data as HistoryEntry[]) ?? []);
   };
 
-  const saveCurrentCtx = () => {
-    if (!saveName.trim() || !instructions.trim()) return;
-    const next: SavedCtx[] = [{ id: Date.now().toString(), name: saveName.trim(), text: instructions.trim() }, ...savedCtxs];
-    persistCtxs(next);
-    setSavedCtxs(next);
+  const saveCurrentCtx = async () => {
+    const userId = state.user?.id;
+    if (!saveName.trim() || !instructions.trim() || !userId) return;
+    const { data, error } = await supabase
+      .from("saved_contexts")
+      .insert({ user_id: userId, name: saveName.trim(), text: instructions.trim() })
+      .select("id, name, text")
+      .single();
+    if (error) { toast.error("Failed to save context."); return; }
+    setSavedCtxs((prev) => [data as SavedCtx, ...prev]);
     setSaveName("");
     setShowSaveInput(false);
     toast.success("Context saved.");
   };
 
-  const deleteCtx = (id: string) => {
-    const next = savedCtxs.filter(c => c.id !== id);
-    persistCtxs(next);
-    setSavedCtxs(next);
+  const deleteCtx = async (id: string) => {
+    const { error } = await supabase.from("saved_contexts").delete().eq("id", id);
+    if (error) { toast.error("Failed to delete context."); return; }
+    setSavedCtxs((prev) => prev.filter(c => c.id !== id));
   };
 
   const hasAnyOutput = Object.keys(outputs).length > 0;
