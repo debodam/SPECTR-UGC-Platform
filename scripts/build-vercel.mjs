@@ -34,40 +34,58 @@ await build({
 // 4. Vercel Node.js function wrapper
 writeFileSync(`${funcDir}/index.js`, `
 'use strict'
-const { default: handler } = require('./server.cjs')
+let handler
+try {
+  handler = require('./server.cjs').default
+} catch (e) {
+  console.error('[spectr] Failed to load server bundle:', e)
+  handler = null
+}
 
 module.exports = async (req, res) => {
-  const proto = req.headers['x-forwarded-proto'] || 'https'
-  const host = req.headers['x-forwarded-host'] || req.headers.host
-  const url = new URL(req.url, \`\${proto}://\${host}\`)
+  if (!handler) {
+    res.statusCode = 500
+    res.setHeader('content-type', 'text/plain')
+    res.end('Server failed to initialize. Check function logs.')
+    return
+  }
+  try {
+    const proto = req.headers['x-forwarded-proto'] || 'https'
+    const host = req.headers['x-forwarded-host'] || req.headers.host
+    const url = new URL(req.url, \`\${proto}://\${host}\`)
 
-  const chunks = []
-  await new Promise((ok, err) => {
-    req.on('data', c => chunks.push(c))
-    req.on('end', ok)
-    req.on('error', err)
-  })
-  const body = chunks.length ? Buffer.concat(chunks) : undefined
+    const chunks = []
+    await new Promise((ok, err) => {
+      req.on('data', c => chunks.push(c))
+      req.on('end', ok)
+      req.on('error', err)
+    })
+    const body = chunks.length ? Buffer.concat(chunks) : undefined
 
-  const webReq = new Request(url.toString(), {
-    method: req.method,
-    headers: new Headers(
-      Object.fromEntries(
-        Object.entries(req.headers)
-          .filter(([, v]) => v != null)
-          .map(([k, v]) => [k, String(v)])
-      )
-    ),
-    ...(body && req.method !== 'GET' && req.method !== 'HEAD'
-      ? { body, duplex: 'half' }
-      : {}),
-  })
+    const webReq = new Request(url.toString(), {
+      method: req.method,
+      headers: new Headers(
+        Object.fromEntries(
+          Object.entries(req.headers)
+            .filter(([, v]) => v != null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      ),
+      ...(body && req.method !== 'GET' && req.method !== 'HEAD'
+        ? { body, duplex: 'half' }
+        : {}),
+    })
 
-  const webRes = await handler.fetch(webReq)
-
-  res.statusCode = webRes.status
-  webRes.headers.forEach((v, k) => res.setHeader(k, v))
-  res.end(Buffer.from(await webRes.arrayBuffer()))
+    const webRes = await handler.fetch(webReq)
+    res.statusCode = webRes.status
+    webRes.headers.forEach((v, k) => res.setHeader(k, v))
+    res.end(Buffer.from(await webRes.arrayBuffer()))
+  } catch (e) {
+    console.error('[spectr] Request handler error:', e)
+    res.statusCode = 500
+    res.setHeader('content-type', 'text/plain')
+    res.end('Internal server error: ' + (e && e.message || String(e)))
+  }
 }
 `)
 
