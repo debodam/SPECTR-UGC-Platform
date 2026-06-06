@@ -14,6 +14,7 @@ import { Route as TrackRouteImport } from './routes/track'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RecordRouteImport } from './routes/record'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DistributeRouteImport } from './routes/distribute'
 import { Route as CompaniesRouteImport } from './routes/companies'
@@ -44,6 +45,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecordRoute = RecordRouteImport.update({
+  id: '/record',
+  path: '/record',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/companies': typeof CompaniesRoute
   '/distribute': typeof DistributeRoute
   '/login': typeof LoginRoute
+  '/record': typeof RecordRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/companies': typeof CompaniesRoute
   '/distribute': typeof DistributeRoute
   '/login': typeof LoginRoute
+  '/record': typeof RecordRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/companies': typeof CompaniesRoute
   '/distribute': typeof DistributeRoute
   '/login': typeof LoginRoute
+  '/record': typeof RecordRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/distribute'
     | '/login'
+    | '/record'
     | '/settings'
     | '/setup'
     | '/signup'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/distribute'
     | '/login'
+    | '/record'
     | '/settings'
     | '/setup'
     | '/signup'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/distribute'
     | '/login'
+    | '/record'
     | '/settings'
     | '/setup'
     | '/signup'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   CompaniesRoute: typeof CompaniesRoute
   DistributeRoute: typeof DistributeRoute
   LoginRoute: typeof LoginRoute
+  RecordRoute: typeof RecordRoute
   SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/record': {
+      id: '/record'
+      path: '/record'
+      fullPath: '/record'
+      preLoaderRoute: typeof RecordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompaniesRoute: CompaniesRoute,
   DistributeRoute: DistributeRoute,
   LoginRoute: LoginRoute,
+  RecordRoute: RecordRoute,
   SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,

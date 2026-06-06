@@ -632,6 +632,15 @@ function Transform() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
+
+  // Pre-populate from Record page via sessionStorage
+  useEffect(() => {
+    const pending = sessionStorage.getItem("pendingTranscript");
+    if (pending) {
+      setText(pending);
+      sessionStorage.removeItem("pendingTranscript");
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [outputs, setOutputs] = useState<Partial<Record<TabKey, string>>>({});
   const [tab, setTab] = useState<TabKey>("Article");
