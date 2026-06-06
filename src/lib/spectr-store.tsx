@@ -117,8 +117,14 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = load();
+    // Flag flips to true once getSession() resolves and the stored workspace is
+    // merged into state. Any onAuthStateChange event that fires before that point
+    // (INITIAL_SESSION, TOKEN_REFRESHED, etc.) would spread ...s which is still
+    // initialState — no companyId, authLoading:false — causing a false redirect.
+    let sessionLoaded = false;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      sessionLoaded = true;
       setState({
         ...initialState,
         ...stored,
@@ -130,6 +136,7 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!sessionLoaded) return;
       setState((s) => ({
         ...s,
         user: sessionToUser(session),

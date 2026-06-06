@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Sparkles, BarChart3, CalendarDays, Settings as SettingsIcon, LogOut, Building2, ChevronsUpDown } from "lucide-react";
+import { Sparkles, BarChart3, CalendarDays, Settings as SettingsIcon, LogOut, Building2, ChevronsUpDown, Mic } from "lucide-react";
 import { type ReactNode, useEffect } from "react";
 import { useApp } from "@/lib/spectr-store";
 import { SpectrLogo } from "./Logo";
@@ -7,6 +7,7 @@ import supabase from "@/lib/supabase";
 
 const NAV = [
   { to: "/transform", label: "Transform", icon: Sparkles },
+  { to: "/record", label: "Record", icon: Mic },
   { to: "/track", label: "Track", icon: BarChart3 },
   { to: "/distribute", label: "Distribute", icon: CalendarDays },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
