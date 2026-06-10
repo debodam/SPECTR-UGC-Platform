@@ -66,6 +66,13 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
       return;
     }
 
+    if (data.user) {
+      await supabase.from("profiles").upsert(
+        { id: data.user.id, email: data.user.email!, full_name: name.trim() },
+        { onConflict: "id" },
+      );
+    }
+
     if (data.session) {
       // Email confirmation disabled — user is immediately signed in
       navigate({ to: "/companies" });
