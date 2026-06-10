@@ -964,7 +964,7 @@ function Transform() {
           <textarea
             rows={3}
             className="spectr-textarea mb-5"
-            placeholder="e.g. 45-min CEO session on carbon capture economics, targeting VP-level O&G audience"
+            placeholder=""
             value={context}
             onChange={(e) => setContext(e.target.value)}
           />
@@ -976,7 +976,7 @@ function Transform() {
           <textarea
             rows={4}
             className="spectr-textarea mb-2"
-            placeholder="e.g. Follow these 4 pillars: ... · Article 1500 words · Video script 5 minutes"
+            placeholder=""
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
           />
@@ -1174,7 +1174,7 @@ function Transform() {
                 <div className="mt-5 pt-4 border-t flex gap-2" style={{ borderColor: "var(--color-border)" }}>
                   <input
                     className="spectr-input flex-1"
-                    placeholder="e.g. Make the hook more aggressive"
+                    placeholder=""
                     value={refineInput[tab] ?? ""}
                     onChange={(e) => setRefineInput((r) => ({ ...r, [tab]: e.target.value }))}
                   />

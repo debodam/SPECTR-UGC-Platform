@@ -83,6 +83,13 @@ function CompaniesPage() {
     if (!name.trim()) return;
     setCreating(true);
     setCreateError("");
+
+    // Ensure a profile row exists — companies.created_by is a FK to public.profiles
+    await supabase.from("profiles").upsert(
+      { id: state.user!.id, full_name: state.user!.name, email: state.user!.email },
+      { onConflict: "id" },
+    );
+
     const { data, error } = await supabase
       .from("companies")
       .insert([{ name: name.trim(), created_by: state.user!.id }])

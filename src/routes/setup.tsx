@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Check, ChevronLeft } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronLeft, FileText, Upload, X } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { SpectrLogo } from "@/components/spectr/Logo";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
@@ -9,6 +9,17 @@ import supabase from "@/lib/supabase";
 export const Route = createFileRoute("/setup")({ component: SetupPage });
 
 const COMPANY_SIZES = ["Startup", "SMB", "Mid-Market", "Enterprise", "All Sizes"];
+const SENIORITY_LEVELS = ["Individual Contributor", "Technical / IC (Developers, Engineers)", "Manager", "Senior Manager / Director", "VP / SVP / EVP", "C-Suite", "Owner / Founder", "All Levels"];
+
+const INDUSTRIES: Record<string, string[]> = {
+  Technology: ["Software & SaaS", "Cybersecurity", "Artificial Intelligence", "Hardware & Semiconductors", "Telecommunications"],
+  Finance: ["Banking & Financial Services", "Investment & Private Equity", "Insurance", "Accounting & Consulting", "Fintech"],
+  "Healthcare & Life Sciences": ["Healthcare", "Pharmaceuticals", "Biotechnology", "Medical Devices", "Mental Health & Wellness"],
+  "Professional Services": ["Legal", "Management Consulting", "Marketing & Advertising", "Recruiting & HR", "Public Relations"],
+  "Industry & Manufacturing": ["Manufacturing", "Construction & Engineering", "Aerospace & Defense", "Automotive", "Logistics & Supply Chain"],
+  "Consumer & Retail": ["Retail & E-commerce", "Food & Beverage", "Consumer Goods", "Hospitality & Tourism", "Real Estate"],
+  "Education & Nonprofit": ["Education & EdTech", "Nonprofit & Social Impact", "Government & Public Sector", "Media & Publishing", "Research & Academia"],
+};
 
 function SetupPage() {
   const { state, update, setWorkspace } = useApp();
@@ -49,6 +60,10 @@ function SetupPage() {
 
     // If user reached setup without going through /companies, create the company now
     if (!companyId && ws.companyName.trim() && state.user?.id) {
+      await supabase.from("profiles").upsert(
+        { id: state.user.id, full_name: state.user.name, email: state.user.email },
+        { onConflict: "id" },
+      );
       const { data } = await supabase
         .from("companies")
         .insert([{ name: ws.companyName.trim(), created_by: state.user.id }])
@@ -78,6 +93,11 @@ function SetupPage() {
         },
         { onConflict: "company_id,user_id" }
       );
+      // Best-effort: save new fields once the columns exist in the DB
+      supabase.from("workspaces").update({
+        company_description: ws.companyDescription,
+        company_pdf_url: ws.companyPdfUrl || null,
+      }).eq("company_id", companyId).eq("user_id", state.user.id).then(() => {});
     }
 
     update({ setupComplete: true });
@@ -100,7 +120,7 @@ function SetupPage() {
       )}
 
       <div className="w-full max-w-[600px] spectr-card p-8 mt-6 spectr-step-enter" key={step}>
-        {step === 1 && <Step1 ws={ws} setWorkspace={setWorkspace} onNext={next} />}
+        {step === 1 && <Step1 ws={ws} setWorkspace={setWorkspace} onNext={next} userId={state.user?.id} />}
         {step === 2 && !skipBaseline && <Step2 ws={ws} setWorkspace={setWorkspace} onNext={next} onBack={back} />}
         {step === 3 && <Step3 ws={ws} setWorkspace={setWorkspace} onNext={next} onBack={back} />}
         {step === 4 && <Step4 ws={ws} setWorkspace={setWorkspace} onNext={() => setStep(5)} onBack={back} />}
@@ -160,16 +180,17 @@ function Nav({ onBack, onNext, nextLabel = "Continue", disabled, onSkip }:
   );
 }
 
-function Step1({ ws, setWorkspace, onNext }: any) {
-  const can = ws.companyName.trim() && ws.industry.trim();
+function Step1({ ws, setWorkspace, onNext, userId }: any) {
+  const can = ws.companyName.trim() && ws.industry.trim() && (ws.companyDescription.trim() || ws.companyPdfUrl);
   return (
     <>
       <H title="Let's set up your workspace" sub="SPECTR will use this to calibrate every piece of content it generates." />
       <div className="space-y-4">
         <div><label className="spectr-label">Company Name</label>
-          <input className="spectr-input" placeholder="e.g. Chirality" value={ws.companyName} onChange={(e) => setWorkspace({ companyName: e.target.value })} /></div>
+          <input className="spectr-input" placeholder="" value={ws.companyName} onChange={(e) => setWorkspace({ companyName: e.target.value })} /></div>
         <div><label className="spectr-label">Industry / Sector</label>
-          <input className="spectr-input" placeholder="e.g. Clean Energy, Oil & Gas" value={ws.industry} onChange={(e) => setWorkspace({ industry: e.target.value })} /></div>
+          <IndustrySelector value={ws.industry} onChange={(v) => setWorkspace({ industry: v })} /></div>
+        <CompanyBrief ws={ws} setWorkspace={setWorkspace} userId={userId} />
         <div>
           <label className="spectr-label">Primary Platform</label>
           <div className="grid grid-cols-4 gap-2">
@@ -192,12 +213,29 @@ function Step1({ ws, setWorkspace, onNext }: any) {
             ))}
           </div>
         </div>
-        <label className="flex items-center justify-between p-3 rounded-md" style={{ background: "var(--color-surface)" }}>
-          <span className="text-sm font-medium">Are you starting from scratch?</span>
-          <input type="checkbox" checked={ws.startingFromScratch} onChange={(e) => setWorkspace({ startingFromScratch: e.target.checked })}
-            className="h-5 w-9 appearance-none rounded-full transition-colors relative cursor-pointer"
-            style={{ background: ws.startingFromScratch ? "var(--color-primary)" : "#ccc" }} />
-        </label>
+        <button
+          type="button"
+          onClick={() => setWorkspace({ startingFromScratch: !ws.startingFromScratch })}
+          className="flex items-center justify-between w-full p-3 rounded-md transition-colors"
+          style={{
+            background: ws.startingFromScratch ? "rgba(10,102,194,0.08)" : "var(--color-surface)",
+            border: `1.5px solid ${ws.startingFromScratch ? "var(--color-primary)" : "var(--color-border)"}`,
+          }}
+        >
+          <span className="text-sm font-medium" style={{ color: ws.startingFromScratch ? "var(--color-primary)" : "inherit" }}>
+            Are you starting from scratch?
+          </span>
+          <div
+            className="flex items-center justify-center rounded-full transition-colors"
+            style={{
+              width: 24, height: 24,
+              background: ws.startingFromScratch ? "var(--color-primary)" : "transparent",
+              border: `2px solid ${ws.startingFromScratch ? "var(--color-primary)" : "var(--color-border)"}`,
+            }}
+          >
+            {ws.startingFromScratch && <Check size={13} color="white" strokeWidth={3} />}
+          </div>
+        </button>
       </div>
       <Nav onNext={onNext} disabled={!can} />
     </>
@@ -332,7 +370,7 @@ function Step3({ ws, setWorkspace, onNext, onBack }: any) {
             Goal Description
             <span style={{ color: "var(--color-destructive)" }}>*</span>
           </label>
-          <textarea className="spectr-textarea" rows={3} placeholder="e.g. Connect with decision makers in oil & gas and energy companies to build credibility and generate client pipeline"
+          <textarea className="spectr-textarea" rows={3} placeholder=""
             value={ws.goalDescription} onChange={(e) => setWorkspace({ goalDescription: e.target.value })} />
           <p className="text-xs mt-2 px-3 py-2 rounded-md" style={{ background: "rgba(10,102,194,0.06)", color: "var(--color-text-secondary)", border: "1px solid rgba(10,102,194,0.15)" }}>
             Your goal determines which targets are required. Be as specific as possible about what you want to achieve on LinkedIn.
@@ -352,11 +390,14 @@ function Step4({ ws, setWorkspace, onNext, onBack }: any) {
       <H title="Who are you trying to reach?" sub="SPECTR uses this to calibrate every content output to your exact audience." />
       <div className="space-y-4">
         <div><label className="spectr-label">Job Titles</label>
-          <input className="spectr-input" placeholder="e.g. VP, Director, Operations Manager"
+          <input className="spectr-input" placeholder=""
             value={ws.audience.jobTitles} onChange={(e) => setWorkspace({ audience: { ...ws.audience, jobTitles: e.target.value } })} /></div>
         <div><label className="spectr-label">Seniority Level</label>
-          <input className="spectr-input" placeholder="e.g. Mid-level to Senior"
-            value={ws.audience.seniority} onChange={(e) => setWorkspace({ audience: { ...ws.audience, seniority: e.target.value } })} /></div>
+          <select className="spectr-input" value={ws.audience.seniority}
+            onChange={(e) => setWorkspace({ audience: { ...ws.audience, seniority: e.target.value } })}>
+            <option value="">Select level...</option>
+            {SENIORITY_LEVELS.map((s) => <option key={s}>{s}</option>)}
+          </select></div>
         <div><label className="spectr-label">Company Size</label>
           <select className="spectr-input" value={ws.audience.companySize}
             onChange={(e) => setWorkspace({ audience: { ...ws.audience, companySize: e.target.value } })}>
@@ -371,12 +412,172 @@ function Step4({ ws, setWorkspace, onNext, onBack }: any) {
               Optional
             </span>
           </label>
-          <textarea className="spectr-textarea" rows={3} placeholder="e.g. Decision makers at mid-market energy companies evaluating carbon capture solutions"
+          <textarea className="spectr-textarea" rows={3} placeholder=""
             value={ws.audience.description} onChange={(e) => setWorkspace({ audience: { ...ws.audience, description: e.target.value } })} />
         </div>
       </div>
       <Nav onBack={onBack} onNext={onNext} nextLabel="Review" />
     </>
+  );
+}
+
+function CompanyBrief({ ws, setWorkspace, userId }: any) {
+  const [mode, setMode] = useState<"text" | "pdf">(ws.companyPdfUrl ? "pdf" : "text");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const switchMode = (m: "text" | "pdf") => {
+    setMode(m);
+    setUploadError("");
+    if (m === "text") {
+      setWorkspace({ companyPdfUrl: "", companyPdfName: "" });
+    } else {
+      setWorkspace({ companyDescription: "" });
+    }
+  };
+
+  const handleFile = async (file: File) => {
+    if (file.type !== "application/pdf") { setUploadError("Please upload a PDF file."); return; }
+    if (file.size > 10 * 1024 * 1024) { setUploadError("File must be under 10 MB."); return; }
+    setUploadError("");
+    setUploading(true);
+    const path = `${userId}/company-brief-${Date.now()}.pdf`;
+    const { error } = await supabase.storage.from("company-docs").upload(path, file, { upsert: true });
+    if (error) { setUploadError(error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("company-docs").getPublicUrl(path);
+    setWorkspace({ companyPdfUrl: data.publicUrl, companyPdfName: file.name });
+    setUploading(false);
+  };
+
+  const clearPdf = () => {
+    setWorkspace({ companyPdfUrl: "", companyPdfName: "" });
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  return (
+    <div>
+      <label className="spectr-label">Company / Product Brief</label>
+      <p className="text-xs mb-2" style={{ color: "var(--color-text-secondary)" }}>
+        SPECTR reads this to understand what you do and generate on-brand content.
+      </p>
+
+      {/* Mode toggle */}
+      <div className="flex rounded-md overflow-hidden mb-3" style={{ border: "1.5px solid var(--color-border)" }}>
+        {(["text", "pdf"] as const).map((m) => (
+          <button key={m} type="button" onClick={() => switchMode(m)}
+            className="flex-1 py-1.5 text-xs font-semibold transition-colors"
+            style={{
+              background: mode === m ? "var(--color-primary)" : "white",
+              color: mode === m ? "white" : "var(--color-text-secondary)",
+            }}>
+            {m === "text" ? "Write description" : "Upload PDF"}
+          </button>
+        ))}
+      </div>
+
+      {mode === "text" ? (
+        <textarea
+          className="spectr-textarea"
+          rows={4}
+          placeholder=""
+          value={ws.companyDescription}
+          onChange={(e) => setWorkspace({ companyDescription: e.target.value })}
+        />
+      ) : (
+        <div>
+          {ws.companyPdfUrl ? (
+            <div className="flex items-center gap-3 p-3 rounded-md" style={{ background: "rgba(10,102,194,0.06)", border: "1.5px solid var(--color-primary)" }}>
+              <FileText size={18} style={{ color: "var(--color-primary)", flexShrink: 0 }} />
+              <span className="text-sm font-medium flex-1 truncate" style={{ color: "var(--color-primary)" }}>{ws.companyPdfName}</span>
+              <button type="button" onClick={clearPdf} className="p-0.5 rounded hover:opacity-70 transition-opacity" style={{ color: "var(--color-primary)" }}>
+                <X size={15} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="w-full flex flex-col items-center gap-2 py-6 rounded-md transition-colors"
+              style={{ border: "2px dashed var(--color-border)", background: "var(--color-surface)", color: "var(--color-text-secondary)" }}
+            >
+              <Upload size={20} />
+              <span className="text-sm font-medium">{uploading ? "Uploading…" : "Click to upload PDF"}</span>
+              <span className="text-xs">Max 10 MB</span>
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept=".pdf" className="hidden"
+            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          {uploadError && <p className="text-xs mt-1.5" style={{ color: "#dc2626" }}>{uploadError}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IndustrySelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  function derive(v: string) {
+    if (!v) return { sector: "", sub: "", custom: "" };
+    for (const [s, subs] of Object.entries(INDUSTRIES)) {
+      if (v === s) return { sector: s, sub: "", custom: "" };
+      if (subs.includes(v)) return { sector: s, sub: v, custom: "" };
+    }
+    return { sector: "Other", sub: "", custom: v };
+  }
+
+  const init = derive(value);
+  const [sector, setSector] = useState(init.sector);
+  const [sub, setSub] = useState(init.sub);
+  const [custom, setCustom] = useState(init.custom);
+
+  const handleSector = (s: string) => {
+    setSector(s);
+    setSub("");
+    setCustom("");
+    onChange(s === "Other" ? "" : s);
+  };
+
+  const handleSub = (s: string) => {
+    setSub(s);
+    setCustom("");
+    onChange(s === "Other" ? "" : s);
+  };
+
+  const handleCustom = (v: string) => {
+    setCustom(v);
+    onChange(v);
+  };
+
+  const showSub = sector !== "" && sector !== "Other";
+  const showCustom = sector === "Other" || sub === "Other";
+
+  return (
+    <div className="space-y-2">
+      <select className="spectr-input" value={sector} onChange={(e) => handleSector(e.target.value)}>
+        <option value="">Select sector…</option>
+        {Object.keys(INDUSTRIES).map((s) => <option key={s} value={s}>{s}</option>)}
+        <option value="Other">Other</option>
+      </select>
+
+      {showSub && (
+        <select className="spectr-input" value={sub} onChange={(e) => handleSub(e.target.value)}>
+          <option value="">Select industry…</option>
+          {INDUSTRIES[sector].map((s) => <option key={s} value={s}>{s}</option>)}
+          <option value="Other">Other</option>
+        </select>
+      )}
+
+      {showCustom && (
+        <input
+          className="spectr-input"
+          placeholder="Type your industry / sector…"
+          value={custom}
+          onChange={(e) => handleCustom(e.target.value)}
+          autoFocus
+        />
+      )}
+    </div>
   );
 }
 
@@ -393,7 +594,7 @@ function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; sav
     <div>
       <div className="flex flex-col items-center text-center">
         <div className="rounded-full flex items-center justify-center mb-4"
-          style={{ background: "var(--color-success)", width: 64, height: 64 }}>
+          style={{ background: "var(--color-primary)", width: 64, height: 64 }}>
           <Check size={36} color="white" />
         </div>
         <h2 className="text-2xl font-bold">You're all set</h2>
@@ -411,6 +612,17 @@ function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; sav
         <div>
           <div className="text-xs font-semibold uppercase" style={{ color: "var(--color-text-secondary)" }}>Goal</div>
           <div className="text-sm mt-0.5 leading-relaxed">{ws.goalDescription || "—"}</div>
+        </div>
+        <div>
+          <div className="text-xs font-semibold uppercase" style={{ color: "var(--color-text-secondary)" }}>Company Brief</div>
+          {ws.companyPdfUrl ? (
+            <div className="flex items-center gap-2 mt-0.5">
+              <FileText size={14} style={{ color: "var(--color-primary)" }} />
+              <span className="text-sm truncate">{ws.companyPdfName || "Uploaded PDF"}</span>
+            </div>
+          ) : (
+            <div className="text-sm mt-0.5 leading-relaxed line-clamp-3">{ws.companyDescription || "—"}</div>
+          )}
         </div>
       </div>
       <button onClick={onLaunch} disabled={saving} className="spectr-btn-primary w-full mt-6">

@@ -1,11 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Building2, Upload, X } from "lucide-react";
 import { useApp, type Workspace } from "@/lib/spectr-store";
 import { AppShell } from "@/components/spectr/AppShell";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import supabase from "@/lib/supabase";
+import { deleteAccount as deleteAccountFn } from "@/lib/delete-account-fn";
 
 export const Route = createFileRoute("/settings")({ component: () => <AppShell><Settings /></AppShell> });
 
@@ -33,6 +39,7 @@ function resizeToDataUrl(file: File, size: number): Promise<string> {
 
 function Settings() {
   const { state, update } = useApp();
+  const navigate = useNavigate();
   const ws = state.workspace;
   const companyId = ws.companyId;
   const userId = state.user?.id;
@@ -40,6 +47,19 @@ function Settings() {
   const [saving, setSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteAccount = async () => {
+    if (!userId) return;
+    setDeleting(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) { setDeleting(false); toast.error("No active session."); return; }
+    const result = await deleteAccountFn({ data: { token: session.access_token } });
+    if (result.error) { setDeleting(false); toast.error(result.error); return; }
+    await supabase.auth.signOut();
+    navigate({ to: "/login" });
+  };
 
   // ── On mount: re-hydrate from Supabase so the form always shows persisted data ──
   useEffect(() => {
@@ -353,6 +373,43 @@ function Settings() {
       <button onClick={save} disabled={saving} className="spectr-btn-primary">
         {saving ? "Saving…" : "Save Settings"}
       </button>
+
+      <section className="spectr-card p-6 mt-6" style={{ borderColor: "#fca5a5", border: "1px solid #fca5a5" }}>
+        <h2 className="font-bold mb-1" style={{ color: "#dc2626" }}>Danger Zone</h2>
+        <p className="text-sm mb-4" style={{ color: "var(--color-text-secondary)" }}>
+          Permanently delete your account and all associated data. This cannot be undone.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="text-sm font-semibold px-4 py-2 rounded-md transition-colors hover:opacity-90"
+          style={{ background: "#dc2626", color: "white" }}
+        >
+          Delete Account
+        </button>
+      </section>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={(o) => !deleting && setShowDeleteConfirm(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete your account, all companies, workspaces, and content data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteAccount}
+              disabled={deleting}
+              className="hover:opacity-90"
+              style={{ background: "#dc2626", color: "white" }}
+            >
+              {deleting ? "Deleting…" : "Yes, delete my account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

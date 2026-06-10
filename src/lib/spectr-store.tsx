@@ -24,6 +24,9 @@ export interface Workspace {
     engagementRate: string; monthlyVisitors: string; weeklyPageSearches: string;
   };
   goalDescription: string;
+  companyDescription: string;
+  companyPdfUrl: string;
+  companyPdfName: string;
   audience: {
     jobTitles: string; seniority: string; companySize: string; description: string;
   };
@@ -57,6 +60,9 @@ const emptyWorkspace: Workspace = {
   baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
   targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
   goalDescription: "",
+  companyDescription: "",
+  companyPdfUrl: "",
+  companyPdfName: "",
   audience: { jobTitles: "", seniority: "", companySize: "", description: "" },
 };
 
