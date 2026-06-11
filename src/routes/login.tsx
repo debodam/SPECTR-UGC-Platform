@@ -148,7 +148,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
                     <input className="spectr-input" placeholder="Your full name" value={name} onChange={(e) => setName(e.target.value)} />
                   </Field>
                   <Field label="Email" error={errs.email}>
-                    <input className="spectr-input" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <input className="spectr-input" placeholder="" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </Field>
                   <Field label="Password" error={errs.pwd}>
                     <PasswordInput value={pwd} onChange={setPwd} show={showPwd} setShow={setShowPwd} placeholder="Create a password (min 6 chars)" />
