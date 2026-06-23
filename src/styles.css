@@ -68,6 +68,9 @@
   --warning: #f59e0b;
   --purple-accent: #0a66c2;
   --text-secondary: #a1a1aa;
+  --glow-primary: 0 0 12px rgba(10,102,194,0.55);
+  --glow-primary-sm: 0 0 8px rgba(10,102,194,0.5);
+  --glow-primary-lg: 0 0 22px rgba(10,102,194,0.5);
 }
 
 @layer base {
@@ -145,10 +148,11 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    box-shadow: var(--glow-primary);
   }
-  .spectr-btn-primary:hover { background: var(--color-primary-hover); }
+  .spectr-btn-primary:hover { background: var(--color-primary-hover); box-shadow: var(--glow-primary-lg); }
   .spectr-btn-primary:active { transform: scale(0.97); transition: background 0.15s, transform 0.1s; }
-  .spectr-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .spectr-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
   .spectr-btn-secondary {
     background: var(--color-card-2);
     color: var(--color-foreground);

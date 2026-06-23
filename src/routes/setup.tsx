@@ -145,10 +145,11 @@ function Stepper({ current, total }: { current: number; total: number }) {
                 background: done || active ? "var(--color-primary)" : "var(--color-card-2)",
                 color: done || active ? "white" : "var(--color-text-secondary)",
                 border: `1px solid ${done || active ? "var(--color-primary)" : "var(--color-border)"}`,
+                boxShadow: done || active ? "var(--glow-primary-sm)" : "none",
               }}>
               {done ? <Check size={14} /> : n}
             </div>
-            {n < total && <div style={{ width: 32, height: 2, background: done ? "var(--color-primary)" : "var(--color-border)" }} />}
+            {n < total && <div style={{ width: 32, height: 2, background: done ? "var(--color-primary)" : "var(--color-border)", boxShadow: done ? "var(--glow-primary-sm)" : "none" }} />}
           </div>
         );
       })}
@@ -470,6 +471,7 @@ function CompanyBrief({ ws, setWorkspace, userId }: any) {
             style={{
               background: mode === m ? "var(--color-primary)" : "var(--color-card-2)",
               color: mode === m ? "white" : "var(--color-text-secondary)",
+              boxShadow: mode === m ? "var(--glow-primary-sm)" : "none",
             }}>
             {m === "text" ? "Write description" : "Upload PDF"}
           </button>
@@ -594,7 +596,7 @@ function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; sav
     <div>
       <div className="flex flex-col items-center text-center">
         <div className="rounded-full flex items-center justify-center mb-4"
-          style={{ background: "var(--color-primary)", width: 64, height: 64 }}>
+          style={{ background: "var(--color-primary)", width: 64, height: 64, boxShadow: "var(--glow-primary-lg)" }}>
           <Check size={36} color="white" />
         </div>
         <h2 className="text-2xl font-bold">You're all set</h2>

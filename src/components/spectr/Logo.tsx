@@ -4,7 +4,7 @@ export function SpectrLogo({ size = 32, showTag = false }: { size?: number; show
       <div className="flex items-center gap-2">
         <div
           className="rounded-md flex items-center justify-center font-bold text-white"
-          style={{ width: size, height: size, background: "var(--color-primary)", fontSize: size * 0.5 }}
+          style={{ width: size, height: size, background: "var(--color-primary)", fontSize: size * 0.5, boxShadow: "var(--glow-primary-sm)" }}
         >
           S
         </div>

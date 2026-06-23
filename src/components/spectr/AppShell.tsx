@@ -54,6 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               style={{
                 color: active ? "white" : "var(--color-text-secondary)",
                 background: active ? "var(--color-primary)" : "transparent",
+                boxShadow: active ? "var(--glow-primary-sm)" : "none",
               }}
             >
               <Icon size={18} />

@@ -424,7 +424,7 @@ function Record() {
                 className="w-24 h-24 rounded-full flex items-center justify-center transition-all"
                 style={{
                   background: "var(--color-primary)",
-                  boxShadow: "0 0 0 10px rgba(10,102,194,0.10)",
+                  boxShadow: "0 0 0 10px rgba(10,102,194,0.10), var(--glow-primary-lg)",
                   color: "white",
                 }}
               >
@@ -459,6 +459,7 @@ function Record() {
                         background: paused ? "var(--color-primary)" : "var(--color-surface)",
                         border: `2px solid ${paused ? "var(--color-primary)" : "var(--color-border)"}`,
                         color: paused ? "white" : "var(--color-foreground)",
+                        boxShadow: paused ? "var(--glow-primary)" : "none",
                       }}
                     >
                       {paused ? <Play size={22} fill="white" /> : <Pause size={22} />}

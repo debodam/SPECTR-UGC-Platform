@@ -120,7 +120,7 @@ function VideoScriptView({ text }: { text: string }) {
             <div key={i} className="mt-4 first:mt-0">
               <span
                 className="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide"
-                style={{ background: "var(--color-primary)", color: "white" }}
+                style={{ background: "var(--color-primary)", color: "white", boxShadow: "var(--glow-primary-sm)" }}
               >
                 {clean.slice(1, -1)}
               </span>
@@ -616,6 +616,7 @@ function TabBar({ tab, setTab, tabBusy }: { tab: TabKey; setTab: (t: TabKey) => 
           left: indicator.left,
           width: indicator.width,
           background: "var(--color-primary)",
+          boxShadow: "var(--glow-primary-sm)",
           transition: "left 0.2s cubic-bezier(0.4,0,0.2,1), width 0.2s cubic-bezier(0.4,0,0.2,1)",
         }}
       />
@@ -952,6 +953,7 @@ function Transform() {
                     background: active ? "var(--color-primary)" : "var(--color-card-2)",
                     color: active ? "white" : "var(--color-text-secondary)",
                     border: `1.5px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
+                    boxShadow: active ? "var(--glow-primary-sm)" : "none",
                   }}
                 >
                   {t.label}
@@ -1002,7 +1004,7 @@ function Transform() {
                 {savedCtxs.length > 0 ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
                 Load saved
                 {savedCtxs.length > 0 && (
-                  <span className="rounded-full text-[10px] px-1.5 font-bold" style={{ background: "var(--color-primary)", color: "white" }}>
+                  <span className="rounded-full text-[10px] px-1.5 font-bold" style={{ background: "var(--color-primary)", color: "white", boxShadow: "var(--glow-primary-sm)" }}>
                     {savedCtxs.length}
                   </span>
                 )}

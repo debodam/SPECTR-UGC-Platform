@@ -282,6 +282,7 @@ function Settings() {
                   background: p.on ? "rgba(10,102,194,0.06)" : "var(--color-surface)",
                   color: p.on ? "var(--color-primary)" : "var(--color-text-secondary)",
                   opacity: p.on ? 1 : 0.6,
+                  boxShadow: p.on ? "var(--glow-primary-sm)" : "none",
                 }}
               >
                 {p.n}
