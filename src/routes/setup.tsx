@@ -107,7 +107,7 @@ function SetupPage() {
   if (!state.isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--color-surface)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-[600px] mb-4">
         <Link to="/companies" className="inline-flex items-center gap-1 text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: "var(--color-text-secondary)" }}>
           <ChevronLeft size={16} /> Companies
@@ -142,13 +142,14 @@ function Stepper({ current, total }: { current: number; total: number }) {
             <div className="flex items-center justify-center rounded-full text-xs font-semibold"
               style={{
                 width: 28, height: 28,
-                background: done || active ? "var(--color-primary)" : "white",
+                background: done || active ? "var(--color-primary)" : "var(--color-card-2)",
                 color: done || active ? "white" : "var(--color-text-secondary)",
                 border: `1px solid ${done || active ? "var(--color-primary)" : "var(--color-border)"}`,
+                boxShadow: done || active ? "var(--glow-primary-sm)" : "none",
               }}>
               {done ? <Check size={14} /> : n}
             </div>
-            {n < total && <div style={{ width: 32, height: 2, background: done ? "var(--color-primary)" : "var(--color-border)" }} />}
+            {n < total && <div style={{ width: 32, height: 2, background: done ? "var(--color-primary)" : "var(--color-border)", boxShadow: done ? "var(--glow-primary-sm)" : "none" }} />}
           </div>
         );
       })}
@@ -468,8 +469,9 @@ function CompanyBrief({ ws, setWorkspace, userId }: any) {
           <button key={m} type="button" onClick={() => switchMode(m)}
             className="flex-1 py-1.5 text-xs font-semibold transition-colors"
             style={{
-              background: mode === m ? "var(--color-primary)" : "white",
+              background: mode === m ? "var(--color-primary)" : "var(--color-card-2)",
               color: mode === m ? "white" : "var(--color-text-secondary)",
+              boxShadow: mode === m ? "var(--glow-primary-sm)" : "none",
             }}>
             {m === "text" ? "Write description" : "Upload PDF"}
           </button>
@@ -594,7 +596,7 @@ function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; sav
     <div>
       <div className="flex flex-col items-center text-center">
         <div className="rounded-full flex items-center justify-center mb-4"
-          style={{ background: "var(--color-primary)", width: 64, height: 64 }}>
+          style={{ background: "var(--color-primary)", width: 64, height: 64, boxShadow: "var(--glow-primary-lg)" }}>
           <Check size={36} color="white" />
         </div>
         <h2 className="text-2xl font-bold">You're all set</h2>

@@ -128,14 +128,11 @@ function CompaniesPage() {
   }
 
   if (state.authLoading) {
-    return <div className="min-h-screen" style={{ background: "var(--color-surface)" }} />;
+    return <div className="min-h-screen" />;
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-12"
-      style={{ background: "var(--color-surface)" }}
-    >
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
       {/* Header */}
       <div className="text-center mb-10">
         <h1 className="text-2xl font-bold tracking-tight">Select your workspace</h1>
@@ -150,7 +147,7 @@ function CompaniesPage() {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="w-[148px] h-[188px] rounded-2xl animate-pulse"
+              className="w-[172px] h-[256px] rounded-2xl animate-pulse"
               style={{ background: "var(--color-border)" }}
             />
           ))}
@@ -161,38 +158,40 @@ function CompaniesPage() {
             <div
               key={c.id}
               onClick={() => selectCompany(c)}
-              className="group relative w-[148px] flex flex-col items-center pt-7 pb-5 px-3 rounded-2xl cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
+              className="group relative w-[172px] flex flex-col rounded-2xl overflow-hidden cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
               style={{
-                background: "white",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)",
+                background: "var(--color-card)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.45)",
               }}
             >
-              {/* Logo or icon */}
-              <div className="w-[76px] h-[76px] flex items-center justify-center mb-3 shrink-0">
+              {/* Cover / logo zone */}
+              <div
+                className="w-full h-[140px] flex items-center justify-center shrink-0"
+                style={{ background: "var(--color-card-2)", borderBottom: "1px solid var(--color-border)" }}
+              >
                 {c.logo_url ? (
-                  <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
+                  <img src={c.logo_url} alt={c.name} className="w-full h-full object-cover" />
                 ) : (
-                  <Building2 size={32} style={{ color: "var(--color-primary)" }} />
+                  <Building2 size={36} style={{ color: "var(--color-primary)" }} />
                 )}
               </div>
 
-              {/* Name */}
-              <span
-                className="text-sm font-semibold text-center leading-snug mb-4 line-clamp-2 w-full"
-                style={{ color: "var(--color-foreground)" }}
-              >
-                {c.name}
-              </span>
+              {/* Name + actions */}
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 px-3 py-5">
+                <span className="text-sm font-bold text-center leading-snug line-clamp-2 w-full text-white">
+                  {c.name}
+                </span>
 
-              {/* Trash */}
-              <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(c); }}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-red-50"
-                style={{ color: "var(--color-text-secondary)" }}
-                title="Delete company"
-              >
-                <Trash2 size={14} />
-              </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(c); }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-[rgba(220,38,38,0.15)]"
+                  style={{ color: "var(--color-text-secondary)" }}
+                  title="Delete company"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
 
@@ -201,10 +200,10 @@ function CompaniesPage() {
             onClick={() => setShowNew(true)}
             className="w-[60px] h-[60px] rounded-full flex items-center justify-center transition-all hover:scale-105"
             style={{
-              background: "white",
+              background: "var(--color-card)",
               border: "2px solid var(--color-border)",
               color: "var(--color-text-secondary)",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
             }}
             title="Add company"
           >
@@ -217,9 +216,9 @@ function CompaniesPage() {
       {showNew && (
         <div
           className="mt-8 w-full max-w-sm p-6 rounded-2xl"
-          style={{ background: "white", boxShadow: "0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)" }}
+          style={{ background: "var(--color-card)", border: "1px solid var(--color-border)", boxShadow: "0 4px 20px rgba(0,0,0,0.45)" }}
         >
-          <h3 className="text-sm font-semibold mb-4">New company</h3>
+          <h3 className="text-sm font-bold mb-4">New company</h3>
           <input
             className="spectr-input"
             placeholder="Company name"
@@ -228,7 +227,7 @@ function CompaniesPage() {
             onKeyDown={(e) => e.key === "Enter" && createCompany()}
             autoFocus
           />
-          {createError && <p className="text-xs mt-2" style={{ color: "#dc2626" }}>{createError}</p>}
+          {createError && <p className="text-xs mt-2" style={{ color: "#f87171" }}>{createError}</p>}
           <div className="flex gap-2 mt-4">
             <button onClick={createCompany} disabled={creating || !name.trim()} className="spectr-btn-primary flex-1">
               {creating ? "Creating..." : "Create & set up"}

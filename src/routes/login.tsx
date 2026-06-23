@@ -106,7 +106,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--color-surface)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
       <div className="mb-6"><SpectrLogo size={40} showTag /></div>
       <div className="w-full max-w-[440px] spectr-card overflow-hidden">
 
@@ -135,7 +135,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
                   style={{
                     color: tab === t ? "var(--color-primary)" : "var(--color-text-secondary)",
                     borderBottom: `2px solid ${tab === t ? "var(--color-primary)" : "transparent"}`,
-                    background: "white",
+                    background: "var(--color-card)",
                   }}>
                   {t === "login" ? "Log In" : "Sign Up"}
                 </button>
@@ -148,7 +148,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
                     <input className="spectr-input" placeholder="Your full name" value={name} onChange={(e) => setName(e.target.value)} />
                   </Field>
                   <Field label="Email" error={errs.email}>
-                    <input className="spectr-input" placeholder="" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <input className="spectr-input" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </Field>
                   <Field label="Password" error={errs.pwd}>
                     <PasswordInput value={pwd} onChange={setPwd} show={showPwd} setShow={setShowPwd} placeholder="Create a password (min 6 chars)" />

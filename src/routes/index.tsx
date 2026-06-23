@@ -13,5 +13,5 @@ function IndexRedirect() {
     else if (state.setupComplete && state.workspace?.companyId) navigate({ to: "/transform" });
     else navigate({ to: "/companies" });
   }, [state.authLoading, state.isAuthenticated, state.setupComplete, navigate]);
-  return <div className="min-h-screen" style={{ background: "var(--color-surface)" }} />;
+  return <div className="min-h-screen" />;
 }

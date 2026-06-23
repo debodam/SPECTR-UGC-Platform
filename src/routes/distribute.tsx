@@ -215,7 +215,10 @@ function Distribute() {
               >
                 <span
                   className="text-[10px] font-bold uppercase px-2 py-1 rounded text-white shrink-0"
-                  style={{ background: FORMAT_COLORS[q.format] ?? "var(--color-primary)" }}
+                  style={{
+                    background: FORMAT_COLORS[q.format] ?? "var(--color-primary)",
+                    boxShadow: (FORMAT_COLORS[q.format] ?? "var(--color-primary)") === "var(--color-primary)" ? "var(--glow-primary-sm)" : "none",
+                  }}
                 >
                   {q.format}
                 </span>
@@ -227,7 +230,7 @@ function Distribute() {
                   onClick={() => toggle(q.id)}
                   className="text-xs font-semibold px-3 py-1 rounded-full shrink-0"
                   style={{
-                    background: q.status === "Published" ? "var(--color-success)" : "white",
+                    background: q.status === "Published" ? "var(--color-success)" : "var(--color-card-2)",
                     color: q.status === "Published" ? "white" : "var(--color-primary)",
                     border: `1px solid ${q.status === "Published" ? "var(--color-success)" : "var(--color-primary)"}`,
                   }}
@@ -318,6 +321,7 @@ function CadenceGrid({ queue }: { queue: QueueItem[] }) {
             style={{
               background: isToday ? "rgba(10,102,194,0.06)" : "var(--color-surface)",
               border: `1.5px solid ${isToday ? "var(--color-primary)" : "transparent"}`,
+              boxShadow: isToday ? "var(--glow-primary-sm)" : "none",
             }}
           >
             <div
@@ -337,7 +341,10 @@ function CadenceGrid({ queue }: { queue: QueueItem[] }) {
                 key={q.id}
                 title={`${q.title} · ${q.time} (${q.format})`}
                 className="text-[10px] font-semibold text-white rounded px-1.5 py-1 mb-1 truncate"
-                style={{ background: FORMAT_COLORS[q.format] ?? "var(--color-primary)" }}
+                style={{
+                  background: FORMAT_COLORS[q.format] ?? "var(--color-primary)",
+                  boxShadow: (FORMAT_COLORS[q.format] ?? "var(--color-primary)") === "var(--color-primary)" ? "var(--glow-primary-sm)" : "none",
+                }}
               >
                 {q.title}
               </div>

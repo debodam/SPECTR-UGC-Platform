@@ -427,7 +427,7 @@ function KpiCard({
         Target: {target ? target.toLocaleString() : "-"}{suffix}
       </div>
       <div className="h-1.5 rounded-full mt-3 overflow-hidden" style={{ background: "var(--color-surface)" }}>
-        <div className="h-full" style={{ width: `${pct}%`, background: "var(--color-primary)" }} />
+        <div className="h-full" style={{ width: `${pct}%`, background: "var(--color-primary)", boxShadow: "var(--glow-primary-sm)" }} />
       </div>
     </div>
   );
@@ -439,10 +439,11 @@ function FormatBadge({ f }: { f: Format }) {
     Post: "var(--color-success)",
     "Video Script": "var(--color-warning)",
   };
+  const bg = colors[f] ?? "var(--color-primary)";
   return (
     <span
       className="text-[10px] font-bold uppercase px-2 py-1 rounded text-white"
-      style={{ background: colors[f] ?? "var(--color-primary)" }}
+      style={{ background: bg, boxShadow: bg === "var(--color-primary)" ? "var(--glow-primary-sm)" : "none" }}
     >
       {f}
     </span>
@@ -491,9 +492,9 @@ function TrendChart({ entries, baseline }: { entries: PerfEntry[]; baseline: num
     <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
       <line x1={P} y1={H - P} x2={W - P} y2={H - P} stroke="var(--color-border)" />
       <line x1={P} y1={P} x2={P} y2={H - P} stroke="var(--color-border)" />
-      <path d={path} fill="none" stroke="var(--color-primary)" strokeWidth={2} />
+      <path d={path} fill="none" stroke="var(--color-primary)" strokeWidth={2} style={{ filter: "drop-shadow(0 0 4px rgba(10,102,194,0.6))" }} />
       {xs.map((x, i) => (
-        <circle key={i} cx={x} cy={ys[i]} r={3} fill="var(--color-primary)" />
+        <circle key={i} cx={x} cy={ys[i]} r={3} fill="var(--color-primary)" style={{ filter: "drop-shadow(0 0 3px rgba(10,102,194,0.7))" }} />
       ))}
     </svg>
   );

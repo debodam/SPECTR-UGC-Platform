@@ -86,7 +86,7 @@ function PostsView({ text }: { text: string }) {
         <div
           key={i}
           className="p-4 rounded-lg border"
-          style={{ borderColor: "var(--color-border)", background: "white" }}
+          style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}
         >
           <div
             className="text-xs font-bold uppercase tracking-wide mb-2"
@@ -120,7 +120,7 @@ function VideoScriptView({ text }: { text: string }) {
             <div key={i} className="mt-4 first:mt-0">
               <span
                 className="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide"
-                style={{ background: "var(--color-primary)", color: "white" }}
+                style={{ background: "var(--color-primary)", color: "white", boxShadow: "var(--glow-primary-sm)" }}
               >
                 {clean.slice(1, -1)}
               </span>
@@ -465,20 +465,20 @@ function SkeletonOutput({ tab }: { tab: TabKey }) {
 // --- Circular progress ---
 
 function CircularProgress({ pct }: { pct: number }) {
-  const r = 44;
+  const r = 54;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
   return (
-    <svg width={108} height={108} viewBox="0 0 108 108">
-      <circle cx={54} cy={54} r={r} fill="none" stroke="#E8EDF2" strokeWidth={8} />
+    <svg width={130} height={130} viewBox="0 0 130 130" className="spectr-heartbeat" style={{ transformOrigin: "65px 65px" }}>
+      <circle cx={65} cy={65} r={r} fill="none" stroke="#E8EDF2" strokeWidth={9} />
       <circle
-        cx={54} cy={54} r={r} fill="none"
-        stroke="var(--color-primary)" strokeWidth={8} strokeLinecap="round"
+        cx={65} cy={65} r={r} fill="none"
+        stroke="var(--color-primary)" strokeWidth={9} strokeLinecap="round"
         strokeDasharray={circ} strokeDashoffset={offset}
-        transform="rotate(-90 54 54)"
-        style={{ transition: "stroke-dashoffset 0.35s ease" }}
+        transform="rotate(-90 65 65)"
+        style={{ transition: "stroke-dashoffset 0.35s ease", filter: "drop-shadow(0 0 6px rgba(10,102,194,0.8))" }}
       />
-      <text x={54} y={60} textAnchor="middle" fontSize={17} fontWeight={700} fill="#0F0F0F" fontFamily="Inter, sans-serif">
+      <text x={65} y={72} textAnchor="middle" fontSize={20} fontWeight={700} fill="white" fontFamily="Inter, sans-serif">
         {pct}%
       </text>
     </svg>
@@ -515,7 +515,7 @@ function HistoryPanel({ entries, onLoad, onClose }: { entries: HistoryEntry[]; o
       <div className="fixed inset-0 z-40" onClick={onClose} style={{ background: "rgba(0,0,0,0.18)" }} />
       <div
         className="fixed top-0 right-0 h-full z-50 flex flex-col"
-        style={{ width: 348, background: "white", boxShadow: "-4px 0 32px rgba(0,0,0,0.13)", borderLeft: "1px solid var(--color-border)" }}
+        style={{ width: 348, background: "var(--color-card)", boxShadow: "-4px 0 32px rgba(0,0,0,0.5)", borderLeft: "1px solid var(--color-border)" }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: "var(--color-border)" }}>
           <div className="flex items-center gap-2">
@@ -542,7 +542,7 @@ function HistoryPanel({ entries, onLoad, onClose }: { entries: HistoryEntry[]; o
                   <button
                     key={entry.id}
                     onClick={() => onLoad(entry)}
-                    className="w-full text-left px-5 py-4 border-b transition-colors hover:bg-[var(--color-surface)]"
+                    className="w-full text-left px-5 py-4 border-b transition-colors hover:bg-[var(--color-card-2)]"
                     style={{ borderColor: "var(--color-border)" }}
                   >
                     <div className="flex items-center gap-1.5 mb-1.5">
@@ -590,7 +590,7 @@ function TabBar({ tab, setTab, tabBusy }: { tab: TabKey; setTab: (t: TabKey) => 
     <div
       ref={containerRef}
       className="relative flex px-6"
-      style={{ borderBottom: "1px solid var(--color-border)", background: "white" }}
+      style={{ borderBottom: "1px solid var(--color-border)" }}
     >
       {TABS.map((t) => (
         <button
@@ -616,6 +616,7 @@ function TabBar({ tab, setTab, tabBusy }: { tab: TabKey; setTab: (t: TabKey) => 
           left: indicator.left,
           width: indicator.width,
           background: "var(--color-primary)",
+          boxShadow: "var(--glow-primary-sm)",
           transition: "left 0.2s cubic-bezier(0.4,0,0.2,1), width 0.2s cubic-bezier(0.4,0,0.2,1)",
         }}
       />
@@ -904,20 +905,20 @@ function Transform() {
       <div
         ref={leftPanelRef}
         className={`${showOutput ? "w-2/5 border-r" : "w-full"} overflow-y-auto relative`}
-        style={{ borderColor: "var(--color-border)", background: "white" }}
+        style={{ borderColor: "var(--color-border)" }}
       >
         {/* Upload/processing overlay */}
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(2px)" }}>
+          <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "rgba(10,10,10,0.85)", backdropFilter: "blur(2px)" }}>
             <div
-              className="flex flex-col items-center px-10 py-9 rounded-2xl"
-              style={{ border: "2px dashed var(--color-border)", background: "white", minWidth: 220 }}
+              className="flex flex-col items-center px-16 py-14 rounded-2xl"
+              style={{ border: "1px solid var(--color-border)", background: "var(--color-card-2)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 320 }}
             >
               <CircularProgress pct={progress} />
-              <p className="text-sm font-semibold mt-4 mb-5">
+              <p className="text-base font-semibold mt-5 mb-6">
                 {progress < 15 ? "Reading file..." : "Generating content..."}
               </p>
-              <button onClick={cancelTransform} className="spectr-btn-secondary" style={{ height: 34 }}>
+              <button onClick={cancelTransform} className="spectr-btn-secondary" style={{ height: 38 }}>
                 Cancel
               </button>
             </div>
@@ -949,9 +950,10 @@ function Transform() {
                   onClick={() => setTab(t.key)}
                   className="flex-1 py-2 text-xs font-semibold rounded-md transition-colors"
                   style={{
-                    background: active ? "var(--color-primary)" : "var(--color-surface)",
+                    background: active ? "var(--color-primary)" : "var(--color-card-2)",
                     color: active ? "white" : "var(--color-text-secondary)",
                     border: `1.5px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
+                    boxShadow: active ? "var(--glow-primary-sm)" : "none",
                   }}
                 >
                   {t.label}
@@ -1002,7 +1004,7 @@ function Transform() {
                 {savedCtxs.length > 0 ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
                 Load saved
                 {savedCtxs.length > 0 && (
-                  <span className="rounded-full text-[10px] px-1.5 font-bold" style={{ background: "var(--color-primary)", color: "white" }}>
+                  <span className="rounded-full text-[10px] px-1.5 font-bold" style={{ background: "var(--color-primary)", color: "white", boxShadow: "var(--glow-primary-sm)" }}>
                     {savedCtxs.length}
                   </span>
                 )}
@@ -1011,14 +1013,14 @@ function Transform() {
               {showCtxMenu && (
                 <div
                   className="absolute left-0 top-full mt-1 w-72 rounded-xl z-50 overflow-hidden"
-                  style={{ background: "white", border: "1px solid var(--color-border)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+                  style={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                 >
                   {savedCtxs.length === 0 ? (
                     <p className="text-xs px-4 py-4 text-center" style={{ color: "var(--color-text-secondary)" }}>
                       No saved contexts yet.
                     </p>
                   ) : savedCtxs.map(c => (
-                    <div key={c.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-[var(--color-surface)] group">
+                    <div key={c.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-[rgba(255,255,255,0.06)] group">
                       <button
                         className="flex-1 text-left text-xs font-medium truncate"
                         onClick={() => { setInstructions(c.text); setShowCtxMenu(false); toast.success(`Loaded "${c.name}"`); }}
@@ -1125,7 +1127,6 @@ function Transform() {
           <div
             className="px-6 py-2 text-xs font-semibold border-b"
             style={{
-              background: "var(--color-surface)",
               color: "var(--color-primary)",
               borderColor: "var(--color-border)",
             }}
@@ -1135,7 +1136,7 @@ function Transform() {
 
           <TabBar tab={tab} setTab={setTab} tabBusy={tabBusy} />
 
-          <div ref={outputScrollRef} className="flex-1 overflow-y-auto p-6" style={{ background: "var(--color-surface)" }}>
+          <div ref={outputScrollRef} className="flex-1 overflow-y-auto p-6">
             {loading ? (
               <SkeletonOutput tab={tab} />
             ) : outputs[tab] ? (
