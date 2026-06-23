@@ -147,7 +147,7 @@ function LogEntry({
     >
       {/* Collapsed row */}
       <div
-        className="group flex items-start gap-3 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--color-surface)]"
+        className="group flex items-start gap-3 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--color-card-2)]"
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ function LogEntry({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
-          className="shrink-0 mt-0.5 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+          className="shrink-0 mt-0.5 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[rgba(220,38,38,0.15)]"
           style={{ color: "var(--color-text-secondary)" }}
           title="Delete"
         >
@@ -183,7 +183,7 @@ function LogEntry({
       {expanded && (
         <div
           className="px-5 pb-5"
-          style={{ background: "var(--color-surface)" }}
+          style={{ background: "var(--color-card-2)" }}
         >
           <p className="text-sm leading-7 whitespace-pre-wrap mb-4" style={{ color: "var(--color-foreground)" }}>
             {entry.transcript_text}
@@ -540,7 +540,7 @@ function Record() {
           {isDone && (
             <div
               className="rounded-xl p-5"
-              style={{ background: "white", border: "1px solid var(--color-border)" }}
+              style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}
             >
               <h2 className="font-bold text-sm mb-3">Transcript</h2>
               <p className="text-sm leading-7 whitespace-pre-wrap">{transcript}</p>
@@ -590,7 +590,7 @@ function Record() {
           {logs.length === 0 ? (
             <div
               className="rounded-xl py-10 text-center"
-              style={{ border: "1px solid var(--color-border)", background: "white" }}
+              style={{ border: "1px solid var(--color-border)", background: "var(--color-card)" }}
             >
               <p className="text-sm font-semibold mb-1">No recordings yet</p>
               <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -600,7 +600,7 @@ function Record() {
           ) : (
             <div
               className="rounded-xl overflow-hidden"
-              style={{ border: "1px solid var(--color-border)", background: "white" }}
+              style={{ border: "1px solid var(--color-border)", background: "var(--color-card)" }}
             >
               {logs.map((entry) => (
                 <LogEntry

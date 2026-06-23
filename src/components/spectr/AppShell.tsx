@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const SidebarContent = ({ onNav }: { onNav?: () => void }) => (
     <>
-      <nav className="flex-1 py-3">
+      <nav className="flex-1 py-3 px-3 space-y-1">
         {NAV.map(({ to, label, icon: Icon }) => {
           const active = pathname.startsWith(to);
           return (
@@ -50,11 +50,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={to}
               to={to}
               onClick={onNav}
-              className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
               style={{
-                color: active ? "var(--color-primary)" : "var(--color-foreground)",
-                borderLeft: `4px solid ${active ? "var(--color-primary)" : "transparent"}`,
-                background: active ? "rgba(10,102,194,0.06)" : "transparent",
+                color: active ? "white" : "var(--color-text-secondary)",
+                background: active ? "var(--color-primary)" : "transparent",
               }}
             >
               <Icon size={18} />
@@ -65,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
       <button
         onClick={() => { onNav?.(); logout(); }}
-        className="flex items-center gap-2 px-5 py-3 text-sm border-t hover:bg-[var(--color-surface)]"
+        className="flex items-center gap-2 px-5 py-3 text-sm border-t hover:bg-[var(--color-card-2)]"
         style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)" }}
       >
         <LogOut size={16} /> Log out
@@ -77,8 +76,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <Link
       to="/companies"
       onClick={onNav}
-      className="mt-4 flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold group transition-colors"
-      style={{ background: "var(--color-surface)", color: "var(--color-foreground)" }}
+      className="mt-4 flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold group transition-colors"
+      style={{ background: "var(--color-card-2)", color: "var(--color-foreground)" }}
       title="Switch company"
     >
       {state.workspace.companyLogoUrl ? (
@@ -102,7 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside
         className="hidden md:flex flex-col w-60 shrink-0 border-r"
-        style={{ background: "white", borderColor: "var(--color-border)" }}
+        style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}
       >
         <div className="p-5 border-b" style={{ borderColor: "var(--color-border)" }}>
           <SpectrLogo size={28} showTag />
@@ -114,7 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile top bar */}
       <header
         className="flex md:hidden items-center justify-between px-4 h-14 shrink-0 border-b sticky top-0 z-30"
-        style={{ background: "white", borderColor: "var(--color-border)" }}
+        style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}
       >
         <button
           onClick={() => setMobileOpen(true)}
@@ -137,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           />
           <aside
             className="relative flex flex-col w-72 h-full shadow-xl"
-            style={{ background: "white" }}
+            style={{ background: "var(--color-card)" }}
           >
             <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: "var(--color-border)" }}>
               <SpectrLogo size={24} showTag />

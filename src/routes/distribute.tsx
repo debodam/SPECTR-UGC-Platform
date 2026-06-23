@@ -227,7 +227,7 @@ function Distribute() {
                   onClick={() => toggle(q.id)}
                   className="text-xs font-semibold px-3 py-1 rounded-full shrink-0"
                   style={{
-                    background: q.status === "Published" ? "var(--color-success)" : "white",
+                    background: q.status === "Published" ? "var(--color-success)" : "var(--color-card-2)",
                     color: q.status === "Published" ? "white" : "var(--color-primary)",
                     border: `1px solid ${q.status === "Published" ? "var(--color-success)" : "var(--color-primary)"}`,
                   }}

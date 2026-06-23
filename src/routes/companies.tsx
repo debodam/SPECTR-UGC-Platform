@@ -163,8 +163,9 @@ function CompaniesPage() {
               onClick={() => selectCompany(c)}
               className="group relative w-[148px] flex flex-col items-center pt-7 pb-5 px-3 rounded-2xl cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
               style={{
-                background: "white",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)",
+                background: "var(--color-card)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.45)",
               }}
             >
               {/* Logo or icon */}
@@ -187,7 +188,7 @@ function CompaniesPage() {
               {/* Trash */}
               <button
                 onClick={(e) => { e.stopPropagation(); setConfirmDelete(c); }}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-red-50"
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-[rgba(220,38,38,0.15)]"
                 style={{ color: "var(--color-text-secondary)" }}
                 title="Delete company"
               >
@@ -201,10 +202,10 @@ function CompaniesPage() {
             onClick={() => setShowNew(true)}
             className="w-[60px] h-[60px] rounded-full flex items-center justify-center transition-all hover:scale-105"
             style={{
-              background: "white",
+              background: "var(--color-card)",
               border: "2px solid var(--color-border)",
               color: "var(--color-text-secondary)",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
             }}
             title="Add company"
           >
@@ -217,9 +218,9 @@ function CompaniesPage() {
       {showNew && (
         <div
           className="mt-8 w-full max-w-sm p-6 rounded-2xl"
-          style={{ background: "white", boxShadow: "0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)" }}
+          style={{ background: "var(--color-card)", border: "1px solid var(--color-border)", boxShadow: "0 4px 20px rgba(0,0,0,0.45)" }}
         >
-          <h3 className="text-sm font-semibold mb-4">New company</h3>
+          <h3 className="text-sm font-bold mb-4">New company</h3>
           <input
             className="spectr-input"
             placeholder="Company name"
@@ -228,7 +229,7 @@ function CompaniesPage() {
             onKeyDown={(e) => e.key === "Enter" && createCompany()}
             autoFocus
           />
-          {createError && <p className="text-xs mt-2" style={{ color: "#dc2626" }}>{createError}</p>}
+          {createError && <p className="text-xs mt-2" style={{ color: "#f87171" }}>{createError}</p>}
           <div className="flex gap-2 mt-4">
             <button onClick={createCompany} disabled={creating || !name.trim()} className="spectr-btn-primary flex-1">
               {creating ? "Creating..." : "Create & set up"}

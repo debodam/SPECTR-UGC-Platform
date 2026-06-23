@@ -135,7 +135,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
                   style={{
                     color: tab === t ? "var(--color-primary)" : "var(--color-text-secondary)",
                     borderBottom: `2px solid ${tab === t ? "var(--color-primary)" : "transparent"}`,
-                    background: "white",
+                    background: "var(--color-card)",
                   }}>
                   {t === "login" ? "Log In" : "Sign Up"}
                 </button>

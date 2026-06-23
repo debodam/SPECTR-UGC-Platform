@@ -86,7 +86,7 @@ function PostsView({ text }: { text: string }) {
         <div
           key={i}
           className="p-4 rounded-lg border"
-          style={{ borderColor: "var(--color-border)", background: "white" }}
+          style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}
         >
           <div
             className="text-xs font-bold uppercase tracking-wide mb-2"
@@ -515,7 +515,7 @@ function HistoryPanel({ entries, onLoad, onClose }: { entries: HistoryEntry[]; o
       <div className="fixed inset-0 z-40" onClick={onClose} style={{ background: "rgba(0,0,0,0.18)" }} />
       <div
         className="fixed top-0 right-0 h-full z-50 flex flex-col"
-        style={{ width: 348, background: "white", boxShadow: "-4px 0 32px rgba(0,0,0,0.13)", borderLeft: "1px solid var(--color-border)" }}
+        style={{ width: 348, background: "var(--color-card)", boxShadow: "-4px 0 32px rgba(0,0,0,0.5)", borderLeft: "1px solid var(--color-border)" }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: "var(--color-border)" }}>
           <div className="flex items-center gap-2">
@@ -542,7 +542,7 @@ function HistoryPanel({ entries, onLoad, onClose }: { entries: HistoryEntry[]; o
                   <button
                     key={entry.id}
                     onClick={() => onLoad(entry)}
-                    className="w-full text-left px-5 py-4 border-b transition-colors hover:bg-[var(--color-surface)]"
+                    className="w-full text-left px-5 py-4 border-b transition-colors hover:bg-[var(--color-card-2)]"
                     style={{ borderColor: "var(--color-border)" }}
                   >
                     <div className="flex items-center gap-1.5 mb-1.5">
@@ -590,7 +590,7 @@ function TabBar({ tab, setTab, tabBusy }: { tab: TabKey; setTab: (t: TabKey) => 
     <div
       ref={containerRef}
       className="relative flex px-6"
-      style={{ borderBottom: "1px solid var(--color-border)", background: "white" }}
+      style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-card)" }}
     >
       {TABS.map((t) => (
         <button
@@ -904,14 +904,14 @@ function Transform() {
       <div
         ref={leftPanelRef}
         className={`${showOutput ? "w-2/5 border-r" : "w-full"} overflow-y-auto relative`}
-        style={{ borderColor: "var(--color-border)", background: "white" }}
+        style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}
       >
         {/* Upload/processing overlay */}
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(2px)" }}>
+          <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "rgba(10,10,10,0.85)", backdropFilter: "blur(2px)" }}>
             <div
               className="flex flex-col items-center px-10 py-9 rounded-2xl"
-              style={{ border: "2px dashed var(--color-border)", background: "white", minWidth: 220 }}
+              style={{ border: "2px dashed var(--color-border)", background: "var(--color-card-2)", minWidth: 220 }}
             >
               <CircularProgress pct={progress} />
               <p className="text-sm font-semibold mt-4 mb-5">
@@ -949,7 +949,7 @@ function Transform() {
                   onClick={() => setTab(t.key)}
                   className="flex-1 py-2 text-xs font-semibold rounded-md transition-colors"
                   style={{
-                    background: active ? "var(--color-primary)" : "var(--color-surface)",
+                    background: active ? "var(--color-primary)" : "var(--color-card-2)",
                     color: active ? "white" : "var(--color-text-secondary)",
                     border: `1.5px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
                   }}
@@ -1011,14 +1011,14 @@ function Transform() {
               {showCtxMenu && (
                 <div
                   className="absolute left-0 top-full mt-1 w-72 rounded-xl z-50 overflow-hidden"
-                  style={{ background: "white", border: "1px solid var(--color-border)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+                  style={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                 >
                   {savedCtxs.length === 0 ? (
                     <p className="text-xs px-4 py-4 text-center" style={{ color: "var(--color-text-secondary)" }}>
                       No saved contexts yet.
                     </p>
                   ) : savedCtxs.map(c => (
-                    <div key={c.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-[var(--color-surface)] group">
+                    <div key={c.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-[rgba(255,255,255,0.06)] group">
                       <button
                         className="flex-1 text-left text-xs font-medium truncate"
                         onClick={() => { setInstructions(c.text); setShowCtxMenu(false); toast.success(`Loaded "${c.name}"`); }}

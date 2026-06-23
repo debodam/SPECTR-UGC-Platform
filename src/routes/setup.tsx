@@ -142,7 +142,7 @@ function Stepper({ current, total }: { current: number; total: number }) {
             <div className="flex items-center justify-center rounded-full text-xs font-semibold"
               style={{
                 width: 28, height: 28,
-                background: done || active ? "var(--color-primary)" : "white",
+                background: done || active ? "var(--color-primary)" : "var(--color-card-2)",
                 color: done || active ? "white" : "var(--color-text-secondary)",
                 border: `1px solid ${done || active ? "var(--color-primary)" : "var(--color-border)"}`,
               }}>
@@ -468,7 +468,7 @@ function CompanyBrief({ ws, setWorkspace, userId }: any) {
           <button key={m} type="button" onClick={() => switchMode(m)}
             className="flex-1 py-1.5 text-xs font-semibold transition-colors"
             style={{
-              background: mode === m ? "var(--color-primary)" : "white",
+              background: mode === m ? "var(--color-primary)" : "var(--color-card-2)",
               color: mode === m ? "white" : "var(--color-text-secondary)",
             }}>
             {m === "text" ? "Write description" : "Upload PDF"}
