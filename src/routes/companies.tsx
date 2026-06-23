@@ -147,7 +147,7 @@ function CompaniesPage() {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="w-[148px] h-[188px] rounded-2xl animate-pulse"
+              className="w-[172px] h-[256px] rounded-2xl animate-pulse"
               style={{ background: "var(--color-border)" }}
             />
           ))}
@@ -158,7 +158,7 @@ function CompaniesPage() {
             <div
               key={c.id}
               onClick={() => selectCompany(c)}
-              className="group relative w-[148px] flex flex-col rounded-2xl overflow-hidden cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
+              className="group relative w-[172px] flex flex-col rounded-2xl overflow-hidden cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
               style={{
                 background: "var(--color-card)",
                 border: "1px solid var(--color-border)",
@@ -167,18 +167,18 @@ function CompaniesPage() {
             >
               {/* Cover / logo zone */}
               <div
-                className="w-full h-[100px] flex items-center justify-center shrink-0"
+                className="w-full h-[140px] flex items-center justify-center shrink-0"
                 style={{ background: "var(--color-card-2)", borderBottom: "1px solid var(--color-border)" }}
               >
                 {c.logo_url ? (
                   <img src={c.logo_url} alt={c.name} className="w-full h-full object-cover" />
                 ) : (
-                  <Building2 size={32} style={{ color: "var(--color-primary)" }} />
+                  <Building2 size={36} style={{ color: "var(--color-primary)" }} />
                 )}
               </div>
 
               {/* Name + actions */}
-              <div className="flex-1 flex flex-col items-center justify-center gap-2.5 px-3 py-4">
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 px-3 py-5">
                 <span className="text-sm font-bold text-center leading-snug line-clamp-2 w-full text-white">
                   {c.name}
                 </span>
