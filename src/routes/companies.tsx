@@ -167,11 +167,11 @@ function CompaniesPage() {
             >
               {/* Cover / logo zone */}
               <div
-                className="w-full h-[100px] flex items-center justify-center p-4 shrink-0"
+                className="w-full h-[100px] flex items-center justify-center shrink-0"
                 style={{ background: "var(--color-card-2)", borderBottom: "1px solid var(--color-border)" }}
               >
                 {c.logo_url ? (
-                  <img src={c.logo_url} alt={c.name} className="max-w-full max-h-full object-contain" />
+                  <img src={c.logo_url} alt={c.name} className="w-full h-full object-cover" />
                 ) : (
                   <Building2 size={32} style={{ color: "var(--color-primary)" }} />
                 )}
