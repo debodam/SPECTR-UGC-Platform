@@ -106,7 +106,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--color-surface)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
       <div className="mb-6"><SpectrLogo size={40} showTag /></div>
       <div className="w-full max-w-[440px] spectr-card overflow-hidden">
 

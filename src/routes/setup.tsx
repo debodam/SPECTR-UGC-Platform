@@ -107,7 +107,7 @@ function SetupPage() {
   if (!state.isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--color-surface)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-[600px] mb-4">
         <Link to="/companies" className="inline-flex items-center gap-1 text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: "var(--color-text-secondary)" }}>
           <ChevronLeft size={16} /> Companies

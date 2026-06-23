@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   if (state.authLoading) {
-    return <div className="min-h-screen" style={{ background: "var(--color-surface)" }} />;
+    return <div className="min-h-screen" />;
   }
 
   if (!state.isAuthenticated || !state.setupComplete) return null;
@@ -96,7 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen w-full" style={{ background: "var(--color-surface)" }}>
+    <div className="flex flex-col md:flex-row min-h-screen w-full">
 
       {/* Desktop sidebar */}
       <aside

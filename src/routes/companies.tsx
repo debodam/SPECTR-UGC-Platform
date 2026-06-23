@@ -128,14 +128,11 @@ function CompaniesPage() {
   }
 
   if (state.authLoading) {
-    return <div className="min-h-screen" style={{ background: "var(--color-surface)" }} />;
+    return <div className="min-h-screen" />;
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-12"
-      style={{ background: "var(--color-surface)" }}
-    >
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
       {/* Header */}
       <div className="text-center mb-10">
         <h1 className="text-2xl font-bold tracking-tight">Select your workspace</h1>
