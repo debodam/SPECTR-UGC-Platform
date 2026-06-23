@@ -465,20 +465,20 @@ function SkeletonOutput({ tab }: { tab: TabKey }) {
 // --- Circular progress ---
 
 function CircularProgress({ pct }: { pct: number }) {
-  const r = 44;
+  const r = 54;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
   return (
-    <svg width={108} height={108} viewBox="0 0 108 108" className="spectr-heartbeat" style={{ transformOrigin: "54px 54px" }}>
-      <circle cx={54} cy={54} r={r} fill="none" stroke="#E8EDF2" strokeWidth={8} />
+    <svg width={130} height={130} viewBox="0 0 130 130" className="spectr-heartbeat" style={{ transformOrigin: "65px 65px" }}>
+      <circle cx={65} cy={65} r={r} fill="none" stroke="#E8EDF2" strokeWidth={9} />
       <circle
-        cx={54} cy={54} r={r} fill="none"
-        stroke="var(--color-primary)" strokeWidth={8} strokeLinecap="round"
+        cx={65} cy={65} r={r} fill="none"
+        stroke="var(--color-primary)" strokeWidth={9} strokeLinecap="round"
         strokeDasharray={circ} strokeDashoffset={offset}
-        transform="rotate(-90 54 54)"
+        transform="rotate(-90 65 65)"
         style={{ transition: "stroke-dashoffset 0.35s ease", filter: "drop-shadow(0 0 6px rgba(10,102,194,0.8))" }}
       />
-      <text x={54} y={60} textAnchor="middle" fontSize={17} fontWeight={700} fill="white" fontFamily="Inter, sans-serif">
+      <text x={65} y={72} textAnchor="middle" fontSize={20} fontWeight={700} fill="white" fontFamily="Inter, sans-serif">
         {pct}%
       </text>
     </svg>
@@ -911,14 +911,14 @@ function Transform() {
         {loading && (
           <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "rgba(10,10,10,0.85)", backdropFilter: "blur(2px)" }}>
             <div
-              className="flex flex-col items-center px-10 py-9 rounded-2xl"
-              style={{ border: "2px dashed var(--color-border)", background: "var(--color-card-2)", minWidth: 220 }}
+              className="flex flex-col items-center px-16 py-14 rounded-2xl"
+              style={{ border: "1px solid var(--color-border)", background: "var(--color-card-2)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 320 }}
             >
               <CircularProgress pct={progress} />
-              <p className="text-sm font-semibold mt-4 mb-5">
+              <p className="text-base font-semibold mt-5 mb-6">
                 {progress < 15 ? "Reading file..." : "Generating content..."}
               </p>
-              <button onClick={cancelTransform} className="spectr-btn-secondary" style={{ height: 34 }}>
+              <button onClick={cancelTransform} className="spectr-btn-secondary" style={{ height: 38 }}>
                 Cancel
               </button>
             </div>
