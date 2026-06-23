@@ -476,7 +476,7 @@ function CircularProgress({ pct }: { pct: number }) {
         stroke="var(--color-primary)" strokeWidth={8} strokeLinecap="round"
         strokeDasharray={circ} strokeDashoffset={offset}
         transform="rotate(-90 54 54)"
-        style={{ transition: "stroke-dashoffset 0.35s ease" }}
+        style={{ transition: "stroke-dashoffset 0.35s ease", filter: "drop-shadow(0 0 6px rgba(10,102,194,0.8))" }}
       />
       <text x={54} y={60} textAnchor="middle" fontSize={17} fontWeight={700} fill="white" fontFamily="Inter, sans-serif">
         {pct}%
