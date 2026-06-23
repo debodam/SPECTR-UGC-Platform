@@ -187,3 +187,9 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 .spectr-content-in { animation: spectr-content-in 0.28s ease forwards; }
+
+@keyframes spectr-heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+.spectr-heartbeat { animation: spectr-heartbeat 1.15s ease-in-out infinite; }

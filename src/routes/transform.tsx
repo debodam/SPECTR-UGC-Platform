@@ -469,7 +469,7 @@ function CircularProgress({ pct }: { pct: number }) {
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
   return (
-    <svg width={108} height={108} viewBox="0 0 108 108">
+    <svg width={108} height={108} viewBox="0 0 108 108" className="spectr-heartbeat" style={{ transformOrigin: "54px 54px" }}>
       <circle cx={54} cy={54} r={r} fill="none" stroke="#E8EDF2" strokeWidth={8} />
       <circle
         cx={54} cy={54} r={r} fill="none"
@@ -478,7 +478,7 @@ function CircularProgress({ pct }: { pct: number }) {
         transform="rotate(-90 54 54)"
         style={{ transition: "stroke-dashoffset 0.35s ease" }}
       />
-      <text x={54} y={60} textAnchor="middle" fontSize={17} fontWeight={700} fill="#0F0F0F" fontFamily="Inter, sans-serif">
+      <text x={54} y={60} textAnchor="middle" fontSize={17} fontWeight={700} fill="white" fontFamily="Inter, sans-serif">
         {pct}%
       </text>
     </svg>
