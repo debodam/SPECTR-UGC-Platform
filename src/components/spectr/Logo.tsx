@@ -1,10 +1,12 @@
 function SpectrMark({ size }: { size: number }) {
   return (
-    <svg width={size * 0.56} height={size * 0.56} viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="13" width="3.5" height="9" rx="1.2" fill="white" />
-      <rect x="8" y="7" width="3.5" height="15" rx="1.2" fill="white" />
-      <rect x="14" y="2" width="3.5" height="20" rx="1.2" fill="white" />
-      <rect x="20" y="9" width="2" height="13" rx="1" fill="white" fillOpacity="0.55" />
+    <svg width={size * 0.58} height={size * 0.58} viewBox="0 0 24 24" fill="none">
+      {/* Left face — shadow side */}
+      <path d="M12 2L2 20H12V2Z" fill="white" fillOpacity="0.45" />
+      {/* Right face — lit side */}
+      <path d="M12 2L22 20H12V2Z" fill="white" fillOpacity="0.95" />
+      {/* Ridge */}
+      <line x1="12" y1="2" x2="12" y2="20" stroke="white" strokeWidth="0.5" strokeOpacity="0.7" />
     </svg>
   );
 }
