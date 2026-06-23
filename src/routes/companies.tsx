@@ -158,39 +158,40 @@ function CompaniesPage() {
             <div
               key={c.id}
               onClick={() => selectCompany(c)}
-              className="group relative w-[148px] flex flex-col items-center pt-7 pb-5 px-3 rounded-2xl cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
+              className="group relative w-[148px] flex flex-col rounded-2xl overflow-hidden cursor-pointer select-none transition-all duration-150 hover:-translate-y-0.5"
               style={{
                 background: "var(--color-card)",
                 border: "1px solid var(--color-border)",
                 boxShadow: "0 4px 20px rgba(0,0,0,0.45)",
               }}
             >
-              {/* Logo or icon */}
-              <div className="w-[76px] h-[76px] flex items-center justify-center mb-3 shrink-0">
+              {/* Cover / logo zone */}
+              <div
+                className="w-full h-[100px] flex items-center justify-center p-4 shrink-0"
+                style={{ background: "var(--color-card-2)", borderBottom: "1px solid var(--color-border)" }}
+              >
                 {c.logo_url ? (
-                  <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
+                  <img src={c.logo_url} alt={c.name} className="max-w-full max-h-full object-contain" />
                 ) : (
                   <Building2 size={32} style={{ color: "var(--color-primary)" }} />
                 )}
               </div>
 
-              {/* Name */}
-              <span
-                className="text-sm font-semibold text-center leading-snug mb-4 line-clamp-2 w-full"
-                style={{ color: "var(--color-foreground)" }}
-              >
-                {c.name}
-              </span>
+              {/* Name + actions */}
+              <div className="flex-1 flex flex-col items-center justify-center gap-2.5 px-3 py-4">
+                <span className="text-sm font-bold text-center leading-snug line-clamp-2 w-full text-white">
+                  {c.name}
+                </span>
 
-              {/* Trash */}
-              <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(c); }}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-[rgba(220,38,38,0.15)]"
-                style={{ color: "var(--color-text-secondary)" }}
-                title="Delete company"
-              >
-                <Trash2 size={14} />
-              </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(c); }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-[rgba(220,38,38,0.15)]"
+                  style={{ color: "var(--color-text-secondary)" }}
+                  title="Delete company"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
 
