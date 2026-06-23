@@ -18,6 +18,7 @@ import { Route as RecordRouteImport } from './routes/record'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DistributeRouteImport } from './routes/distribute'
 import { Route as CompaniesRouteImport } from './routes/companies'
+import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TransformRoute = TransformRouteImport.update({
@@ -65,6 +66,11 @@ const CompaniesRoute = CompaniesRouteImport.update({
   path: '/companies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccessRoute = AccessRouteImport.update({
+  id: '/access',
+  path: '/access',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -73,6 +79,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
   '/distribute': typeof DistributeRoute
   '/login': typeof LoginRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
   '/distribute': typeof DistributeRoute
   '/login': typeof LoginRoute
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
   '/distribute': typeof DistributeRoute
   '/login': typeof LoginRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/access'
     | '/companies'
     | '/distribute'
     | '/login'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/access'
     | '/companies'
     | '/distribute'
     | '/login'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/access'
     | '/companies'
     | '/distribute'
     | '/login'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccessRoute: typeof AccessRoute
   CompaniesRoute: typeof CompaniesRoute
   DistributeRoute: typeof DistributeRoute
   LoginRoute: typeof LoginRoute
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompaniesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/access': {
+      id: '/access'
+      path: '/access'
+      fullPath: '/access'
+      preLoaderRoute: typeof AccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -237,6 +257,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccessRoute: AccessRoute,
   CompaniesRoute: CompaniesRoute,
   DistributeRoute: DistributeRoute,
   LoginRoute: LoginRoute,

@@ -30,7 +30,7 @@ function CompaniesPage() {
 
   useEffect(() => {
     if (state.authLoading) return;
-    if (!state.isAuthenticated) { navigate({ to: "/login" }); return; }
+    if (!state.isAuthenticated) { navigate({ to: "/access" }); return; }
     fetchCompanies();
   }, [state.authLoading, state.isAuthenticated]);
 
@@ -244,7 +244,7 @@ function CompaniesPage() {
 
       {/* Logout */}
       <button
-        onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); }}
+        onClick={async () => { await supabase.auth.signOut(); localStorage.removeItem("spectr-access-verified"); navigate({ to: "/access" }); }}
         className="mt-12 flex items-center gap-2 text-sm transition-opacity hover:opacity-60"
         style={{ color: "var(--color-text-secondary)" }}
       >

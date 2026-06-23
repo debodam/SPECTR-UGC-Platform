@@ -16,6 +16,10 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
   useEffect(() => { setTab(initialTab); }, [initialTab]);
 
   useEffect(() => {
+    if (localStorage.getItem("spectr-access-verified") !== "true") {
+      navigate({ to: "/access" });
+      return;
+    }
     if (state.isAuthenticated) {
       navigate({ to: "/companies" });
     }

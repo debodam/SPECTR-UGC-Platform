@@ -14,7 +14,7 @@ import { SpectrProvider } from "@/lib/spectr-store";
 import { Toaster } from "@/components/ui/sonner";
 import { StarBackground } from "@/components/spectr/StarBackground";
 
-const INTERACTIVE_STAR_PATHS = ["/login", "/signup", "/companies"];
+const INTERACTIVE_STAR_PATHS = ["/access", "/login", "/signup", "/companies"];
 
 function NotFoundComponent() {
   return (

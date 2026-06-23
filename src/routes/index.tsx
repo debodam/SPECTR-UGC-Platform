@@ -9,7 +9,7 @@ function IndexRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
     if (state.authLoading) return;
-    if (!state.isAuthenticated) navigate({ to: "/login" });
+    if (!state.isAuthenticated) navigate({ to: "/access" });
     else if (state.setupComplete && state.workspace?.companyId) navigate({ to: "/transform" });
     else navigate({ to: "/companies" });
   }, [state.authLoading, state.isAuthenticated, state.setupComplete, navigate]);

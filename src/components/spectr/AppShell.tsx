@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (state.authLoading) return;
-    if (!state.isAuthenticated) navigate({ to: "/login" });
+    if (!state.isAuthenticated) navigate({ to: "/access" });
     else if (!state.workspace?.companyId) navigate({ to: "/companies" });
     else if (!state.setupComplete) navigate({ to: "/setup" });
   }, [state.authLoading, state.isAuthenticated, state.setupComplete, navigate]);
@@ -37,7 +37,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    navigate({ to: "/login" });
+    localStorage.removeItem("spectr-access-verified");
+    navigate({ to: "/access" });
   };
 
   const SidebarContent = ({ onNav }: { onNav?: () => void }) => (
