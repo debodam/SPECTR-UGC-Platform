@@ -582,8 +582,8 @@ function Record() {
 
       {/* ── Transcription Logs ── */}
       <div
-        className="border-t px-8 pb-10"
-        style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+        className="px-8 pb-10"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}
       >
         <div className="max-w-xl mx-auto pt-8">
           <h2 className="font-bold text-sm mb-4">Transcription Logs</h2>

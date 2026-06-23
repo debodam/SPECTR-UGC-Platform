@@ -102,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside
         className="hidden md:flex flex-col w-60 shrink-0 border-r"
-        style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}
+        style={{ borderColor: "var(--color-border)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
       >
         <div className="p-5 border-b" style={{ borderColor: "var(--color-border)" }}>
           <SpectrLogo size={28} showTag />

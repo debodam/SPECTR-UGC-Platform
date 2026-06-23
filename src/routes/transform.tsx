@@ -590,7 +590,7 @@ function TabBar({ tab, setTab, tabBusy }: { tab: TabKey; setTab: (t: TabKey) => 
     <div
       ref={containerRef}
       className="relative flex px-6"
-      style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-card)" }}
+      style={{ borderBottom: "1px solid var(--color-border)" }}
     >
       {TABS.map((t) => (
         <button
@@ -905,7 +905,7 @@ function Transform() {
       <div
         ref={leftPanelRef}
         className={`${showOutput ? "w-2/5 border-r" : "w-full"} overflow-y-auto relative`}
-        style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}
+        style={{ borderColor: "var(--color-border)" }}
       >
         {/* Upload/processing overlay */}
         {loading && (
@@ -1127,7 +1127,6 @@ function Transform() {
           <div
             className="px-6 py-2 text-xs font-semibold border-b"
             style={{
-              background: "var(--color-surface)",
               color: "var(--color-primary)",
               borderColor: "var(--color-border)",
             }}
@@ -1137,7 +1136,7 @@ function Transform() {
 
           <TabBar tab={tab} setTab={setTab} tabBusy={tabBusy} />
 
-          <div ref={outputScrollRef} className="flex-1 overflow-y-auto p-6" style={{ background: "var(--color-surface)" }}>
+          <div ref={outputScrollRef} className="flex-1 overflow-y-auto p-6">
             {loading ? (
               <SkeletonOutput tab={tab} />
             ) : outputs[tab] ? (
