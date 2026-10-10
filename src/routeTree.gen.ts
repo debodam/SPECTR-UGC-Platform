@@ -9,61 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransformRouteImport } from './routes/transform'
-import { Route as TrackRouteImport } from './routes/track'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SetupRouteImport } from './routes/setup'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RecordRouteImport } from './routes/record'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as DistributeRouteImport } from './routes/distribute'
-import { Route as CompaniesRouteImport } from './routes/companies'
-import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccessRouteImport } from './routes/access'
+import { Route as CompaniesRouteImport } from './routes/companies'
+import { Route as DistributeRouteImport } from './routes/distribute'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RecordRouteImport } from './routes/record'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as TrackRouteImport } from './routes/track'
+import { Route as TransformRouteImport } from './routes/transform'
 
-const TransformRoute = TransformRouteImport.update({
-  id: '/transform',
-  path: '/transform',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrackRoute = TrackRouteImport.update({
-  id: '/track',
-  path: '/track',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SetupRoute = SetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecordRoute = RecordRouteImport.update({
-  id: '/record',
-  path: '/record',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DistributeRoute = DistributeRouteImport.update({
-  id: '/distribute',
-  path: '/distribute',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompaniesRoute = CompaniesRouteImport.update({
-  id: '/companies',
-  path: '/companies',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccessRoute = AccessRouteImport.update({
@@ -71,9 +31,49 @@ const AccessRoute = AccessRouteImport.update({
   path: '/access',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CompaniesRoute = CompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DistributeRoute = DistributeRouteImport.update({
+  id: '/distribute',
+  path: '/distribute',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecordRoute = RecordRouteImport.update({
+  id: '/record',
+  path: '/record',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransformRoute = TransformRouteImport.update({
+  id: '/transform',
+  path: '/transform',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -175,67 +175,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/transform': {
-      id: '/transform'
-      path: '/transform'
-      fullPath: '/transform'
-      preLoaderRoute: typeof TransformRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/track': {
-      id: '/track'
-      path: '/track'
-      fullPath: '/track'
-      preLoaderRoute: typeof TrackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/record': {
-      id: '/record'
-      path: '/record'
-      fullPath: '/record'
-      preLoaderRoute: typeof RecordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/distribute': {
-      id: '/distribute'
-      path: '/distribute'
-      fullPath: '/distribute'
-      preLoaderRoute: typeof DistributeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/companies': {
-      id: '/companies'
-      path: '/companies'
-      fullPath: '/companies'
-      preLoaderRoute: typeof CompaniesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/access': {
@@ -245,11 +189,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/companies': {
+      id: '/companies'
+      path: '/companies'
+      fullPath: '/companies'
+      preLoaderRoute: typeof CompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/distribute': {
+      id: '/distribute'
+      path: '/distribute'
+      fullPath: '/distribute'
+      preLoaderRoute: typeof DistributeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/record': {
+      id: '/record'
+      path: '/record'
+      fullPath: '/record'
+      preLoaderRoute: typeof RecordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transform': {
+      id: '/transform'
+      path: '/transform'
+      fullPath: '/transform'
+      preLoaderRoute: typeof TransformRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

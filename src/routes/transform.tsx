@@ -927,7 +927,7 @@ function Transform() {
 
         <div className="p-6 pb-8">
           <div className="flex items-center justify-between mb-1">
-            <h1 className="text-xl font-bold">Transform</h1>
+            <h1 className="spectr-display" style={{ fontSize: 22 }}>Transform</h1>
             <button
               onClick={() => { setShowHistory(true); fetchHistory(); }}
               className="spectr-btn-secondary flex items-center gap-1.5"

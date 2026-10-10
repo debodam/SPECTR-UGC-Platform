@@ -135,7 +135,7 @@ function CompaniesPage() {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
       {/* Header */}
       <div className="text-center mb-10">
-        <h1 className="text-2xl font-bold tracking-tight">Select your workspace</h1>
+        <h1 className="spectr-display" style={{ fontSize: 26 }}>Select your workspace</h1>
         <p className="text-sm mt-2" style={{ color: "var(--color-text-secondary)" }}>
           Choose a company to enter its content workspace.
         </p>

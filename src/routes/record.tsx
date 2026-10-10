@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronUp, Download, Mic, Pause, Play, Square, Trash2 } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { AppShell } from "@/components/spectr/AppShell";
+import { OrbRings } from "@/components/spectr/Orb";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -409,9 +410,9 @@ function Record() {
       {/* ── Recording interface — vertically centered ── */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 pt-8 pb-6">
         <div className="w-full max-w-xl">
-          <h1 className="text-xl font-bold mb-2 text-center">Record</h1>
-          <p className="text-sm mb-10 text-center" style={{ color: "var(--color-text-secondary)" }}>
-            Record audio and get a live transcript directly in your browser.
+          <h1 className="spectr-display text-center" style={{ fontSize: 28 }}>Record</h1>
+          <p className="spectr-eyebrow mb-10 text-center mt-2.5">
+            Record audio and get a live transcript, right in your browser.
           </p>
 
           {/* Controls */}
@@ -419,17 +420,24 @@ function Record() {
 
             {/* Idle */}
             {!isActive && !isDone && (
-              <button
-                onClick={startRecording}
-                className="w-24 h-24 rounded-full flex items-center justify-center transition-all"
-                style={{
-                  background: "var(--color-primary)",
-                  boxShadow: "0 0 0 10px rgba(10,102,194,0.10), var(--glow-primary-lg)",
-                  color: "white",
-                }}
-              >
-                <Mic size={30} />
-              </button>
+              <div className="spectr-orb-wrap" style={{ width: 220, height: 220 }}>
+                <div style={{ position: "absolute", inset: 0 }}>
+                  <OrbRings size={220} />
+                </div>
+                <button
+                  onClick={startRecording}
+                  className="rounded-full flex items-center justify-center transition-all relative z-10"
+                  style={{
+                    width: 88,
+                    height: 88,
+                    background: "var(--color-primary)",
+                    boxShadow: "0 0 0 8px rgba(10,102,194,0.10), var(--glow-primary-lg)",
+                    color: "white",
+                  }}
+                >
+                  <Mic size={28} />
+                </button>
+              </div>
             )}
 
             {/* Active: timer + Pause/Resume + Stop */}
@@ -488,8 +496,8 @@ function Record() {
             )}
 
             {!isActive && !transcript && (
-              <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                Click to start recording
+              <p className="spectr-eyebrow">
+                Tap to start recording
               </p>
             )}
 
