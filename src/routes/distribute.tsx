@@ -130,8 +130,8 @@ function Distribute() {
 
   return (
     <div className="p-8 max-w-[1400px] mx-auto">
-      <h1 className="text-2xl font-bold mb-1">Distribute</h1>
-      <p className="text-sm mb-6" style={{ color: "var(--color-text-secondary)" }}>
+      <h1 className="spectr-display mb-2" style={{ fontSize: 28 }}>Distribute</h1>
+      <p className="spectr-eyebrow mb-6">
         Sequence the rollout. Time it for momentum.
       </p>
 

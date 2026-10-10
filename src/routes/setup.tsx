@@ -160,7 +160,7 @@ function Stepper({ current, total }: { current: number; total: number }) {
 function H({ title, sub }: { title: string; sub: string }) {
   return (
     <div className="mb-6">
-      <h2 className="text-2xl font-bold">{title}</h2>
+      <h2 className="spectr-display" style={{ fontSize: 24 }}>{title}</h2>
       <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>{sub}</p>
     </div>
   );
@@ -599,7 +599,7 @@ function Complete({ ws, onLaunch, saving }: { ws: any; onLaunch: () => void; sav
           style={{ background: "var(--color-primary)", width: 64, height: 64, boxShadow: "var(--glow-primary-lg)" }}>
           <Check size={36} color="white" />
         </div>
-        <h2 className="text-2xl font-bold">You're all set</h2>
+        <h2 className="spectr-display" style={{ fontSize: 24 }}>You're all set</h2>
         <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>Review your workspace and launch SPECTR.</p>
       </div>
       <div className="mt-6 p-4 rounded-md space-y-3" style={{ background: "var(--color-surface)" }}>

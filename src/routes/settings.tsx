@@ -184,7 +184,7 @@ function Settings() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      <h1 className="spectr-display mb-6" style={{ fontSize: 28 }}>Settings</h1>
 
       <Section title="Company & Workspace">
         {/* Logo uploader */}
