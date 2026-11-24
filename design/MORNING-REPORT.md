@@ -381,3 +381,27 @@ The one left is Chrome creating an AudioContext on a headless machine. It takes 
   - **Root URL.** `https://tryspectr.online/` still sends signed-out visitors to the login page, so share `/welcome`.
   - **One long task.** Opening Record shows a 170 to 200 ms task in headless Chrome. It is mostly the one-time audio setup, which takes 13 ms in a real browser.
   - **Not tested live.** Real sign-in and a real generation on the live site, which need your account.
+
+## 12 demo stall
+- **Cause.** The stall was the tour card staying invisible. Step 11 added a "place the card while hidden, then show it" guard, which only ran when the spotlight's boxes changed.
+  - After the Distribute "queue" step, the next step ("copy") highlights the same post, so nothing changed and the card never appeared.
+  - The tour still advanced if you clicked the highlighted button, which is why automated walks passed. But a visitor saw a dim screen and no card.
+  - Fix: the reveal now runs after every render, once per step.
+- **Second bug, found by the new tests.** Clicking a highlighted element that navigates (View full growth plan) could pause the tour into a Resume chip. A click on the target now marks the step as advancing, so it never pauses.
+- **Hardening, as the brief asked.**
+  - **Navigation retries:** up to 4 retries to reach a step's page, alternating history push and router navigate, each logged.
+  - **Fallback card:** after 4 s without a card, one always appears. It says "Go to Results" (or whichever page) when off route, and offers Next when on route. A per-step watchdog enforces this, covering a missing target, an unmeasurable target and a swallowed navigation alike.
+  - **Posted step:** it also advances when the post becomes posted in the sandbox. Advancing is guarded per step, so a click plus the condition never skips a step.
+  - **Stale storage:** the sandbox is stored with a version and a run id, so data from an earlier visit is reseeded.
+  - **Already posted:** if the due post is already posted, the queue steps are skipped.
+  - **Replay and Finish demo:** Replay reseeds the sandbox and starts the tour at 0. Finish demo only opens the closing card, so your exploration stays until Replay.
+- **Tests.** `npm run e2e:demo` now also walks the whole tour, from the first card to the closing card, at 1440x900 and 390x844:
+  - a normal walk
+  - Replay, then a fast walk with the first navigation to Results deliberately blocked
+  - a fresh slow walk (2 s per click) with page reloads at steps 2, 6 and 8
+  
+  A watchdog fails any moment of dim with no card and no Resume chip lasting over 5 s; the longest seen is 4.0 s. Any self-pause also fails. All of it passes, with zero AI and Supabase requests, alongside the 4 layout sizes, `e2e`, `e2e:landing`, typecheck, lint and the Vercel build.
+- **Live.** Commit `b88b157` deployed. The same stall walks ran against https://www.tryspectr.online at both sizes and all reached the closing card, with "See what else I've built" and "Built by Debojeet Dam" linking to debodam.com. Screenshots are in `design/e2e/live/` and `design/e2e/demo-stall-*/`.
+- **Left.**
+  1. **Insight step after a reload.** If you reload while on it, the Apply target sometimes cannot be measured. The fallback card offers Next instead of the Apply click.
+  2. **Pillar share wording.** Applying the insight shows "20% to 24%", because the shares are renormalized to 100, while the tour card says "20 to 25 percent".
