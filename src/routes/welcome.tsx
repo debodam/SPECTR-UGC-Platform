@@ -1,151 +1,163 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChartNoAxesColumn, Mic, Zap, type LucideIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useApp } from "@/lib/spectr-store";
-import { useEffect } from "react";
 import { isDemo } from "@/demo/mode";
 
+/** Real captures of the demo (Fastbreak AI data). Regenerate with `npm run shots:landing`. */
+const SHOTS = [
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    alt: "SPECTR Dashboard: a growth plan card with this week's plays, LinkedIn impressions, 12 week goal progress and posts ready to publish",
+  },
+  {
+    key: "record",
+    label: "Record",
+    alt: "SPECTR Record screen: a recording in progress with the live transcript filling in next to the play's guided prompts",
+  },
+  {
+    key: "transform",
+    label: "Transform",
+    alt: "SPECTR Transform screen: one recording turned into an article, with tabs for posts and a video script",
+  },
+  {
+    key: "growth",
+    label: "Growth",
+    alt: "SPECTR Growth plan page: north star metric, forecast, content pillars and weekly cadence",
+  },
+] as const;
+const SRC = (key: string) => `/landing/${key}.webp`;
+const ADVANCE_MS = 4000;
+
 export const Route = createFileRoute("/welcome")({
-  head: () => ({ meta: [{ title: "SPECTR - Turn expertise into content" }] }),
+  head: () => ({
+    meta: [{ title: "SPECTR - Turn expertise into content" }],
+    links: [{ rel: "preload", as: "image", href: SRC("dashboard"), type: "image/webp" }],
+  }),
   component: Welcome,
 });
-
-const FEATURES: { icon: LucideIcon; title: string; body: string }[] = [
-  {
-    icon: Zap,
-    title: "Transform any input.",
-    body: "Paste a transcript, upload a document, or drop in your notes. SPECTR turns it into a polished article, post, or video script in seconds.",
-  },
-  {
-    icon: Mic,
-    title: "Record and transcribe.",
-    body: "Speak your thoughts directly into SPECTR. Your voice is transcribed in real time and instantly ready to transform.",
-  },
-  {
-    icon: ChartNoAxesColumn,
-    title: "Track and distribute.",
-    body: "Schedule your content, monitor performance, and double down on what works. All in one place.",
-  },
-];
-
-const CONTACT_EMAIL = "debojeetdam.business@gmail.com";
 
 function Welcome() {
   const navigate = useNavigate();
   const { state } = useApp();
-  const tryNow = () => navigate({ to: state.isAuthenticated ? "/" : "/access" });
+  // Open app keeps the existing entry flow: the app if signed in, otherwise the access code page.
+  const openApp = () => navigate({ to: state.isAuthenticated ? "/" : "/access" });
+
   // The landing page is outside the demo: only Exit demo (which turns demo mode off first) leads here.
   useEffect(() => {
     if (isDemo()) navigate({ to: "/", replace: true });
   }, [navigate]);
 
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  // The first shot is preloaded; the other three load after the first paint.
+  const [restReady, setRestReady] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduced(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    const raf = requestAnimationFrame(() => setRestReady(true));
+    return () => {
+      mq.removeEventListener("change", sync);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (paused || reduced || !restReady) return;
+    const t = window.setInterval(() => setActive((i) => (i + 1) % SHOTS.length), ADVANCE_MS);
+    return () => window.clearInterval(t);
+  }, [paused, reduced, restReady]);
+
+  const pick = (i: number) => {
+    setActive(i);
+    setPaused(true); // a choice stops the slideshow for the rest of the visit
+  };
+
   return (
-    <div className="au-shell lp-shell">
-      <div className="lp-scroll">
-        <section className="lp-hero">
-          <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center" }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 14,
-                background: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 10px 24px rgba(6,42,92,0.25)",
-              }}
-            >
-              <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24">
-                <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
-                <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
-              </svg>
-            </div>
-            <span style={{ fontSize: 34, fontWeight: 600, letterSpacing: "-0.02em" }}>SPECTR</span>
-          </div>
-          <div style={{ marginTop: 8, fontSize: 15, color: "rgba(255,255,255,0.88)" }}>
-            Content Transformation Engine
-          </div>
-          <h1 className="lp-title">Turn expertise into content. Automatically.</h1>
-          <p className="lp-lede">
-            Record it, transform it, publish it. SPECTR takes your raw knowledge and turns it into
-            publish-ready articles, posts, and video scripts.
+    <div className={`ld${reduced ? " ld--still" : ""}`}>
+      <header className="ld-top">
+        <div className="ld-brand">
+          <span className="ld-logo" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24">
+              <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
+              <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
+            </svg>
+          </span>
+          <span className="ld-wordmark">SPECTR</span>
+        </div>
+        <a
+          className="ld-credit"
+          href="https://debodam.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Built by Debojeet Dam
+        </a>
+      </header>
+
+      <main className="ld-main">
+        <section className="ld-copy">
+          <h1 className="ld-title">Turn expertise into content. Automatically.</h1>
+          <p className="ld-sub">
+            Record it, transform it, publish it. SPECTR turns raw knowledge into articles, posts and
+            video scripts.
           </p>
-          <div className="lp-ctas" style={{ marginTop: 44 }}>
-            <button type="button" className="lp-cta" onClick={tryNow}>
-              Try SPECTR now
-            </button>
-            <a href="/demo" className="lp-cta lp-cta--ghost">
+          <div className="ld-ctas">
+            <a href="/demo" className="ld-btn ld-btn--primary">
               Try the demo
             </a>
+            <button type="button" className="ld-btn ld-btn--ghost" onClick={openApp}>
+              Open app
+            </button>
           </div>
+          <p className="ld-trust">2 min guided tour. No signup. Fake data, nothing saved.</p>
         </section>
 
-        <section className="lp-features">
-          <h2 className="lp-h2">Everything you need to go from idea to published.</h2>
-          <div className="lp-grid">
-            {FEATURES.map(({ icon: Icon, title, body }) => (
-              <div key={title} className="sx-glass lp-card">
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 16,
-                    background: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 8px 20px rgba(6,42,92,0.2)",
-                  }}
-                >
-                  <Icon size={26} strokeWidth={1.9} color="#0a66c2" aria-hidden="true" />
-                </div>
-                <div
-                  style={{ marginTop: 22, fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em" }}
-                >
-                  {title}
-                </div>
-                <div
-                  style={{
-                    marginTop: 10,
-                    fontSize: 15.5,
-                    lineHeight: 1.6,
-                    color: "rgba(255,255,255,0.92)",
-                  }}
-                >
-                  {body}
-                </div>
-              </div>
+        <section className="ld-show" aria-label="Product screenshots">
+          <div className="ld-frame">
+            <div className="ld-frame-bar" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="ld-shots">
+              {SHOTS.map((s, i) =>
+                i === 0 || restReady ? (
+                  <img
+                    key={s.key}
+                    src={SRC(s.key)}
+                    alt={s.alt}
+                    width={1600}
+                    height={1000}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchPriority={i === 0 ? "high" : "low"}
+                    className={`ld-shot${i === active ? " is-on" : ""}`}
+                    aria-hidden={i !== active}
+                  />
+                ) : null,
+              )}
+            </div>
+          </div>
+          <div className="ld-pills" role="group" aria-label="Choose a screen">
+            {SHOTS.map((s, i) => (
+              <button
+                key={s.key}
+                type="button"
+                className={`ld-pill${i === active ? " is-on" : ""}`}
+                aria-pressed={i === active}
+                onClick={() => pick(i)}
+              >
+                {s.label}
+              </button>
             ))}
           </div>
         </section>
-
-        <section className="lp-contact-wrap">
-          <div className="sx-glass lp-contact">
-            <h2 className="lp-h2" style={{ fontSize: "clamp(28px, 3.4vw, 40px)" }}>
-              Ready to transform your content?
-            </h2>
-            <div style={{ marginTop: 14, fontSize: 16.5, color: "rgba(255,255,255,0.92)" }}>
-              Have questions? Email{" "}
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                style={{
-                  color: "#ffffff",
-                  fontWeight: 600,
-                  textDecoration: "underline",
-                  overflowWrap: "anywhere",
-                }}
-              >
-                {CONTACT_EMAIL}
-              </a>
-            </div>
-            <div style={{ marginTop: 32 }}>
-              <button type="button" className="lp-cta" onClick={tryNow}>
-                Try SPECTR now
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
+      </main>
     </div>
   );
 }

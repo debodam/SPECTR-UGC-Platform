@@ -270,3 +270,21 @@ Screenshots from the e2e scripts go to `design/e2e/`, which is git-ignored.
 - **Also fixed.**
   - The Dashboard growth plan card's north star pill now shrinks with an ellipsis instead of running out of the card.
   - The tour spotlight's cut-out now has the same rounded corners as its ring, so no undimmed corner shows.
+
+## 08 landing
+- **What it is now.** `/welcome` is a single screen for recruiters. The top bar has the SPECTR logo on the left and "Built by Debojeet Dam" on the right (opens https://debodam.com in a new tab). Under it are two columns:
+  - Left: the headline, one subline, **Try the demo** (`/demo`) and **Open app**, plus the trust line. Open app keeps the existing flow: the app if signed in, otherwise the access code page.
+  - Right: real demo screenshots in a frosted browser frame, with Dashboard, Record, Transform and Growth pills.
+- **Removed.** The old feature grid, the contact section and the tagline under the logo.
+- **Carousel.**
+  - It moves on every 4 seconds with a 400 ms crossfade.
+  - Clicking a pill shows that screen and stops the slideshow for the rest of the visit.
+  - With reduced motion it shows the first shot only, and the pills still work.
+  - The first image is preloaded and the other three load after the first paint. Every image has an explicit 1600x1000 size and descriptive alt text.
+- **Screenshots.** `npm run shots:landing` regenerates `public/landing/{dashboard,record,transform,growth}.webp` from the live demo:
+  - 1440x900 at 2x, with the banner and tour hidden
+  - 1600px wide WebP, 77 to 116 KB each
+- **Tooling choice.** The shots and checks use the repo's existing headless Chrome harness instead of Playwright, which is not installed. Chrome writes the WebP itself, so no new dependencies were added.
+- **Phone.** Under 1024px the page stacks. On 390x844 both buttons are visible without scrolling. The subline hides below 700px tall.
+- **Tests.** `npm run e2e:landing` passes at 1280x720, 1440x900 and 1920x1080, and on a 390x844 phone. It checks for no scroll, everything inside the viewport, the links, that the images load, and the slideshow and pills.
+- **Also in this step.** On Record, "Use sample recording" and "Paste or type instead" now sit in one centered row of matching pills.
