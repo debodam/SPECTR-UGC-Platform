@@ -1,3 +1,4 @@
+import { useHomeLink } from "@/demo/mode";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { FileText, Upload, X, Check, ChevronLeft, LoaderCircle, Info } from "lucide-react";
@@ -176,6 +177,7 @@ const STEP_SUBS: Record<number, string> = {
 };
 
 function SetupPage() {
+  const homeLink = useHomeLink();
   const { state, update, setWorkspace } = useApp();
   const navigate = useNavigate();
   const [step, setStep] = useState<number>(state.setupStep || 1);
@@ -399,7 +401,7 @@ function SetupPage() {
         }}
       >
         <Link
-          to="/welcome"
+          to={homeLink}
           aria-label="SPECTR home"
           style={{
             display: "inline-flex",

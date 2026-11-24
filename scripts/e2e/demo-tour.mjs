@@ -35,7 +35,6 @@ const ROUTES = [
   ["results", "/results"],
   ["distribute", "/distribute"],
   ["settings", "/settings"],
-  ["welcome", "/welcome"],
 ];
 let failures = 0;
 
@@ -312,6 +311,13 @@ for (const [width, height] of sizes) {
         );
       if (f.railOut === false) issues.push(`${name}: the rail's Exit demo button is clipped`);
     }
+    // The landing page is outside the demo: the logo stays in the app and /welcome sends you back.
+    await h.go("/", 2200);
+    const logo = await h.ev(`document.querySelector('.sx-rail-logo')?.getAttribute('href')`);
+    if (logo !== "/") issues.push(`rail logo links to ${logo} in the demo`);
+    await h.go("/welcome", 2500);
+    const landed = await h.ev(`location.pathname`);
+    if (landed !== "/") issues.push(`/welcome in the demo stayed on ${landed}`);
     // Transform result view and the closing card.
     await h.go("/transform?play=demo-play-sixweek", 2500);
     await h.type(

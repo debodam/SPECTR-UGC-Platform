@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
-import { exitDemo, isDemo } from "@/demo/mode";
+import { exitDemo, isDemo, useHomeLink } from "@/demo/mode";
 
 export type RailPath =
   "/" | "/growth" | "/transform" | "/record" | "/results" | "/distribute" | "/settings";
@@ -41,6 +41,7 @@ const initials = (name?: string | null) =>
 
 /** Left rail shared by every app page. Active item is always SPECTR blue. */
 export function AppRail({ active }: { active: RailPath }) {
+  const homeLink = useHomeLink();
   const navigate = useNavigate();
   const logout = async () => {
     if (isDemo()) return exitDemo();
@@ -50,7 +51,7 @@ export function AppRail({ active }: { active: RailPath }) {
   };
   return (
     <aside className="sx-rail">
-      <Link to="/welcome" className="sx-rail-logo" aria-label="SPECTR home" title="SPECTR home">
+      <Link to={homeLink} className="sx-rail-logo" aria-label="SPECTR home" title="SPECTR home">
         <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24">
           <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
           <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 /**
  * Demo mode switch. The demo is per browser tab (sessionStorage) and is only ever turned on by /demo.
  * The real app never sets this flag, so none of the demo paths run for real users.
@@ -11,6 +12,16 @@ export const DEMO_KEYS = {
 } as const;
 
 export const DEMO_TIP = "Disabled in demo";
+
+/**
+ * Where the SPECTR logo links. In the demo it stays inside the app (the Dashboard); only Exit demo leads back to
+ * the landing page. Read after mount so the server render and the first client render agree.
+ */
+export function useHomeLink(): "/" | "/welcome" {
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(isDemo()), []);
+  return demo ? "/" : "/welcome";
+}
 
 export function isDemo(): boolean {
   if (typeof window === "undefined") return false;

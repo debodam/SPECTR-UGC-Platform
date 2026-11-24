@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChartNoAxesColumn, Mic, Zap, type LucideIcon } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
+import { useEffect } from "react";
+import { isDemo } from "@/demo/mode";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({ meta: [{ title: "SPECTR - Turn expertise into content" }] }),
@@ -31,6 +33,10 @@ function Welcome() {
   const navigate = useNavigate();
   const { state } = useApp();
   const tryNow = () => navigate({ to: state.isAuthenticated ? "/" : "/access" });
+  // The landing page is outside the demo: only Exit demo (which turns demo mode off first) leads here.
+  useEffect(() => {
+    if (isDemo()) navigate({ to: "/", replace: true });
+  }, [navigate]);
 
   return (
     <div className="au-shell lp-shell">

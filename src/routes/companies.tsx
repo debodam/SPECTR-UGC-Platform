@@ -5,7 +5,7 @@ import { emptyGrowthPrefs, useApp } from "@/lib/spectr-store";
 import { Building2, Trash2, Plus, LogOut, LoaderCircle } from "lucide-react";
 import { friendlyError } from "@/lib/utils";
 import { useEscape } from "@/lib/use-escape";
-import { DEMO_TIP, exitDemo, isDemo } from "@/demo/mode";
+import { DEMO_TIP, exitDemo, isDemo, useHomeLink } from "@/demo/mode";
 import { toast } from "sonner";
 
 interface Company {
@@ -293,6 +293,7 @@ function AddCircle({
 }
 
 function CompaniesPage() {
+  const homeLink = useHomeLink();
   const { state, update, setWorkspace } = useApp();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -482,7 +483,7 @@ function CompaniesPage() {
       >
         {/* Logo top-left */}
         <Link
-          to="/welcome"
+          to={homeLink}
           aria-label="SPECTR home"
           style={{
             display: "flex",
