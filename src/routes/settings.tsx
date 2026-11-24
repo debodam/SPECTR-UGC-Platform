@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import supabase from "@/lib/supabase";
+import { createGrowthPlan } from "@/lib/growth-service";
+import { errMessage } from "@/lib/utils";
 import { deleteAccount as deleteAccountFn } from "@/lib/delete-account-fn";
 
 export const Route = createFileRoute("/settings")({ component: Settings });
@@ -175,7 +177,27 @@ function Settings() {
       toast.error((coErr ?? wsErr)!.message || "Failed to save settings.");
       return;
     }
-    toast.success("Settings saved.");
+    // Audience, goals and targets feed the growth plan, so offer to rebuild it.
+    if (["audience", "goals", "targets"].includes(tab)) {
+      toast.success("Settings saved.", {
+        description: "Your growth plan uses these. Regenerate it to reflect the change.",
+        duration: 8000,
+        action: {
+          label: "Regenerate plan",
+          onClick: () => {
+            createGrowthPlan({ companyId, userId }, ws, { regenerate: true })
+              .then(() =>
+                toast.success("Growth plan regenerated", {
+                  action: { label: "View plan", onClick: () => navigate({ to: "/growth" }) },
+                }),
+              )
+              .catch((e) =>
+                toast.error("Could not regenerate the plan", { description: errMessage(e) }),
+              );
+          },
+        },
+      });
+    } else toast.success("Settings saved.");
   };
 
   const inStyle: React.CSSProperties = {
