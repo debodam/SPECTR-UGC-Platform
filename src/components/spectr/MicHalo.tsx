@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef } from "react";
+import { Mic } from "lucide-react";
 
 // Geometry, colors and breathe values are taken from design/source/Record.dc.html and Dashboard.dc.html.
 const N = 18, CX = 200, CY = 196, OUT = 352;
@@ -163,8 +164,7 @@ export function MicHalo({ recording, onClick, liveAudio = false }: {
         <rect {...core} fill="#ffffff" opacity="0.7" filter={`url(#${uid}-glow)`} style={{ transition: morph }} />
         <rect {...core} fill="#ffffff" style={{ transition: morph }} />
         <g style={{ transition: "opacity .5s ease", opacity: recording ? 0 : 1 }}>
-          <path d="M146 214 V232 C146 270 254 270 254 232 V214" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="200" cy="296" r="7" fill="#ffffff" />
+          <Mic x={CX - 21} y={CY - 21} size={42} color="#0a66c2" strokeWidth={2.2} />
         </g>
         <rect x="182" y="178" width="36" height="36" rx="9" fill="#0a66c2" style={{ transition: "opacity .5s ease", opacity: recording ? 1 : 0 }} />
       </svg>
