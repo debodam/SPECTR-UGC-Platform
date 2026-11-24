@@ -1,3 +1,4 @@
+import { demoRow } from "./client";
 /**
  * The guided tour. Edit copy here. Each step either waits for Next, for a click on its target, or for a condition.
  * `num` is the step shown to the visitor ("Step 3 of 9"); a few steps share a number because they are one idea.
@@ -5,7 +6,10 @@
 export const TOUR_TOTAL = 9;
 
 const PLAY = "demo-play-sixweek";
-const DUE = '[data-queue-id="demo-queue-9"]';
+const DUE_ID = "demo-queue-9";
+const DUE = `[data-queue-id="${DUE_ID}"]`;
+/** True once the due post has been marked posted in the sandbox (by the visitor, or left over). */
+const duePosted = () => demoRow("queue_items", DUE_ID)?.status === "posted";
 const INSIGHT = '[data-insight-id="demo-ins-4"]';
 
 export interface TourStep {
@@ -166,6 +170,8 @@ export const TOUR: TourStep[] = [
   {
     id: "queue",
     num: 6,
+    // Already posted (stale state): this target cannot appear, so go on to Results.
+    skip: duePosted,
     route: "/distribute",
     targets: [DUE],
     title: "An honest posting queue",
@@ -175,6 +181,8 @@ export const TOUR: TourStep[] = [
   {
     id: "copy",
     num: 6,
+    // Already posted (stale state): this target cannot appear, so go on to Results.
+    skip: duePosted,
     route: "/distribute",
     targets: [DUE],
     click: `${DUE} [data-tour="copy-post"]`,
@@ -191,6 +199,9 @@ export const TOUR: TourStep[] = [
     title: "Mark it posted",
     body: "Click Mark as posted. The play moves forward and Results gets an entry that waits for the numbers.",
     advance: "click",
+    // The click advances; so does the post becoming posted in the sandbox, in case the click event is missed.
+    done: duePosted,
+    skip: duePosted,
   },
   {
     id: "pending",

@@ -21,7 +21,10 @@ const ALL = [
   [1536, 864],
   [1920, 1080],
 ];
-const sizes = process.argv[2] ? [process.argv[2].split("x").map(Number)] : ALL;
+// No argument: every layout size, then the stall scenarios. "WxH": that size only. "stall": the scenarios only.
+const arg = process.argv[2];
+const sizes = arg === "stall" ? [] : arg ? [arg.split("x").map(Number)] : ALL;
+const runStall = !arg || arg === "stall";
 const timings = JSON.parse(
   fs.readFileSync(path.resolve("src/demo/seed/sampleRecordingTimings.json"), "utf8"),
 );
@@ -378,5 +381,180 @@ for (const [width, height] of sizes) {
     console.log(
       "  PASS: tour cards placed, sample in sync, Stop step, Markdown, zero AI and Supabase requests, layout fits",
     );
+}
+
+// ── Stall scenarios: the whole tour, first card to the closing card, the ways real visitors walk it ──
+// A watchdog in the page records the longest time the dim was up with no tour card and no Resume chip.
+const WATCHDOG = `(() => {
+  if (window.__stallWatch) return; window.__stallWatch = true; window.__stallMax = 0; let since = null;
+  setInterval(() => {
+    const dim = document.querySelector('.demo-tour');
+    const card = document.querySelector('.demo-card');
+    const placing = card && card.closest('.is-placing');
+    const ok = !dim || (card && !placing) || document.querySelector('.demo-resume') || document.querySelector('.demo-end');
+    if (ok) since = null; else { since ??= Date.now(); window.__stallMax = Math.max(window.__stallMax, Date.now() - since); }
+  }, 200);
+})()`;
+
+async function walk(h, mouse, { mode, blockNavOnce = false, reloadAt = [] }) {
+  const issues = [];
+  const seen = [];
+  const reloaded = new Set();
+  let stallMax = 0;
+  const readStall = async () => {
+    stallMax = Math.max(stallMax, (await h.ev(`window.__stallMax || 0`)) ?? 0);
+  };
+  const cardNow = () =>
+    h.ev(`(() => { const c = document.querySelector('.demo-card'); if (!c || c.closest('.is-placing')) return null;
+      return { id: c.dataset.step, advance: c.dataset.advance, click: c.dataset.click, off: c.dataset.offRoute === 'true',
+        num: Number((c.querySelector('.demo-card-step')?.innerText.match(/Step (\\d+)/) || [])[1]) }; })()`);
+  for (let n = 0; n < 90; n++) {
+    if (await h.ev(`!!document.querySelector('.demo-end')`)) break;
+    let c = null;
+    for (let t = 0; t < 60 && !c; t++) {
+      c = await cardNow();
+      if (!c) {
+        // A paused tour shows the Resume chip: carry on, as a visitor would.
+        if (await h.ev(`!!document.querySelector('.demo-resume')`)) {
+          issues.push(`the tour paused itself after ${seen.at(-1) ?? "start"}`);
+          await mouse(".demo-resume");
+        }
+        if (await h.ev(`!!document.querySelector('.demo-end')`)) break;
+        await h.sleep(200);
+      }
+    }
+    if (await h.ev(`!!document.querySelector('.demo-end')`)) break;
+    if (!c) {
+      issues.push(`stuck after ${seen.at(-1) ?? "start"}: no card for 12 s`);
+      break;
+    }
+    if (reloadAt.includes(c.num) && !reloaded.has(c.num)) {
+      reloaded.add(c.num);
+      await readStall();
+      await h.send("Page.reload");
+      await h.sleep(4500);
+      continue;
+    }
+    if (seen.at(-1) !== c.id) seen.push(c.id);
+    await h.sleep(mode === "slow" ? 2000 : mode === "fast" ? 0 : 600);
+    if (c.id === "listening") {
+      if (mode === "normal") {
+        for (let k = 0; k < 320; k++) {
+          if (await h.ev(`document.documentElement.dataset.sample !== 'playing'`)) break;
+          await h.sleep(250);
+        }
+      } else await mouse('[data-tour="stop-recording"]'); // stopping early is allowed
+    } else {
+      if (c.id === "posted" && blockNavOnce)
+        // Swallow the tour's first push to Results; the retry (or the fallback card) must still get through.
+        await h.ev(`(() => { const orig = history.pushState; let done = false;
+          history.pushState = function (s, t, u) { if (!done && String(u).includes('/results')) { done = true; window.__blockedNav = true; return; }
+            return orig.apply(this, arguments); }; })()`);
+      if (c.advance === "button") await mouse(".demo-card .gh-btn--primary:not([disabled])");
+      else if (c.advance === "click") {
+        for (let t = 0; t < 30; t++) {
+          if (await h.ev(`!!document.querySelector(${JSON.stringify(c.click)})`)) break;
+          await h.sleep(100);
+        }
+        await mouse(c.click);
+      }
+    }
+    // Wait for the tour to move on (another card, the closing card, or no card while the next one loads).
+    for (let t = 0; t < 50; t++) {
+      const now = await cardNow();
+      if (!now || now.id !== c.id || (await h.ev(`!!document.querySelector('.demo-end')`))) break;
+      await h.sleep(200);
+    }
+  }
+  await readStall();
+  const end = await h.ev(
+    `({ shown: !!document.querySelector('.demo-end'), links: [...document.querySelectorAll('.demo-end a, .demo-bar a')].map(a => a.href + ' ' + a.innerText.trim()), blocked: !!window.__blockedNav })`,
+  );
+  if (!end.shown) issues.push(`never reached the closing card (last: ${seen.at(-1)})`);
+  if (!end.links.some((l) => l.startsWith("https://debodam.com") && /what else/i.test(l)))
+    issues.push("closing card has no 'See what else I've built' link to debodam.com");
+  if (
+    !end.links.some((l) => l.startsWith("https://debodam.com") && /Built by Debojeet Dam/.test(l))
+  )
+    issues.push("no 'Built by Debojeet Dam' link");
+  if (stallMax > 5000) issues.push(`dim with no card for ${(stallMax / 1000).toFixed(1)} s`);
+  if (blockNavOnce && !end.blocked) issues.push("the navigation block never triggered");
+  return { issues, seen, stallMax, blocked: end.blocked };
+}
+
+if (runStall) {
+  for (const [width, height] of [
+    [1440, 900],
+    [390, 844],
+  ]) {
+    const tag = `stall ${width}x${height}`;
+    const out = path.resolve("design/e2e", `demo-stall-${width}x${height}`);
+    fs.mkdirSync(out, { recursive: true });
+    const h = await launch({ out, width, height, port: 9500 + (width % 53) });
+    await h.send("Page.addScriptToEvaluateOnNewDocument", { source: WATCHDOG });
+    const mouse = async (sel) => {
+      const box =
+        await h.ev(`(() => { const el = document.querySelector(${JSON.stringify(sel)}); if (!el) return null;
+        el.scrollIntoView({ block: 'nearest' }); const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+      if (!box) throw new Error("not found: " + sel);
+      for (const type of ["mouseMoved", "mousePressed", "mouseReleased"])
+        await h.send("Input.dispatchMouseEvent", {
+          type,
+          x: box.x,
+          y: box.y,
+          button: "left",
+          clickCount: 1,
+        });
+    };
+    const issues = [];
+    const start = h.requests.length;
+    try {
+      // 1. Normal walk, with the full sample take.
+      await h.go("/demo", 4500);
+      let r = await walk(h, mouse, { mode: "normal" });
+      r.issues.forEach((i) => issues.push("normal: " + i));
+      console.log(
+        `${tag} normal: ${r.seen.length} cards, longest bare dim ${(r.stallMax / 1000).toFixed(1)} s`,
+      );
+      await h.shot("1-closing.png");
+      // 2. Replay from the closing card, then a fast walk with the first push to Results swallowed.
+      await mouse(".demo-end-row .gh-btn:first-child");
+      await h.sleep(4500);
+      const reset = await h.ev(`({ step: document.querySelector('.demo-card')?.dataset.step,
+        tour: JSON.parse(sessionStorage.getItem('spectr-demo-tour') || '{}').i })`);
+      if (reset.tour !== 0) issues.push(`Replay did not restart the tour (index ${reset.tour})`);
+      r = await walk(h, mouse, { mode: "fast", blockNavOnce: true });
+      r.issues.forEach((i) => issues.push("replay + fast + blocked nav: " + i));
+      console.log(
+        `${tag} replay fast: ${r.seen.length} cards, blocked nav recovered: ${r.blocked}, longest bare dim ${(r.stallMax / 1000).toFixed(1)} s`,
+      );
+      // The due post is back after Replay: the sandbox was reseeded (the fast walk marked it posted again).
+      // 3. Fresh demo, slow visitor, reloading the page at steps 2, 6 and 8.
+      await h.go("/demo", 4500);
+      const due = await h.ev(
+        `!!document.querySelector('[data-queue-id="demo-queue-9"]') || 'not on this page'`,
+      );
+      r = await walk(h, mouse, { mode: "slow", reloadAt: [2, 6, 8] });
+      r.issues.forEach((i) => issues.push("slow + reloads: " + i));
+      console.log(
+        `${tag} slow with reloads: ${r.seen.length} cards, longest bare dim ${(r.stallMax / 1000).toFixed(1)} s (${due})`,
+      );
+      await h.shot("3-closing.png");
+      const calls = h.requests.slice(start).filter((u) => BLOCKED.test(u));
+      if (calls.length) issues.push(`AI or Supabase requests: ${[...new Set(calls)].join(", ")}`);
+    } catch (e) {
+      issues.push(String(e));
+      await h.shot("fail.png");
+    } finally {
+      await h.close();
+    }
+    if (issues.length) {
+      failures++;
+      issues.forEach((i) => console.log(`  FAIL ${tag}: ${i}`));
+    } else
+      console.log(
+        `  PASS ${tag}: normal, replay + fast + blocked navigation, slow + reloads, zero AI and Supabase requests`,
+      );
+  }
 }
 process.exitCode = failures ? 1 : 0;

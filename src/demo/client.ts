@@ -8,16 +8,32 @@ import { buildDemoTables, type DemoRow, type DemoTables } from "./data";
 import { demoSeed } from "./data";
 import { DEMO_KEYS, DEMO_TIP } from "./mode";
 
-let tables: DemoTables | null = null;
+/** Bump when the seed or the table shapes change, so an older stored sandbox is never reused. */
+const DB_VERSION = 3;
 
+let tables: DemoTables | null = null;
+let tablesRun = "";
+
+const currentRun = () => sessionStorage.getItem(DEMO_KEYS.run) || "";
+
+/**
+ * The sandbox for this demo run. A stored copy is only reused if it has the same version and run id; anything
+ * else (an earlier visit, an older build) is replaced by a fresh copy of the seed.
+ */
 function db(): DemoTables {
-  if (tables) return tables;
+  const run = currentRun();
+  if (tables && tablesRun === run) return tables;
+  tables = null;
   try {
     const raw = sessionStorage.getItem(DEMO_KEYS.db);
-    if (raw) tables = JSON.parse(raw) as DemoTables;
+    const stored = raw
+      ? (JSON.parse(raw) as { v?: number; run?: string; tables?: DemoTables })
+      : null;
+    if (stored?.v === DB_VERSION && stored.run === run && stored.tables) tables = stored.tables;
   } catch {
     tables = null;
   }
+  tablesRun = run;
   if (!tables) {
     tables = buildDemoTables(new Date());
     persist();
@@ -25,10 +41,19 @@ function db(): DemoTables {
   return tables;
 }
 
+/** One row of the sandbox, read directly (the tour uses it to follow what the visitor has done). */
+export function demoRow(table: string, id: string): DemoRow | undefined {
+  try {
+    return db()[table]?.find((r) => r.id === id);
+  } catch {
+    return undefined;
+  }
+}
+
 function writeNow() {
   flushQueued = false;
   try {
-    sessionStorage.setItem(DEMO_KEYS.db, JSON.stringify(tables));
+    sessionStorage.setItem(DEMO_KEYS.db, JSON.stringify({ v: DB_VERSION, run: tablesRun, tables }));
   } catch {
     /* storage full or blocked: the demo keeps working in memory */
   }

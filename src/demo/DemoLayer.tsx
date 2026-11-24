@@ -17,6 +17,20 @@ interface TourState {
 }
 
 const PAD = 10;
+/** Longest the visitor ever sees the dim with no card: then a fallback card appears. */
+const OFF_ROUTE_MS = 4000;
+/** When to (re)try sending the visitor to the step's page: the first push, then up to 4 retries. */
+const NAV_RETRY_AT = [900, 2100, 3300, 4500, 5700];
+const ROUTE_NAME: Record<string, string> = {
+  "/": "the Dashboard",
+  "/growth": "the Growth plan",
+  "/record": "Record",
+  "/transform": "Transform",
+  "/distribute": "Distribute",
+  "/results": "Results",
+};
+const searchOf = (href: string) =>
+  Object.fromEntries(new URLSearchParams(href.split("?")[1] ?? "").entries());
 
 /** Space kept between the card and the viewport edges, and between the card and the spotlight. */
 const MARGIN = 16;
@@ -225,6 +239,8 @@ export default function DemoLayer() {
    * so the dim never flashes and the spotlight glides from one target to the next. */
   const [holesFor, setHolesFor] = useState(-1);
   const [missing, setMissing] = useState(false);
+  /** Waited too long for the step's page: the card shows with a button that goes there. */
+  const [offRoute, setOffRoute] = useState(false);
   const [cardH, setCardH] = useState(220);
   const [confirmSkip, setConfirmSkip] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -263,7 +279,30 @@ export default function DemoLayer() {
   );
 
   const next = useCallback(() => goTo(tour.i + 1), [goTo, tour.i]);
+  // The live tour position, for handlers scheduled earlier (a click timer, a condition poll).
+  const tourRef = useRef(tour);
+  tourRef.current = tour;
+  /** Moves on from step `from` only if the tour is still on it, so a click plus a condition never skip a step. */
+  /** Set the moment the visitor clicks the highlighted element: that click may navigate away from the step's
+   * page, and leaving the page because of it must not pause the tour. */
+  const advancing = useRef(-1);
+  const advanceFrom = useCallback(
+    (from: number) => {
+      const t = tourRef.current;
+      if (t.i !== from) return;
+      if (t.status !== "running" && advancing.current !== from) return;
+      goTo(from + 1);
+    },
+    [goTo],
+  );
   const back = useCallback(() => goTo(tour.i - 1), [goTo, tour.i]);
+  /** The off-route card's button: go to the step's page; the step then carries on as usual. */
+  const goToStepRoute = useCallback(() => {
+    if (!step) return;
+    demoEvent("tour navigate", { step: step.id, attempt: "button" });
+    router.history.push(step.go ?? step.route);
+    void router.navigate({ to: step.route, search: searchOf(step.go ?? step.route) as never });
+  }, [router, step]);
   /** Escape pauses quietly; Skip tour asks first, then leaves the visitor to explore on their own. */
   const skip = useCallback(() => {
     demoEvent("tour paused", { step: step?.id });
@@ -330,7 +369,8 @@ export default function DemoLayer() {
     );
   }, [step]);
 
-  // Activate the step: make sure we are on its route, then find its targets.
+  // Activate the step: make sure we are on its route, then find its targets. The visitor must never be left on a
+  // dimmed screen with no card: after OFF_ROUTE_MS a card always shows, with a way forward.
   useEffect(() => {
     if (!running || !step) return;
     settled.current = false;
@@ -338,23 +378,56 @@ export default function DemoLayer() {
     if (!step.targets?.length) setHoles(null);
     setAvoidBoxes([]);
     setMissing(false);
-    let navTimer: number | undefined;
-    let settleTimer: number | undefined;
-    if (window.location.pathname !== step.route) {
-      // A click may already be navigating there; give it a moment before sending the visitor ourselves.
-      navTimer = window.setTimeout(() => {
-        if (window.location.pathname !== step.route) router.history.push(step.go ?? step.route);
-      }, 900);
+    setOffRoute(false);
+    const timers: number[] = [];
+    const onRoute = () => window.location.pathname === step.route;
+
+    // Navigation: a click may already be on its way there, so the first push waits a moment. Then retry, in case a
+    // push is swallowed (a route transition already in flight, a re-render), alternating the two router APIs.
+    if (!onRoute()) {
+      const target = step.go ?? step.route;
+      NAV_RETRY_AT.forEach((at, k) =>
+        timers.push(
+          window.setTimeout(() => {
+            if (onRoute()) return;
+            demoEvent("tour navigate", { step: step.id, attempt: k + 1, to: target });
+            if (k % 2 === 0) router.history.push(target);
+            else void router.navigate({ to: step.route, search: searchOf(target) as never });
+          }, at),
+        ),
+      );
     }
+    const cleanup = () => timers.forEach((t) => window.clearTimeout(t));
     if (!step.targets?.length) {
-      settled.current = window.location.pathname === step.route;
-      return () => window.clearTimeout(navTimer);
+      settled.current = onRoute();
+      const poll = window.setInterval(() => {
+        if (onRoute()) {
+          settled.current = true;
+          window.clearInterval(poll);
+        }
+      }, 150);
+      timers.push(
+        window.setTimeout(() => {
+          if (!onRoute()) setOffRoute(true);
+        }, OFF_ROUTE_MS),
+      );
+      return () => {
+        cleanup();
+        window.clearInterval(poll);
+      };
     }
-    const started = Date.now();
     // Same page: measure almost at once. New page: let its entrance transition finish first.
+    const started = Date.now();
     const startPath = window.location.pathname;
+    let settleTimer: number | undefined;
     const poll = window.setInterval(() => {
-      if (window.location.pathname !== step.route) return;
+      const elapsed = Date.now() - started;
+      if (!onRoute()) {
+        // Off route for too long: show the card with a button that takes the visitor there.
+        if (elapsed > OFF_ROUTE_MS) setOffRoute(true);
+        return;
+      }
+      setOffRoute(false);
       const first = document.querySelector(step.targets![0]);
       if (first) {
         window.clearInterval(poll);
@@ -375,17 +448,19 @@ export default function DemoLayer() {
           },
           window.location.pathname === startPath ? 60 : 320,
         );
-      } else if (Date.now() - started > 7000) {
+      } else if (elapsed > OFF_ROUTE_MS) {
+        // On the right page but the target never showed: carry on with a plain Next.
         window.clearInterval(poll);
         settled.current = true;
         setMissing(true);
       }
     }, 120);
     return () => {
+      cleanup();
       window.clearInterval(poll);
-      window.clearTimeout(navTimer);
       window.clearTimeout(settleTimer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, step, router, measure]);
 
   // Keep the spotlight on its target as anything moves: resize, scroll, layout changes, fonts, animations.
@@ -432,25 +507,36 @@ export default function DemoLayer() {
     if (!running || step?.advance !== "click") return;
     const sel = step.click ?? step.targets?.[0];
     if (!sel) return;
+    const from = tour.i;
     const onClick = (e: MouseEvent) => {
-      if ((e.target as Element | null)?.closest?.(sel)) window.setTimeout(next, 60);
+      if ((e.target as Element | null)?.closest?.(sel)) {
+        advancing.current = from;
+        window.setTimeout(() => advanceFrom(from), 60);
+      }
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [running, step, next]);
+  }, [running, step, tour.i, advanceFrom]);
 
-  // Advance when a condition is met.
+  // Advance when a condition is met: "wait" steps, and click steps that also watch the sandbox (Mark as posted).
   useEffect(() => {
-    if (!running || step?.advance !== "wait" || !step.done) return;
+    if (!running || !step?.done) return;
+    const from = tour.i;
     const iv = window.setInterval(() => {
-      if (step.done!()) next();
+      if (step.done!()) advanceFrom(from);
     }, 250);
     return () => window.clearInterval(iv);
-  }, [running, step, next]);
+  }, [running, step, tour.i, advanceFrom]);
 
   // Leaving the step's page pauses the tour and offers a Resume chip.
   useEffect(() => {
-    if (running && step && settled.current && pathname !== step.route) {
+    if (
+      running &&
+      step &&
+      settled.current &&
+      pathname !== step.route &&
+      advancing.current !== tour.i
+    ) {
       demoEvent("tour paused", { step: step.id, at: pathname });
       setTour({ i: tour.i, status: "paused" });
     }
@@ -488,32 +574,53 @@ export default function DemoLayer() {
   // The card is measured while hidden, placed, and only then shown, so it never appears (or glides in) from a
   // position worked out for the previous step's card.
   const [placedFor, setPlacedFor] = useState(-1);
+  // The reveal is scheduled once per step and never cancelled by a re-render: a highlighted element that keeps
+  // moving re-runs this effect every frame, which used to cancel the reveal forever and leave the card hidden.
+  const revealFor = useRef(-1);
+  // Runs after every render (cheap and guarded): the card can mount without any of the usual inputs changing,
+  // for example when two steps in a row highlight the same element, and it must still be revealed.
   useLayoutEffect(() => {
     if (!cardRef.current) return;
-    setCardH(cardRef.current.offsetHeight);
-    if (placedFor !== tour.i) {
+    const h = cardRef.current.offsetHeight;
+    if (h !== cardH) setCardH(h);
+    if (placedFor !== tour.i && revealFor.current !== tour.i) {
+      const i = tour.i;
+      revealFor.current = i;
       // Show it on the next frame; the timer covers browsers that pause animation frames (background tabs).
-      const show = () => setPlacedFor(tour.i);
-      const raf = requestAnimationFrame(show);
-      const t = window.setTimeout(show, 80);
-      return () => {
-        cancelAnimationFrame(raf);
-        window.clearTimeout(t);
-      };
+      const show = () => setPlacedFor((p) => (p === i ? p : i));
+      requestAnimationFrame(show);
+      window.setTimeout(show, 80);
     }
-  }, [tour.i, tour.status, holes, missing, confirmSkip, viewport, placedFor]);
+  });
 
   const vw = viewport.w;
   const vh = viewport.h;
   const cardW = cardWidth();
   const waitingForTarget =
-    running && !!step?.targets?.length && (holesFor !== tour.i || !holes) && !missing;
+    running && !!step?.targets?.length && (holesFor !== tour.i || !holes) && !missing && !offRoute;
+  // Watchdog: whatever the reason (a swallowed navigation, a target that never gets a size), a step never waits
+  // more than OFF_ROUTE_MS without a card. Off the step's page it offers "Go to ..."; on it, a plain Next.
+  const waitingRef = useRef(false);
+  waitingRef.current = waitingForTarget;
+  useEffect(() => {
+    if (!running || !step?.targets?.length) return;
+    const route = step.route;
+    const t = window.setTimeout(() => {
+      if (!waitingRef.current) return;
+      demoEvent("tour fallback card", { step: step.id, at: window.location.pathname });
+      if (window.location.pathname !== route) setOffRoute(true);
+      else setMissing(true);
+    }, OFF_ROUTE_MS + 150);
+    return () => window.clearTimeout(t);
+  }, [running, step, tour.i]);
+  // Off route, the previous step's spotlight no longer means anything: show the plain dim and a centered card.
+  const shownHoles = offRoute ? null : holes;
   const pos = useMemo(
-    () => placeCard(holes, avoidBoxes, cardW, cardH),
-    [holes, avoidBoxes, cardW, cardH, vw, vh], // eslint-disable-line react-hooks/exhaustive-deps
+    () => placeCard(shownHoles, avoidBoxes, cardW, cardH),
+    [shownHoles, avoidBoxes, cardW, cardH, vw, vh], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const { pathRef, ringRefs } = useGlidingSpotlight(holes, holesFor, vw, vh);
+  const { pathRef, ringRefs } = useGlidingSpotlight(offRoute ? null : holes, holesFor, vw, vh);
 
   const body = step ? (Array.isArray(step.body) ? step.body : [step.body]) : [];
 
@@ -551,11 +658,11 @@ export default function DemoLayer() {
       {running && step && (
         <div className="demo-tour" aria-live="polite">
           <svg className="demo-dim" width={vw} height={vh} aria-hidden="true">
-            <path ref={pathRef} d={buildDimPath(vw, vh, holes)} fillRule="evenodd" />
+            <path ref={pathRef} d={buildDimPath(vw, vh, shownHoles)} fillRule="evenodd" />
           </svg>
           {/* Explanation steps: the spotlight is visible but not clickable, so the tour stays in control. */}
           {step.advance === "button" &&
-            holes?.map((b, k) => (
+            shownHoles?.map((b, k) => (
               <div
                 key={k}
                 className="demo-hole-block"
@@ -563,7 +670,7 @@ export default function DemoLayer() {
                 hidden={holesFor !== tour.i}
               />
             ))}
-          {holes?.map((b, k) => (
+          {shownHoles?.map((b, k) => (
             <div
               key={`r${k}`}
               ref={(el) => {
@@ -583,7 +690,8 @@ export default function DemoLayer() {
                 ref={cardRef}
                 className="demo-card"
                 data-step={step.id}
-                data-advance={missing ? "button" : step.advance}
+                data-advance={missing || offRoute ? "button" : step.advance}
+                data-off-route={offRoute ? "true" : undefined}
                 data-click={step.click ?? step.targets?.[0] ?? ""}
                 role="dialog"
                 aria-modal="false"
@@ -615,7 +723,12 @@ export default function DemoLayer() {
                     {p}
                   </p>
                 ))}
-                {missing && step.advance !== "button" && (
+                {offRoute && (
+                  <p className="demo-card-body demo-card-note">
+                    This step is on {ROUTE_NAME[step.route] ?? "another page"}.
+                  </p>
+                )}
+                {missing && !offRoute && step.advance !== "button" && (
                   <p className="demo-card-body demo-card-note">
                     This part of the page is not showing right now. Continue with Next.
                   </p>
@@ -657,7 +770,17 @@ export default function DemoLayer() {
                     ) : (
                       <span />
                     )}
-                    {step.advance === "button" || missing ? (
+                    {offRoute ? (
+                      <button
+                        ref={primaryRef}
+                        type="button"
+                        className="gh-btn gh-btn--primary gh-btn--small"
+                        onClick={goToStepRoute}
+                      >
+                        Go to {(ROUTE_NAME[step.route] ?? "the page").replace(/^the /, "")}
+                        <ArrowRight size={14} aria-hidden="true" />
+                      </button>
+                    ) : step.advance === "button" || missing ? (
                       <button
                         ref={primaryRef}
                         type="button"

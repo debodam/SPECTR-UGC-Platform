@@ -9,6 +9,8 @@ export const DEMO_KEYS = {
   db: "spectr-demo-db",
   state: "spectr-demo-state",
   tour: "spectr-demo-tour",
+  /** Id of this demo run: the stored sandbox must carry the same id, or it is stale and gets reseeded. */
+  run: "spectr-demo-run",
 } as const;
 
 export const DEMO_TIP = "Disabled in demo";
@@ -41,6 +43,10 @@ function clearDemoKeys() {
 export function startDemo() {
   clearDemoKeys();
   sessionStorage.setItem(FLAG, "1");
+  sessionStorage.setItem(
+    DEMO_KEYS.run,
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+  );
   installDemoGuard();
   demoEvent("demo started");
 }
