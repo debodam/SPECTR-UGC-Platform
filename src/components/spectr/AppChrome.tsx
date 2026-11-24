@@ -18,13 +18,7 @@ import supabase from "@/lib/supabase";
 import { exitDemo, isDemo, useHomeLink } from "@/demo/mode";
 
 export type RailPath =
-  | "/"
-  | "/growth"
-  | "/transform"
-  | "/record"
-  | "/results"
-  | "/distribute"
-  | "/settings";
+  "/" | "/growth" | "/transform" | "/record" | "/results" | "/distribute" | "/settings";
 
 const NAV: { to: RailPath; label: string; icon: LucideIcon }[] = [
   { to: "/", label: "Dashboard", icon: House },
