@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import supabase from "@/lib/supabase";
 import { useApp } from "@/lib/spectr-store";
@@ -242,10 +242,10 @@ function CompaniesPage() {
       <div className="co-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", boxSizing: "border-box", padding: "32px 44px 36px" }}>
 
         {/* Logo top-left */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        <Link to="/welcome" aria-label="SPECTR home" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, alignSelf: "flex-start", color: "inherit", textDecoration: "none" }}>
           <SpectrMark size={36} />
           <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.02em" }}>SPECTR</div>
-        </div>
+        </Link>
 
         {/* Center content */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "clamp(32px, 6vh, 64px)", padding: "40px 0" }}>

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { FileText, Upload, X, Check, ChevronLeft, LoaderCircle, Info } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
@@ -157,10 +157,10 @@ function SetupPage() {
 
         {/* Left sidebar */}
         <aside className="su-aside" style={{ position: "relative", width: 340, flexShrink: 0, boxSizing: "border-box", padding: "40px 36px", background: "rgba(255,255,255,0.1)", borderRight: "1px solid rgba(255,255,255,0.28)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Link to="/welcome" aria-label="SPECTR home" style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "inherit", textDecoration: "none" }}>
             <SpectrMark />
             <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.02em" }}>SPECTR</span>
-          </div>
+          </Link>
 
           <div style={{ marginTop: 56 }}>
             <div style={{ fontSize: 24, fontWeight: 300, letterSpacing: "-0.01em" }}>Workspace setup</div>

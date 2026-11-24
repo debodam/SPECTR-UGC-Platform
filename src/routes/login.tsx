@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff, Mail, CircleAlert, LoaderCircle } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
@@ -99,7 +99,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
         {/* Left: form */}
         <div className="au-form" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", padding: "36px 40px", boxSizing: "border-box", overflowY: "auto" }}>
           {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Link to="/welcome" aria-label="SPECTR home" style={{ display: "flex", alignItems: "center", gap: 12, alignSelf: "flex-start", color: "inherit", textDecoration: "none" }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(10,102,194,0.3)" }}>
               <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24">
                 <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
@@ -110,7 +110,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
               <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.02em", lineHeight: 1.1 }}>SPECTR</div>
               <div style={{ marginTop: 2, fontSize: 12, color: "rgba(255,255,255,0.88)" }}>Content Transformation Engine</div>
             </div>
-          </div>
+          </Link>
 
           {/* Form content */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 0" }}>

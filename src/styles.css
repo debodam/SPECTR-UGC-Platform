@@ -813,3 +813,32 @@ body > div { height: 100%; }
   .sx-fit-db .db-cards { flex: 0 1 auto; min-height: 0; max-height: 600px; height: 100%; grid-template-rows: repeat(2, minmax(0, 1fr)); }
   .sx-fit-db .db-cards > .db-card { min-height: 0; }
 }
+
+/* ── Landing (/welcome) ── */
+.lp-shell { background: radial-gradient(1000px 700px at 50% 20%, rgba(160,205,255,0.5), rgba(160,205,255,0) 70%), linear-gradient(170deg, #b9d6f8 0%, #4d92e0 40%, #0a4a94 100%); }
+.lp-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.lp-hero { min-height: min(860px, calc(100dvh - 90px)); padding: clamp(40px, 8dvh, 80px) 24px 48px; text-align: center; }
+.lp-title { margin: clamp(40px, 8dvh, 84px) auto 0; max-width: 1000px; font-size: clamp(40px, 6vw, 84px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.04; }
+.lp-lede { margin: 32px auto 0; max-width: 720px; font-size: clamp(17px, 1.6vw, 21px); line-height: 1.55; color: rgba(255,255,255,0.92); }
+.lp-cta {
+  height: 60px; padding: 0 40px; border-radius: 999px; border: 0; background: #ffffff; color: #0a66c2;
+  font: inherit; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 16px 40px rgba(6,42,92,0.3);
+  transition: filter .15s ease, transform .15s ease;
+}
+.lp-cta:hover { filter: brightness(0.96); }
+.lp-cta:active { transform: translateY(1px); }
+.lp-cta:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }
+.lp-features { max-width: 1120px; margin: 0 auto; padding: 0 24px 108px; text-align: center; }
+.lp-h2 { margin: 0; font-size: clamp(26px, 2.6vw, 36px); font-weight: 300; letter-spacing: -0.02em; }
+.lp-grid { margin-top: 44px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; text-align: left; }
+.lp-card { padding: 28px; border-radius: 26px; }
+.lp-contact-wrap { max-width: 968px; margin: 0 auto; padding: 0 24px 120px; }
+.lp-contact { padding: clamp(28px, 4vw, 44px); border-radius: 36px; text-align: center; }
+@media (max-width: 900px) {
+  .lp-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Rail logo is a link to the landing page */
+.sx-rail-logo { transition: transform .15s ease, box-shadow .15s ease; }
+.sx-rail-logo:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(6,42,92,0.25); }
+.sx-rail-logo:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }

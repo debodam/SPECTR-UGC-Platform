@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Check, Download, ChevronDown, LogOut, ChevronsUpDown, Bell, Mic, House, Sparkles, ChartNoAxesColumn, Calendar, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
@@ -374,12 +374,11 @@ function RecordPage() {
 
         {/* Left rail */}
         <aside className="sx-rail">
-          <div className="sx-rail-logo">
+          <Link to="/welcome" className="sx-rail-logo" aria-label="SPECTR home" title="SPECTR home">
             <svg width="22" height="22" viewBox="0 0 24 24">
               <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
               <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
-            </svg>
-          </div>
+            </svg></Link>
           <nav className="sx-rail-nav">
             {NAV_ITEMS.map((n) => (
               <button
