@@ -1,4 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PlayBanner } from "@/components/spectr/GrowthCards";
+import { playSearch, usePlay } from "@/lib/use-growth";
+import { advancePlay, insertWithLinks, type RepoCtx } from "@/lib/growth-repo";
+import { toAppFormat } from "@/lib/growth-types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Copy, Download, FileText, RefreshCw, Trash2, X, LogOut, History, ChevronsUpDown, Bell, Save, Upload, Sparkles, Target, MessageSquare, Video, House, Mic, ChartNoAxesColumn, Calendar, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
@@ -6,7 +10,7 @@ import { useApp } from "@/lib/spectr-store";
 import { transformContent, type TransformInput } from "@/lib/transform-fn";
 import supabase from "@/lib/supabase";
 
-export const Route = createFileRoute("/transform")({ component: TransformPage });
+export const Route = createFileRoute("/transform")({ component: TransformPage, validateSearch: playSearch });
 
 type TabKey = "Article" | "Post" | "Video Script";
 
@@ -436,12 +440,19 @@ function TransformPage() {
   const { state } = useApp();
   const navigate = useNavigate();
   const ws = state.workspace;
+  const { play: playId } = Route.useSearch();
+  const playCtx: RepoCtx | null = useMemo(
+    () => (ws.companyId && state.user?.id ? { companyId: ws.companyId, userId: state.user.id } : null),
+    [ws.companyId, state.user?.id],
+  );
+  const { play, refresh: refreshPlay } = usePlay(playCtx, playId);
 
   const [context, setContext] = useState("");
   const [instructions, setInstructions] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
+  const playPrefilled = useRef(false);
 
   useEffect(() => {
     const pending = sessionStorage.getItem("pendingTranscript");
@@ -451,6 +462,18 @@ function TransformPage() {
   const [loading, setLoading] = useState(false);
   const [outputs, setOutputs] = useState<Partial<Record<TabKey, string>>>({});
   const [tab, setTab] = useState<TabKey>("Article");
+
+  // Opened from a play: use its format, open with its hook, and pull in the recording linked to it.
+  useEffect(() => {
+    if (!play || playPrefilled.current) return;
+    playPrefilled.current = true;
+    setTab(toAppFormat(play.format) as TabKey);
+    setContext((c) => c || `Open with this hook: "${play.hook}"`);
+    if (play.linkedLogId) {
+      supabase.from("transcripts").select("transcript_text").eq("id", play.linkedLogId).maybeSingle()
+        .then(({ data }) => { if (data?.transcript_text) setText((t) => t || (data.transcript_text as string)); });
+    }
+  }, [play]);
   const [refineInput, setRefineInput] = useState<Partial<Record<TabKey, string>>>({});
   const [source, setSource] = useState<Source | null>(null);
   const [tabBusy, setTabBusy] = useState<TabKey | null>(null);
@@ -562,7 +585,11 @@ function TransformPage() {
       const companyId = ws.companyId;
       const userId = state.user?.id;
       if (companyId && userId && generated.trim()) {
-        await supabase.from("generations").insert({ company_id: companyId, user_id: userId, format: tab, content: generated });
+        const { data: gen } = await insertWithLinks("generations", { company_id: companyId, user_id: userId, format: tab, content: generated }, { play_id: playId });
+        if (playCtx && playId && gen?.id) {
+          await advancePlay(playCtx, playId, "transformed", { linkedContentId: gen.id as string }).catch(() => {});
+          refreshPlay();
+        }
         const { data: all } = await supabase.from("generations").select("id").eq("company_id", companyId).eq("user_id", userId).order("created_at", { ascending: false });
         if (all && all.length > 10) {
           await supabase.from("generations").delete().in("id", all.slice(10).map((r: any) => r.id));
@@ -690,6 +717,18 @@ function TransformPage() {
         </header>
 
         <main className="sx-main"><div className="sx-page">
+        {play && (
+          <PlayBanner
+            play={play}
+            note={play.status === "transformed" || play.linkedContentId
+              ? "Content generated and linked to this play. Schedule it next."
+              : `Format set to ${toAppFormat(play.format)} to match this play, and the hook is added to your context.`}
+            onClear={() => navigate({ to: "/transform", search: {} })}
+            action={play.linkedContentId ? (
+              <button type="button" className="gh-btn gh-btn--primary" onClick={() => navigate({ to: "/distribute", search: { play: play.id } })}>Schedule it</button>
+            ) : undefined}
+          />
+        )}
         {/* ── FORM VIEW ── */}
         {!showOutput && (
           <div className="tf-form sx-glass">

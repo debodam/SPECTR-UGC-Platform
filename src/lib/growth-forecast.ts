@@ -25,6 +25,7 @@ const FORMAT_PLURAL: Record<Format, string> = { Article: "articles", Post: "post
 const num = (v?: string) => { const n = Number(String(v ?? "").replace(/[^\d.]/g, "")); return Number.isFinite(n) ? n : 0; };
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const fmt = (n: number, unit: string) => (unit === "%" ? `${round1(n)}%` : Math.round(n).toLocaleString());
+const lower = (s: string) => s.replace(/^(?!LinkedIn)./, (c) => c.toLowerCase());
 const dateLabel = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 /** Value each entry contributes toward the metric, used to rank formats for the gap suggestion. */
@@ -62,7 +63,7 @@ export function computeForecast(opts: {
     state: "starter", current: baseline, target, progressPct: 0, projected: baseline, projectedPct: 0,
     targetDate: dateLabel(targetDate), weeksLeft, ratePerWeek: 0, sentence: "", gapSentence: "", assumption: "", unit,
   };
-  if (!target) return { ...empty, state: "no-target", sentence: `Set a ${label.toLowerCase()} target in Settings to see a forecast.` };
+  if (!target) return { ...empty, state: "no-target", sentence: `Set a ${lower(label)} target in Settings to see a forecast.` };
   if (key === "monthlyVisitors") return { ...empty, state: "untracked", progressPct: Math.min(100, (baseline / target) * 100), sentence: "Profile visitors are not logged per post yet, so progress uses your setup baseline." };
   if (!sorted.length) return { ...empty, progressPct: Math.min(100, (baseline / target) * 100), sentence: "Log your first result in Results to unlock a forecast." };
 
@@ -93,8 +94,8 @@ export function computeForecast(opts: {
   const progressPct = Math.max(0, Math.min(100, (current / target) * 100));
   const projectedPct = Math.max(0, Math.round((projected / target) * 100));
   const sentence = weeksLeft < 0.5
-    ? `You are at ${Math.round(progressPct)}% of your ${label.toLowerCase()} target.`
-    : `At your current pace you reach ${projectedPct}% of your ${label.toLowerCase()} target by ${dateLabel(targetDate)}.`;
+    ? `You are at ${Math.round(progressPct)}% of your ${lower(label)} target.`
+    : `At your current pace you reach ${projectedPct}% of your ${lower(label)} target by ${dateLabel(targetDate)}.`;
 
   let gapSentence = "";
   const gap = target - projected;

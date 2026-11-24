@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import supabase from "./supabase";
 import type { Format, PerfEntry } from "./spectr-store";
 import type { Experiment, GrowthPlan, Insight, Play } from "./growth-types";
-import { loadActivePlan, loadAllPlays, loadCurrentPlays, loadExperiments, loadInsights, type RepoCtx } from "./growth-repo";
+import { getPlay, loadActivePlan, loadAllPlays, loadCurrentPlays, loadExperiments, loadInsights, type RepoCtx } from "./growth-repo";
 
 export function perfFromRow(row: Record<string, unknown>): PerfEntry {
   return {
@@ -52,3 +52,18 @@ export function useGrowth(ctx: RepoCtx | null) {
   useEffect(() => { reload(); }, [reload]);
   return { ...data, status, error, reload, setData };
 }
+
+/** Loads a single play by id (from a `?play=` search param) and keeps it fresh after status changes. */
+export function usePlay(ctx: RepoCtx | null, playId: string | undefined) {
+  const [play, setPlay] = useState<Play | null>(null);
+  const refresh = useCallback(async () => {
+    if (!ctx || !playId) { setPlay(null); return; }
+    try { setPlay(await getPlay(ctx, playId)); } catch { setPlay(null); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx?.companyId, ctx?.userId, playId]);
+  useEffect(() => { refresh(); }, [refresh]);
+  return { play, refresh };
+}
+
+/** Search param validator shared by every route that can be opened from a play. */
+export const playSearch = (s: Record<string, unknown>): { play?: string } => (typeof s.play === "string" && s.play ? { play: s.play } : {});

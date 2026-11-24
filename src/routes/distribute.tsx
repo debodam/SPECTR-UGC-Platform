@@ -4,8 +4,12 @@ import { X, LogOut, ChevronsUpDown, Bell, Plus, Calendar, Check, House, Sparkles
 import { toast } from "sonner";
 import { useApp, type QueueItem, type Format } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
+import { PlayBanner } from "@/components/spectr/GrowthCards";
+import { playSearch, usePlay } from "@/lib/use-growth";
+import { advancePlay, insertWithLinks, loadAllPlays, type RepoCtx } from "@/lib/growth-repo";
+import { toAppFormat, type Play } from "@/lib/growth-types";
 
-export const Route = createFileRoute("/distribute")({ component: DistributePage });
+export const Route = createFileRoute("/distribute")({ component: DistributePage, validateSearch: playSearch });
 
 const FORMATS: Format[] = ["Article", "Post", "Video Script"];
 
@@ -26,6 +30,7 @@ function fromRow(row: Record<string, unknown>): QueueItem {
     date: row.date as string,
     time: row.time as string,
     status: row.status as QueueItem["status"],
+    playId: (row.play_id as string) ?? null,
   };
 }
 
@@ -118,6 +123,26 @@ function DistributePage() {
   const [draft, setDraft] = useState<Partial<QueueItem>>(blank());
   const [draftFormat, setDraftFormat] = useState<Format>("Article");
   const [saving, setSaving] = useState(false);
+  const { play: playId } = Route.useSearch();
+  const ctx: RepoCtx | null = useMemo(() => (companyId && userId ? { companyId, userId } : null), [companyId, userId]);
+  const { play, refresh: refreshPlay } = usePlay(ctx, playId);
+  const [plays, setPlays] = useState<Play[]>([]);
+  const [linkPlayId, setLinkPlayId] = useState<string>("");
+
+  useEffect(() => { if (ctx) loadAllPlays(ctx).then(setPlays).catch(() => setPlays([])); }, [ctx]);
+
+  const fillFromPlay = (p: Play | undefined) => {
+    if (!p) { setLinkPlayId(""); return; }
+    setLinkPlayId(p.id);
+    setDraft((d) => ({ ...d, title: p.title }));
+    setDraftFormat(toAppFormat(p.format));
+  };
+
+  // Opened from a play: open the add form prefilled with it.
+  useEffect(() => {
+    if (play && !["scheduled", "posted", "measured"].includes(play.status)) { setAdding(true); fillFromPlay(play); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [play?.id]);
 
   useEffect(() => {
     if (!companyId) { setLoadingQueue(false); return; }
@@ -141,10 +166,12 @@ function DistributePage() {
       date: draft.date || new Date().toISOString().slice(0, 10),
       time: draft.time || "09:00",
       status: "Scheduled",
+      playId: linkPlayId || null,
     };
-    const { error } = await supabase.from("queue_items").insert(toRow(item, companyId, userId));
+    const { error } = await insertWithLinks("queue_items", toRow(item, companyId, userId), { play_id: linkPlayId });
     setSaving(false);
     if (error) { toast.error("Failed to save"); return; }
+    if (ctx && linkPlayId) { await advancePlay(ctx, linkPlayId, "scheduled").catch(() => {}); refreshPlay(); setLinkPlayId(""); }
     setQueue(prev => [...prev, item].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)));
     setDraft(blank()); setDraftFormat("Article"); setAdding(false); toast.success("Added to queue");
   };
@@ -155,6 +182,7 @@ function DistributePage() {
     const { error } = await supabase.from("queue_items").update({ status: newStatus }).eq("id", id);
     if (error) { toast.error("Failed to update status"); return; }
     setQueue(prev => prev.map(q => q.id === id ? { ...q, status: newStatus } : q));
+    if (ctx && item.playId && newStatus === "Published") advancePlay(ctx, item.playId, "posted").catch(() => {});
   };
 
   const remove = async (id: string) => {
@@ -224,7 +252,20 @@ function DistributePage() {
           </div>
         </header>
 
-        <main className="sx-main"><div className="sx-page"><div className="ds-layout">
+        <main className="sx-main"><div className="sx-page">
+        {play && (
+          <PlayBanner
+            play={play}
+            note={["scheduled", "posted", "measured"].includes(play.status)
+              ? "Scheduled. When it is live and you have numbers, log them in Results."
+              : "Pick a date and time below. The queue item keeps this play's title and format."}
+            onClear={() => navigate({ to: "/distribute", search: {} })}
+            action={["scheduled", "posted"].includes(play.status) ? (
+              <button type="button" className="gh-btn gh-btn--primary" onClick={() => navigate({ to: "/results", search: { play: play.id } })}>Log results</button>
+            ) : undefined}
+          />
+        )}
+        <div className="ds-layout">
         {/* Publish queue panel */}
         <div className="sx-glass ds-queue" style={{ padding: 24, borderRadius: 26, display: "flex", flexDirection: "column" }}>
           {/* Header */}
@@ -245,6 +286,16 @@ function DistributePage() {
           {/* Add form */}
           {adding && (
             <div style={{ flexShrink: 0, marginTop: 14, boxSizing: "border-box", padding: 18, borderRadius: 20, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.4)" }}>
+              {plays.some((p) => !["scheduled", "posted", "measured"].includes(p.status)) && (
+                <>
+                  <label htmlFor="ds-play" style={{ display: "block", fontSize: 13, fontWeight: 600 }}>From a play</label>
+                  <select id="ds-play" className="tf-in" value={linkPlayId} onChange={(e) => fillFromPlay(plays.find((p) => p.id === e.target.value))}
+                    style={{ ...inStyle, marginTop: 8, marginBottom: 14, appearance: "none" as any }}>
+                    <option value="">Not from a play</option>
+                    {plays.filter((p) => !["scheduled", "posted", "measured"].includes(p.status) || p.id === linkPlayId).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                </>
+              )}
               <div style={{ fontSize: 13, fontWeight: 600 }}>Title</div>
               <input autoFocus className="tf-in" type="text" placeholder="Content title" value={draft.title || ""} onChange={e => setDraft({ ...draft, title: e.target.value })} onKeyDown={e => e.key === "Enter" && save()}
                 style={{ ...inStyle, marginTop: 8 }} />
@@ -311,6 +362,7 @@ function DistributePage() {
                   <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.88)" }}>
                     <span style={{ height: 22, padding: "0 9px", borderRadius: 999, background: "rgba(255,255,255,0.22)", fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center" }}>{q.format}</span>
                     <span>{fmtWhen(q.date, q.time)}</span>
+                    {q.playId && <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>From a play</span>}
                   </div>
                 </div>
               ))}
@@ -341,7 +393,8 @@ function DistributePage() {
             ))}
           </div>
         </div>
-        </div></div></main>
+        </div>
+        </div></main>
 
     </div>
   );

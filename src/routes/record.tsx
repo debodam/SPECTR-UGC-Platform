@@ -1,12 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Download, ChevronDown, LogOut, ChevronsUpDown, Bell, Mic, House, Sparkles, ChartNoAxesColumn, Calendar, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
 import { MicHalo, type OrbState } from "@/components/spectr/MicHalo";
+import { PlayBanner } from "@/components/spectr/GrowthCards";
+import { playSearch, usePlay } from "@/lib/use-growth";
+import { advancePlay, insertWithLinks, type RepoCtx } from "@/lib/growth-repo";
+import { guidedPrompts } from "@/lib/growth-prompts";
 
-export const Route = createFileRoute("/record")({ component: RecordPage });
+export const Route = createFileRoute("/record")({ component: RecordPage, validateSearch: playSearch });
 
 // --- Helpers ---
 
@@ -205,6 +209,12 @@ function RecordPage() {
   const { state } = useApp();
   const navigate = useNavigate();
   const ws = state.workspace;
+  const { play: playId } = Route.useSearch();
+  const ctx: RepoCtx | null = useMemo(
+    () => (ws.companyId && state.user?.id ? { companyId: ws.companyId, userId: state.user.id } : null),
+    [ws.companyId, state.user?.id],
+  );
+  const { play, refresh: refreshPlay } = usePlay(ctx, playId);
 
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -252,11 +262,15 @@ function RecordPage() {
     const companyId = ws.companyId;
     const userId = state.user?.id;
     if (!companyId || !userId || !text.trim()) return false;
-    const { data, error: err } = await supabase
-      .from("transcripts")
-      .insert({ company_id: companyId, user_id: userId, transcript_text: text, duration_seconds: duration })
-      .select("id, transcript_text, duration_seconds, created_at")
-      .single();
+    const { data, error: err } = await insertWithLinks(
+      "transcripts",
+      { company_id: companyId, user_id: userId, transcript_text: text, duration_seconds: duration },
+      { play_id: playId },
+    );
+    if (!err && data && ctx && playId) {
+      await advancePlay(ctx, playId, "recorded", { linkedLogId: data.id as string }).catch(() => {});
+      refreshPlay();
+    }
     if (err) {
       console.error("Save transcript error:", err);
       return false;
@@ -350,7 +364,7 @@ function RecordPage() {
 
   const sendToTransform = (text: string) => {
     sessionStorage.setItem("pendingTranscript", text);
-    navigate({ to: "/transform" });
+    navigate({ to: "/transform", search: playId ? { play: playId } : {} });
   };
 
   const handleLogout = async () => {
@@ -473,6 +487,16 @@ function RecordPage() {
           boxShadow: "0 10px 30px rgba(6,42,92,0.14)",
           display: "flex", flexDirection: "column", overflow: "hidden",
         }}>
+          {play && (
+            <div style={{ marginBottom: 16, flexShrink: 0 }}>
+              <PlayBanner
+                play={play}
+                prompts={guidedPrompts(play, ws)}
+                note={play.status === "recorded" || play.linkedLogId ? "Recorded and linked to this play. Take it to Transform next." : "Tap the mic and speak to these prompts. Your recording is linked to this play when you save it."}
+                onClear={() => navigate({ to: "/record", search: {} })}
+              />
+            </div>
+          )}
           {/* Panel header */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
             <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em" }}>Transcription logs</div>

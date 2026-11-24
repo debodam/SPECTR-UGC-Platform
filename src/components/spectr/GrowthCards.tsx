@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ArrowRight, FlaskConical, Lightbulb, TriangleAlert, TrendingUp } from "lucide-react";
 import type { Experiment, Insight, Play, PlayStatus } from "@/lib/growth-types";
 
@@ -111,5 +112,30 @@ export function ExperimentSummary({ experiment, play }: { experiment: Experiment
       </div>
       {experiment.learning && <div className="gh-exp-learning">{experiment.learning}</div>}
     </div>
+  );
+}
+
+/** Shown on Record, Transform, Distribute and Results when the page was opened from a play. */
+export function PlayBanner({ play, prompts, note, onClear, action }: { play: Play; prompts?: string[]; note?: string; onClear?: () => void; action?: ReactNode }) {
+  return (
+    <section className="gh-banner" aria-label={`Play: ${play.title}`}>
+      <div className="gh-banner-head">
+        <span className="gh-eyebrow">This week's play · {play.type}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <FormatChip format={play.format} />
+          <StatusChip status={play.status} />
+          {onClear && <button type="button" className="gh-banner-clear" onClick={onClear} aria-label="Stop working on this play">Clear</button>}
+        </div>
+      </div>
+      <div className="gh-banner-title">{play.title}</div>
+      <div className="gh-banner-hook">"{play.hook}"</div>
+      {note && <div className="gh-banner-note">{note}</div>}
+      {action && <div style={{ marginTop: 12 }}>{action}</div>}
+      {prompts && prompts.length > 0 && (
+        <ol className="gh-banner-prompts">
+          {prompts.map((p) => <li key={p}>{p}</li>)}
+        </ol>
+      )}
+    </section>
   );
 }

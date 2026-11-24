@@ -4,8 +4,13 @@ import { toast } from "sonner";
 import { Check, X, LogOut, ChevronsUpDown, Bell, Plus, SquarePen, Trash2, House, Sparkles, Mic, ChartNoAxesColumn, Calendar, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import { useApp, type PerfEntry, type Format } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
+import { PlayBanner } from "@/components/spectr/GrowthCards";
+import { perfFromRow, playSearch, usePlay } from "@/lib/use-growth";
+import { loadAllPlays, upsertWithLinks, type RepoCtx } from "@/lib/growth-repo";
+import { syncPlayResults } from "@/lib/growth-service";
+import { toAppFormat, type Play } from "@/lib/growth-types";
 
-export const Route = createFileRoute("/results")({ component: TrackPage });
+export const Route = createFileRoute("/results")({ component: TrackPage, validateSearch: playSearch });
 
 const FORMATS: Format[] = ["Article", "Post", "Video Script"];
 const SOURCES = ["Transcript", "Notes", "Draft"] as const;
@@ -125,7 +130,7 @@ function TrackPage() {
     supabase.from("perf_entries").select("*").eq("company_id", companyId).order("date", { ascending: false })
       .then(({ data, error }) => {
         if (error) toast.error("Failed to load entries");
-        else setEntries((data ?? []).map(fromRow));
+        else setEntries((data ?? []).map(perfFromRow));
         setLoadingEntries(false);
       });
   }, [companyId]);
@@ -146,6 +151,25 @@ function TrackPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<PerfEntry>>(blank());
   const [saving, setSaving] = useState(false);
+  const { play: playId } = Route.useSearch();
+  const ctx: RepoCtx | null = useMemo(() => (companyId && userId ? { companyId, userId } : null), [companyId, userId]);
+  const { play, refresh: refreshPlay } = usePlay(ctx, playId);
+  const [plays, setPlays] = useState<Play[]>([]);
+  const [linkPlayId, setLinkPlayId] = useState("");
+  const reloadPlays = () => { if (ctx) loadAllPlays(ctx).then(setPlays).catch(() => setPlays([])); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(reloadPlays, [ctx]);
+
+  const startFromPlay = (p: Play | undefined) => {
+    setLinkPlayId(p?.id ?? "");
+    if (p) setDraft((d) => ({ ...d, title: d.title || p.title, format: toAppFormat(p.format) }));
+  };
+
+  // Opened from a play: open the add row prefilled and linked.
+  useEffect(() => {
+    if (play) { setAdding(true); setEditingId(null); setDraft({ ...blank(), title: play.title, format: toAppFormat(play.format) }); setLinkPlayId(play.id); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [play?.id]);
 
   const save = async () => {
     if (!companyId || !userId) { toast.error("No active company"); return; }
@@ -160,12 +184,16 @@ function TrackPage() {
       engagementRate: Number(draft.engagementRate ?? 0),
       followersGained: Number(draft.followersGained ?? 0),
       notes: draft.notes || "",
+      playId: linkPlayId || null,
+      variant: (draft.variant as PerfEntry["variant"]) ?? null,
     };
-    const { error } = await supabase.from("perf_entries").upsert(toRow(entry, companyId, userId));
+    const { error } = await upsertWithLinks("perf_entries", toRow(entry, companyId, userId), { play_id: entry.playId, variant: entry.variant });
     setSaving(false);
     if (error) { toast.error("Failed to save entry"); return; }
-    setEntries(prev => [entry, ...prev.filter(e => e.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date)));
-    setAdding(false); setEditingId(null); setDraft(blank()); toast.success("Entry saved");
+    const next = [entry, ...entries.filter(e => e.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date));
+    setEntries(next);
+    setAdding(false); setEditingId(null); setDraft(blank()); setLinkPlayId(""); toast.success("Entry saved");
+    if (ctx && entry.playId) { await syncPlayResults(ctx, entry.playId, next).catch(() => {}); refreshPlay(); reloadPlays(); }
   };
 
   const del = async (id: string) => {
@@ -232,12 +260,21 @@ function TrackPage() {
         </header>
 
         <main className="sx-main"><div className="sx-page">
+        {play && (
+          <PlayBanner
+            play={play}
+            note={play.status === "measured"
+              ? "Results logged and attached to this play. Your forecast and insights now include them."
+              : "Enter the numbers for this play below. Saving attaches them to the play and marks it measured."}
+            onClear={() => navigate({ to: "/results", search: {} })}
+            action={play.status === "measured" ? <button type="button" className="gh-btn gh-btn--primary" onClick={() => navigate({ to: "/" })}>Back to Growth</button> : undefined}
+          />
+        )}
         {/* KPI row */}
         <div className="tr-kpis">
           {kpis.map((k) => {
             const pct = k.target ? Math.min(100, (k.current / k.target) * 100) : 0;
-            const gap = k.target ? Math.abs(k.current - k.target) / k.target : 1;
-            const onTrack = k.target && gap <= 0.1;
+            const onTrack = k.target > 0 && k.current >= k.target * 0.9;
             const val = k.suffix
               ? (Math.round(k.current * 10) / 10).toFixed(1) + k.suffix
               : Math.round(k.current).toLocaleString();
@@ -283,6 +320,15 @@ function TrackPage() {
             {["Date", "Title", "Format", "Source", "Impressions", "Eng %", "Followers", "Notes", ""].map(h => <span key={h}>{h}</span>)}
           </div>
 
+          {(adding || editingId) && plays.length > 0 && (
+            <div className="tr-linkrow">
+              <label htmlFor="tr-play">Result for a play</label>
+              <select id="tr-play" className="tf-in" value={linkPlayId} onChange={(e) => startFromPlay(plays.find((p) => p.id === e.target.value))}>
+                <option value="">Not from a play</option>
+                {plays.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+              </select>
+            </div>
+          )}
           {/* Inline add row */}
           {adding && (
             <AddRow
@@ -321,7 +367,7 @@ function TrackPage() {
                     <span>{e.followersGained > 0 ? `+${e.followersGained}` : e.followersGained}</span>
                     <span style={{ color: "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.notes}</span>
                     <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                      <button type="button" onClick={() => { setEditingId(e.id); setDraft(e); }}
+                      <button type="button" onClick={() => { setEditingId(e.id); setDraft(e); setLinkPlayId(e.playId ?? ""); }}
                         style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                         <SquarePen size={13} strokeWidth={2.2} aria-hidden="true" />
                       </button>

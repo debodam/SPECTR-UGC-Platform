@@ -43,6 +43,7 @@ export interface PerfEntry {
 export interface QueueItem {
   id: string; title: string; format: Format; date: string; time: string;
   status: "Scheduled" | "Published";
+  playId?: string | null;
 }
 
 export interface AppState {

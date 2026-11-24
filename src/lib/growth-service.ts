@@ -1,8 +1,8 @@
-import type { Workspace } from "./spectr-store";
+import type { PerfEntry, Workspace } from "./spectr-store";
 import type { GrowthPlan, PlanInputs, Play } from "./growth-types";
 import { buildFallbackPlan } from "./growth-plan";
 import { generateGrowthPlan } from "./growth-fn";
-import { loadActivePlan, loadExperiments, loadInsights, savePlanWithPlays, type RepoCtx } from "./growth-repo";
+import { advancePlay, loadActivePlan, loadExperiments, loadInsights, savePlanWithPlays, type RepoCtx } from "./growth-repo";
 
 export function planInputsFromWorkspace(ws: Workspace, learnings: string[] = []): PlanInputs {
   return {
@@ -56,4 +56,17 @@ export async function createGrowthPlan(ctx: RepoCtx, ws: Workspace, opts: { rege
   ].slice(0, 30);
   const saved = await savePlanWithPlays(ctx, { ...p, channels: ["LinkedIn"], history }, plays);
   return { ...saved, source: result.source };
+}
+
+/** Rolls the Results entries logged for a play into its numbers and marks it measured. */
+export async function syncPlayResults(ctx: RepoCtx, playId: string, entries: PerfEntry[]): Promise<void> {
+  const mine = entries.filter((e) => e.playId === playId);
+  if (!mine.length) return;
+  const results = {
+    impressions: mine.reduce((s, e) => s + e.impressions, 0),
+    engagementRate: Math.round((mine.reduce((s, e) => s + e.engagementRate, 0) / mine.length) * 10) / 10,
+    followersGained: mine.reduce((s, e) => s + e.followersGained, 0),
+    entries: mine.length,
+  };
+  await advancePlay(ctx, playId, "measured", { results });
 }
