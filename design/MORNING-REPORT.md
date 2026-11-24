@@ -254,3 +254,19 @@ Screenshots from the e2e scripts go to `design/e2e/`, which is git-ignored.
   - The pages show 3,123 vs 4,000, 2.4x, and 3.5% vs 4.5%.
   - The closing card says Fastbreak AI and links to https://debodam.com, with the "Built by Debojeet Dam" footer.
 - **Final grep.** It returns only a CSS comment about SPECTR's own auth and Setup pages. There is no top-level `e2e/` folder; the tests live in `scripts/e2e/`.
+
+## 07 better voice
+- **Engine.** Kokoro, the first choice, installed and ran on the first attempt, so edge-tts was not needed. The voice is `am_michael` at speed 0.97.
+- **Where it runs.** Kokoro lives in a throwaway venv at `~/.spectr-tts` (Python 3.12 from Homebrew, plus espeak-ng). Nothing was added to the app's dependencies.
+- **Rendering.** Each chunk is rendered as its own clip with its silent edges trimmed, and the clips are joined with 220 ms pauses.
+  - Final length: **49.7 seconds**.
+  - Format: AAC, 128k, mono, 44.1 kHz.
+  - Size: 790 KB.
+  - Loudness: normalized to -16 LUFS (it measures -16.8).
+- **Word timings.** Kokoro's own per-word timestamps, placed at each chunk's real start in the joined audio. Every chunk start is within 45 ms of where the voice resumes in the waveform.
+- **Matching values.** `delayMs` for each chunk and `durationSeconds` (50) in `content.ts` were updated to match, and the tour copy now says a 50 second take. The player reads its length from the timings file, so no other constant needed changing.
+- **Rebuild.** Run `~/.spectr-tts/bin/python scripts/demo/render-voice-kokoro.py`. The older `scripts/demo/make-sample-recording.py` (macOS voice) is still there as a fallback.
+- **Tests.** `npm run e2e:demo` passes at all four sizes. The headless tour plays the audio, the transcript stays within 17 ms of it, and the Stop step appears right after the take ends. Typecheck, lint and build pass.
+- **Also fixed.**
+  - The Dashboard growth plan card's north star pill now shrinks with an ellipsis instead of running out of the card.
+  - The tour spotlight's cut-out now has the same rounded corners as its ring, so no undimmed corner shows.

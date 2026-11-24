@@ -110,7 +110,7 @@ export const TOUR: TourStep[] = [
     go: `/record?play=${PLAY}`,
     targets: ['[data-tour="sample-recording"]'],
     title: "Record a take",
-    body: "Normally you talk for a minute. Click Use sample recording to hear a prepared 49 second take, with sound.",
+    body: "Normally you talk for a minute. Click Use sample recording to hear a prepared 50 second take, with sound.",
     advance: "click",
   },
   {

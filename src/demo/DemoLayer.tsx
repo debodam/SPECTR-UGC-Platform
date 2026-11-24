@@ -16,6 +16,8 @@ interface TourState {
 }
 
 const PAD = 10;
+/** Corner radius of the spotlight; matches .demo-ring in styles.css. */
+const RING_RADIUS = 18;
 /** Space kept between the card and the viewport edges, and between the card and the spotlight. */
 const MARGIN = 16;
 const GAP = 14;
@@ -487,7 +489,17 @@ export default function DemoLayer() {
 
   const path = useMemo(() => {
     const outer = `M0 0H${vw}V${vh}H0Z`;
-    const cut = (holes ?? []).map((b) => `M${b.x} ${b.y}h${b.w}v${b.h}h${-b.w}Z`).join("");
+    // Rounded like the ring (.demo-ring, 18px), so no undimmed corner shows outside it.
+    const cut = (holes ?? [])
+      .map((b) => {
+        const r = Math.min(RING_RADIUS, b.w / 2, b.h / 2);
+        return (
+          `M${b.x + r} ${b.y}h${b.w - 2 * r}a${r} ${r} 0 0 1 ${r} ${r}v${b.h - 2 * r}` +
+          `a${r} ${r} 0 0 1 ${-r} ${r}h${-(b.w - 2 * r)}a${r} ${r} 0 0 1 ${-r} ${-r}` +
+          `v${-(b.h - 2 * r)}a${r} ${r} 0 0 1 ${r} ${-r}Z`
+        );
+      })
+      .join("");
     return outer + cut;
   }, [holes, vw, vh]);
 

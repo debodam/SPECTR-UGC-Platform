@@ -326,36 +326,36 @@ export const TOUR_PLAY = {
   playKey: "play-sixweek",
   title: "The 6 week basketball program that added 3.5 inches to a vertical",
   sampleRecording: {
-    durationSeconds: 58,
+    durationSeconds: 50,
     // Streamed into the live transcript. delayMs is the wait before each chunk appears.
     chunks: [
-      { delayMs: 700, text: "Okay so here's my six week basketball training program." },
+      { delayMs: 0, text: "Okay so here's my six week basketball training program." },
       {
-        delayMs: 1400,
+        delayMs: 3695,
         text: " Fourteen guards ran it, and the average vertical went up three and a half inches.",
       },
       {
-        delayMs: 1600,
+        delayMs: 5131,
         text: " Weeks one and two are about landing. Teaching players to absorb force before we ask them to produce it.",
       },
       {
-        delayMs: 1300,
+        delayMs: 6677,
         text: " Weeks three and four, we add heavy lower body strength, two days a week, nothing fancy.",
       },
       {
-        delayMs: 1300,
+        delayMs: 5678,
         text: " Week five is the jump week. Short, fast, low volume, lots of rest between sets.",
       },
       {
-        delayMs: 1700,
+        delayMs: 5814,
         text: " Week six is the test, and a deload. The legs feel fresh and the number shows up.",
       },
       {
-        delayMs: 1800,
+        delayMs: 5529,
         text: " The one rule: nobody trains hard two days in a row on the same legs. Fatigue hides in week four, and that is where most programs fall apart.",
       },
       {
-        delayMs: 2000,
+        delayMs: 10059,
         text: " So we check how heavy the legs feel every morning, and if it's a four or five twice in a row, we change the week.",
       },
     ],

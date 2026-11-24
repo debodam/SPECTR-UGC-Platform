@@ -293,7 +293,11 @@ function Dashboard() {
                   <h2 id="gp-h" className="gp-title">
                     Growth plan
                   </h2>
-                  {g.plan && <span className="gp-metric">{g.plan.northStarMetric}</span>}
+                  {g.plan && (
+                    <span className="gp-metric" title={g.plan.northStarMetric}>
+                      {g.plan.northStarMetric}
+                    </span>
+                  )}
                 </div>
                 {planLoading ? (
                   <div

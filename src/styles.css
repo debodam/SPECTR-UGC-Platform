@@ -2896,10 +2896,17 @@ select.gx-input {
 }
 .gp-title {
   margin: 0;
+  flex: none;
   font-size: 16px;
   font-weight: 600;
+  white-space: nowrap;
 }
+/* Long north star metrics shrink to the card and end in an ellipsis; the full text is in the line below. */
 .gp-metric {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 12.5px;
   font-weight: 600;
   padding: 4px 10px;
