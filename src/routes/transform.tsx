@@ -2332,18 +2332,10 @@ function TransformPage() {
                 historyEntries.map((entry) => {
                   const raw = safeExtract(entry.content, entry.format);
                   const preview = previewText(raw, 120);
+                  // Format tags stay in the blue glass palette; the label tells them apart.
                   const kindColor =
-                    entry.format === "Article"
-                      ? "rgba(255,255,255,0.24)"
-                      : entry.format === "Post"
-                        ? "#ecfdf3"
-                        : "#fffaeb";
-                  const kindTextColor =
-                    entry.format === "Article"
-                      ? "#ffffff"
-                      : entry.format === "Post"
-                        ? "#067647"
-                        : "#b54708";
+                    entry.format === "Article" ? "rgba(255,255,255,0.24)" : "#ffffff";
+                  const kindTextColor = entry.format === "Article" ? "#ffffff" : "#0a66c2";
                   return (
                     <button
                       key={entry.id}

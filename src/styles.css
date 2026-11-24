@@ -393,16 +393,16 @@ option {
     font-weight: 600;
   }
   .spectr-pill-done {
-    background: #ecfdf3;
-    color: #067647;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
   }
   .spectr-pill-active {
     background: rgba(255, 255, 255, 0.92);
     color: #0a66c2;
   }
   .spectr-pill-warn {
-    background: #fffaeb;
-    color: #b54708;
+    background: #ffffff;
+    color: #0b3a75;
   }
   .spectr-pill-error {
     background: #fef3f2;
@@ -935,7 +935,7 @@ option {
   min-height: 520px;
 }
 .st-tabs {
-  width: 244px;
+  width: 264px;
   flex-shrink: 0;
   box-sizing: border-box;
   padding: 20px;
@@ -947,6 +947,9 @@ option {
 }
 .st-tabs > button {
   flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .st-pad {
   padding-left: 36px !important;
@@ -1654,7 +1657,6 @@ body > div {
   height: var(--app-h);
 }
 
-
 /* Thin translucent scrollbars, visible only while hovering the scroll area */
 * {
   scrollbar-width: thin;
@@ -2124,8 +2126,9 @@ body > div {
   color: #ffffff;
 }
 .gh-chip--done {
-  background: #ecfdf3;
-  color: #067647;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
 }
 .gh-chip--format {
   background: #ffffff;
@@ -2218,8 +2221,8 @@ body > div {
   color: #0a66c2;
 }
 .gh-insight--warning .gh-insight-icon {
-  color: #b54708;
-  background: #fffaeb;
+  color: #0b3a75;
+  background: #ffffff;
 }
 .gh-insight-text {
   font-size: 14.5px;
@@ -2726,13 +2729,16 @@ select.gx-input {
   height: 24px;
   padding: 0 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #067647;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
   font-size: 12px;
   font-weight: 700;
 }
 .db-delta.is-down {
-  color: #b42318;
+  background: #ffffff;
+  color: #0b3a75;
+  box-shadow: none;
 }
 .db-delta.is-down svg {
   transform: rotate(180deg);
@@ -2797,26 +2803,29 @@ select.gx-input {
   flex-shrink: 0;
 }
 .db-day {
-  width: 28px;
-  height: 44px;
-  border-radius: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding-bottom: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.14);
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
   color: transparent;
 }
 .db-day.has-post {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: none;
   color: #0a66c2;
 }
 .db-day.is-today {
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.95),
-    0 0 0 4px rgba(255, 255, 255, 0.3);
+    0 0 0 2px #0a66c2,
+    0 0 0 4px rgba(255, 255, 255, 0.95);
 }
 .db-count {
   min-width: 22px;
@@ -2859,8 +2868,8 @@ select.gx-input {
   text-overflow: ellipsis;
 }
 .db-chip-behind {
-  background: #fef3f2;
-  color: #b42318;
+  background: #ffffff;
+  color: #0b3a75;
 }
 .db-ideas {
   height: 52px;
@@ -3255,12 +3264,13 @@ select.gx-input {
   color: #ffffff;
 }
 .ds-badge--due {
-  background: #fffaeb;
-  color: #b54708;
+  background: #ffffff;
+  color: #0b3a75;
 }
 .ds-badge--posted {
-  background: #ecfdf3;
-  color: #067647;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
 }
 .ds-form {
   margin-top: 14px;
@@ -3561,8 +3571,9 @@ select.gx-input {
   margin-top: 4px;
 }
 .ds-cal-tag.is-posted {
-  background: #ecfdf3;
-  color: #067647;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
 }
 .ds-tip-dot {
   width: 22px;
@@ -3678,7 +3689,8 @@ select.gx-input {
   -webkit-backdrop-filter: blur(14px);
   color: #ffffff;
   font-family:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI", sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI",
+    sans-serif;
 }
 .rc-card-head {
   display: flex;
@@ -4076,10 +4088,11 @@ select.gx-input {
 }
 
 .demo-resume {
+  /* Sits in the middle of the page header line (88px tall, under the banner), where nothing else lives. */
   position: fixed;
   left: 50%;
-  bottom: 22px;
-  transform: translateX(-50%);
+  top: calc(var(--demo-banner-h) + 44px);
+  transform: translate(-50%, -50%);
   z-index: 10000;
   display: inline-flex;
   align-items: center;

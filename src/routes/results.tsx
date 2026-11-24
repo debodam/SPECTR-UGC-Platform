@@ -569,8 +569,8 @@ function TrackPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         flexShrink: 0,
-                        background: onTrack ? "#ecfdf3" : "#fef3f2",
-                        color: onTrack ? "#067647" : "#b42318",
+                        background: onTrack ? "rgba(255,255,255,0.2)" : "#ffffff",
+                        color: onTrack ? "#ffffff" : "#0b3a75",
                       }}
                     >
                       {onTrack ? "On track" : "Behind"}
