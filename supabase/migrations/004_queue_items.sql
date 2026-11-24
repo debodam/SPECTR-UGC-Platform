@@ -13,6 +13,7 @@ create table if not exists public.queue_items (
 
 alter table public.queue_items enable row level security;
 
+drop policy if exists "Users can manage own queue_items" on public.queue_items;
 create policy "Users can manage own queue_items"
   on public.queue_items for all
   using  (auth.uid() = user_id)

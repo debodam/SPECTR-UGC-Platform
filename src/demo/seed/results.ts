@@ -1,0 +1,481 @@
+// Results (perf entries) and Distribute queue. Dates are relative to "now" so the demo never looks stale.
+export type Format = "Article" | "Post" | "Video Script";
+export type Source = "Transcript" | "Notes" | "Draft";
+
+export interface SeedEntry {
+  daysAgo: number;
+  title: string;
+  format: Format;
+  source: Source;
+  impressions: number;
+  engagementRate: number;
+  followersGained: number;
+  notes: string;
+}
+
+// 32 entries over 9 weeks. Weekly impression totals climb from about 4.6k to about 12.8k.
+// Total followers gained across entries is 983, so current followers = 2140 + 983 = 3123.
+export const SEED_ENTRIES: SeedEntry[] = [
+  // Week 1
+  {
+    daysAgo: 62,
+    title: "Your players do not need more workouts, they need a plan",
+    format: "Post",
+    source: "Notes",
+    impressions: 1450,
+    engagementRate: 2.6,
+    followersGained: 14,
+    notes: "First post of the program. Solid comments from two club directors.",
+  },
+  {
+    daysAgo: 60,
+    title: "Why most training programs fail by week three",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2100,
+    engagementRate: 2.9,
+    followersGained: 31,
+    notes: "Long read time. Saved by a few head coaches.",
+  },
+  {
+    daysAgo: 57,
+    title: "We asked 40 coaches how they plan a training week",
+    format: "Post",
+    source: "Notes",
+    impressions: 1050,
+    engagementRate: 2.2,
+    followersGained: 17,
+    notes: "Survey style post. Okay but forgettable.",
+  },
+  // Week 2
+  {
+    daysAgo: 54,
+    title: "Copy and paste workouts are not coaching",
+    format: "Post",
+    source: "Transcript",
+    impressions: 1900,
+    engagementRate: 3.1,
+    followersGained: 19,
+    notes: "Contrarian title helped. Good debate in comments.",
+  },
+  {
+    daysAgo: 52,
+    title: "A simple model for load, recovery and game days",
+    format: "Article",
+    source: "Draft",
+    impressions: 2350,
+    engagementRate: 3.0,
+    followersGained: 28,
+    notes: "Framework post. Several coaches asked for the template.",
+  },
+  {
+    daysAgo: 50,
+    title: "My first assistant coach taught me this",
+    format: "Post",
+    source: "Notes",
+    impressions: 1550,
+    engagementRate: 2.4,
+    followersGained: 24,
+    notes: "Coach story. Decent follower pickup for the reach.",
+  },
+  // Week 3
+  {
+    daysAgo: 47,
+    title: "Stop calling it conditioning",
+    format: "Post",
+    source: "Transcript",
+    impressions: 1700,
+    engagementRate: 3.3,
+    followersGained: 22,
+    notes: "Strength coaches and head coaches both engaged.",
+  },
+  {
+    daysAgo: 45,
+    title: "60 seconds: the free throw mistake everyone makes",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 2900,
+    engagementRate: 3.8,
+    followersGained: 36,
+    notes: "First video script. Opened with a question hook.",
+  },
+  {
+    daysAgo: 43,
+    title: "What a tired player looks like in week 4",
+    format: "Post",
+    source: "Transcript",
+    impressions: 1600,
+    engagementRate: 2.8,
+    followersGained: 26,
+    notes: "Specific and visual. Shared twice.",
+  },
+  // Week 4
+  {
+    daysAgo: 41,
+    title: "Rest is a skill your players have to practice",
+    format: "Article",
+    source: "Draft",
+    impressions: 2600,
+    engagementRate: 3.4,
+    followersGained: 29,
+    notes: "Strong with performance coaches.",
+  },
+  {
+    daysAgo: 40,
+    title: "The 3 drills I would keep if I could only keep three",
+    format: "Video Script",
+    source: "Notes",
+    impressions: 3300,
+    engagementRate: 4.2,
+    followersGained: 44,
+    notes: "Numbered promise in the hook. Best video so far.",
+  },
+  {
+    daysAgo: 38,
+    title: "Why we picked a new logo",
+    format: "Post",
+    source: "Notes",
+    impressions: 1200,
+    engagementRate: 2.5,
+    followersGained: 15,
+    notes: "Off topic for the audience. Do not repeat.",
+  },
+  {
+    daysAgo: 36,
+    title: "Everything I got wrong about load management",
+    format: "Post",
+    source: "Transcript",
+    impressions: 900,
+    engagementRate: 2.3,
+    followersGained: 30,
+    notes: "Low reach but a well known strength coach reshared it.",
+  },
+  // Week 5
+  {
+    daysAgo: 34,
+    title: "How we run a 25 minute skill session",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2200,
+    engagementRate: 3.0,
+    followersGained: 21,
+    notes: "Practical and saveable.",
+  },
+  {
+    daysAgo: 32,
+    title: "Basketball training is not a workout problem",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2700,
+    engagementRate: 3.5,
+    followersGained: 33,
+    notes: "Contrarian title. Best article so far at that point.",
+  },
+  {
+    daysAgo: 30,
+    title: "What we learned from 12 injury conversations",
+    format: "Post",
+    source: "Notes",
+    impressions: 1300,
+    engagementRate: 2.6,
+    followersGained: 16,
+    notes: "Too many bullets. Hard to skim.",
+  },
+  {
+    daysAgo: 29,
+    title: "So today I want to talk about training",
+    format: "Video Script",
+    source: "Draft",
+    impressions: 1400,
+    engagementRate: 3.0,
+    followersGained: 26,
+    notes: "Weak opening line. Viewers dropped in the first 3 seconds.",
+  },
+  // Week 6
+  {
+    daysAgo: 27,
+    title: "From 58 to 71 percent at the line. I changed the last 10 minutes of practice",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 4300,
+    engagementRate: 4.9,
+    followersGained: 51,
+    notes: "Opened with a before and after number. Number hook worked.",
+  },
+  {
+    daysAgo: 25,
+    title: "A quiet player is giving you data",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2000,
+    engagementRate: 3.2,
+    followersGained: 22,
+    notes: "Short and sharp.",
+  },
+  {
+    daysAgo: 23,
+    title: "Designing training for the bad week",
+    format: "Article",
+    source: "Draft",
+    impressions: 2300,
+    engagementRate: 3.6,
+    followersGained: 30,
+    notes: "Good depth. Slow burn over several days.",
+  },
+  {
+    daysAgo: 22,
+    title: "A player told us our program felt like homework",
+    format: "Post",
+    source: "Notes",
+    impressions: 1500,
+    engagementRate: 2.9,
+    followersGained: 36,
+    notes: "Honest story. Strong follower conversion.",
+  },
+  // Week 7
+  {
+    daysAgo: 20,
+    title: "Why I stopped asking players if they feel good",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 5200,
+    engagementRate: 5.4,
+    followersGained: 58,
+    notes: "Strong hook and a clear takeaway at 40 seconds.",
+  },
+  {
+    daysAgo: 18,
+    title: "The best athlete is not always the best trainee",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2100,
+    engagementRate: 3.4,
+    followersGained: 23,
+    notes: "Lots of agreement from coaches and parents.",
+  },
+  {
+    daysAgo: 16,
+    title: "How to read game film for training clues",
+    format: "Article",
+    source: "Draft",
+    impressions: 2400,
+    engagementRate: 3.7,
+    followersGained: 34,
+    notes: "Niche and useful. Strong saves.",
+  },
+  {
+    daysAgo: 15,
+    title: "The day I almost quit coaching",
+    format: "Post",
+    source: "Notes",
+    impressions: 1600,
+    engagementRate: 3.0,
+    followersGained: 36,
+    notes: "Personal story. Personal posts convert well.",
+  },
+  // Week 8
+  {
+    daysAgo: 13,
+    title: "Five words that kill a practice",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 5900,
+    engagementRate: 6.1,
+    followersGained: 64,
+    notes: "Best performer of the program. Shared by a college head coach.",
+  },
+  {
+    daysAgo: 11,
+    title: "What training load actually measures",
+    format: "Post",
+    source: "Draft",
+    impressions: 2300,
+    engagementRate: 3.6,
+    followersGained: 27,
+    notes: "Clear definition post.",
+  },
+  {
+    daysAgo: 9,
+    title: "Training is a promise, not a schedule",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2800,
+    engagementRate: 3.8,
+    followersGained: 41,
+    notes: "Best article of the program. Strong comments.",
+  },
+  {
+    daysAgo: 8,
+    title: "Our one rule for the first week of a season",
+    format: "Post",
+    source: "Notes",
+    impressions: 1800,
+    engagementRate: 3.1,
+    followersGained: 32,
+    notes: "Simple rule, easy to repeat.",
+  },
+  // Week 9 (in progress)
+  {
+    daysAgo: 6,
+    title: "The player who went quiet in week 4",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 4700,
+    engagementRate: 5.8,
+    followersGained: 47,
+    notes: "Story hook. Still climbing.",
+  },
+  {
+    daysAgo: 4,
+    title: "Fatigue is a signal, not an attitude problem",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2200,
+    engagementRate: 3.5,
+    followersGained: 24,
+    notes: "Came from the recording earlier this week.",
+  },
+  {
+    daysAgo: 2,
+    title: "What to do when a player stops improving",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2700,
+    engagementRate: 3.9,
+    followersGained: 27,
+    notes: "Strong first two days.",
+  },
+];
+
+export type QueueStatus = "Draft" | "Ready" | "Posted"; // legacy mapping: Scheduled = Ready, Published = Posted
+
+export interface SeedQueueItem {
+  daysFromNow: number; // negative = past
+  time: string;
+  title: string;
+  format: Format;
+  status: QueueStatus;
+  awaitingResults?: boolean;
+  due?: boolean;
+}
+
+export const SEED_QUEUE: SeedQueueItem[] = [
+  // Recently posted, results already logged (match entries above)
+  {
+    daysFromNow: -2,
+    time: "08:30",
+    title: "What to do when a player stops improving",
+    format: "Article",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -4,
+    time: "09:00",
+    title: "Fatigue is a signal, not an attitude problem",
+    format: "Post",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -6,
+    time: "12:15",
+    title: "The player who went quiet in week 4",
+    format: "Video Script",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -8,
+    time: "09:00",
+    title: "Our one rule for the first week of a season",
+    format: "Post",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -9,
+    time: "08:30",
+    title: "Training is a promise, not a schedule",
+    format: "Article",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -11,
+    time: "09:00",
+    title: "What training load actually measures",
+    format: "Post",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -13,
+    time: "12:15",
+    title: "Five words that kill a practice",
+    format: "Video Script",
+    status: "Posted",
+  },
+  // Posted yesterday, waiting for numbers (shows the "log results" nudge)
+  {
+    daysFromNow: -1,
+    time: "09:00",
+    title: "Three questions to ask before writing any training program",
+    format: "Post",
+    status: "Posted",
+    awaitingResults: true,
+  },
+  // Due today (shows the "due now" badge)
+  {
+    daysFromNow: 0,
+    time: "11:30",
+    title: "How one guard went from 61 to 74 percent at the line in 8 weeks",
+    format: "Video Script",
+    status: "Ready",
+    due: true,
+  },
+  // Upcoming
+  {
+    daysFromNow: 1,
+    time: "09:00",
+    title: "Why we stopped giving every athlete the same program",
+    format: "Article",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 2,
+    time: "09:00",
+    title: "My first assistant coach taught me what I got wrong",
+    format: "Post",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 3,
+    time: "12:15",
+    title: "The 6 week basketball program that added 3.5 inches to a vertical",
+    format: "Video Script",
+    status: "Draft",
+  },
+  {
+    daysFromNow: 4,
+    time: "09:00",
+    title: "One sentence from a parent that changed our roadmap",
+    format: "Post",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 5,
+    time: "08:30",
+    title: "The training plan we wish we had in 2024",
+    format: "Article",
+    status: "Draft",
+  },
+  {
+    daysFromNow: 7,
+    time: "09:00",
+    title: "What our week 12 numbers say about video",
+    format: "Post",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 8,
+    time: "12:15",
+    title: "Three signs a player is about to plateau",
+    format: "Video Script",
+    status: "Draft",
+  },
+];

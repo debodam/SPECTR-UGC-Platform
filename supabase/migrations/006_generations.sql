@@ -9,6 +9,7 @@ create table if not exists public.generations (
 
 alter table public.generations enable row level security;
 
+drop policy if exists "Users manage their own generations" on public.generations;
 create policy "Users manage their own generations"
   on public.generations for all
   using (auth.uid() = user_id)

@@ -1,10 +1,8 @@
 import { useRef, useState } from "react";
+import type { Workspace } from "@/lib/spectr-store";
+import { errMessage, friendlyError } from "@/lib/utils";
 import { Upload, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import {
-  parseLinkedInFile,
-  type LinkedInFileType,
-  type ParsedMetrics,
-} from "@/lib/linkedin-xls";
+import { parseLinkedInFile, type LinkedInFileType, type ParsedMetrics } from "@/lib/linkedin-xls";
 
 interface SlotDef {
   type: LinkedInFileType;
@@ -48,8 +46,8 @@ interface SlotState {
 const IDLE: SlotState = { status: "idle", message: "", parsed: {} };
 
 interface Props {
-  ws: any;
-  setWorkspace: (patch: any) => void;
+  ws: Workspace;
+  setWorkspace: (patch: Partial<Workspace>) => void;
 }
 
 export function LinkedInUploadSlots({ ws, setWorkspace }: Props) {
@@ -76,8 +74,14 @@ export function LinkedInUploadSlots({ ws, setWorkspace }: Props) {
       const metrics = await parseLinkedInFile(file, type);
       setWorkspace({ baseline: { ...ws.baseline, ...metrics } });
       patch(type, { status: "done", parsed: metrics });
-    } catch (err: any) {
-      patch(type, { status: "error", message: err.message ?? "Parse failed." });
+    } catch (err) {
+      patch(type, {
+        status: "error",
+        message: friendlyError(
+          err,
+          "Could not read that file. Check it is a LinkedIn analytics export.",
+        ),
+      });
     }
   }
 
@@ -90,12 +94,16 @@ export function LinkedInUploadSlots({ ws, setWorkspace }: Props) {
   return (
     <div className="mb-5">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "var(--color-text-secondary)" }}>
+        <span
+          className="text-xs font-semibold uppercase tracking-wide"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           Auto-fill from LinkedIn exports
         </span>
-        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium"
-          style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}>
+        <span
+          className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+          style={{ background: "rgba(10,102,194,0.08)", color: "var(--color-primary)" }}
+        >
           Optional
         </span>
       </div>
@@ -114,8 +122,8 @@ export function LinkedInUploadSlots({ ws, setWorkspace }: Props) {
       </div>
 
       <p className="text-[11px] mt-2" style={{ color: "var(--color-text-secondary)" }}>
-        Files are parsed in your browser — nothing is uploaded or stored.
-        You can still edit the numbers manually below.
+        Files are parsed in your browser. Nothing is uploaded or stored. You can still edit the
+        numbers manually below.
       </p>
     </div>
   );
@@ -138,11 +146,13 @@ function Slot({
     <div
       className="rounded-lg p-3 flex flex-col gap-2 min-h-[100px]"
       style={{
-        border: `1px solid ${state.status === "done"
-          ? "var(--color-success)"
-          : state.status === "error"
-          ? "var(--color-destructive)"
-          : "var(--color-border)"}`,
+        border: `1px solid ${
+          state.status === "done"
+            ? "var(--color-success)"
+            : state.status === "error"
+              ? "var(--color-destructive)"
+              : "var(--color-border)"
+        }`,
         background: "var(--color-surface)",
         transition: "border-color 0.15s",
       }}
@@ -158,7 +168,10 @@ function Slot({
             type="button"
             onClick={() => inputRef.current?.click()}
             className="flex items-center gap-1.5 text-xs font-semibold w-full justify-center py-1.5 rounded-md transition-colors"
-            style={{ border: "1px dashed var(--color-border)", color: "var(--color-text-secondary)" }}
+            style={{
+              border: "1px dashed var(--color-border)",
+              color: "var(--color-text-secondary)",
+            }}
           >
             <Upload size={11} />
             Upload .xlsx
@@ -166,8 +179,10 @@ function Slot({
         )}
 
         {state.status === "parsing" && (
-          <div className="flex items-center gap-1.5 text-xs py-1"
-            style={{ color: "var(--color-text-secondary)" }}>
+          <div
+            className="flex items-center gap-1.5 text-xs py-1"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             <Loader2 size={12} className="animate-spin" />
             Parsing…
           </div>
@@ -176,23 +191,31 @@ function Slot({
         {state.status === "done" && (
           <div>
             <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1 text-xs font-semibold"
-                style={{ color: "var(--color-success)" }}>
+              <div
+                className="flex items-center gap-1 text-xs font-semibold"
+                style={{ color: "var(--color-success)" }}
+              >
                 <CheckCircle2 size={12} />
                 Filled in
               </div>
-              <button type="button" onClick={onClear}
+              <button
+                type="button"
+                onClick={onClear}
                 className="text-xs rounded p-0.5 hover:opacity-70"
                 style={{ color: "var(--color-text-secondary)" }}
-                title="Clear and re-upload">
+                title="Clear and re-upload"
+              >
                 <X size={12} />
               </button>
             </div>
             {def.fields
               .filter((f) => state.parsed[f.key] !== undefined)
               .map((f) => (
-                <div key={f.key} className="text-[11px]"
-                  style={{ color: "var(--color-text-secondary)" }}>
+                <div
+                  key={f.key}
+                  className="text-[11px]"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   {f.label}:{" "}
                   <span className="font-semibold" style={{ color: "var(--color-foreground)" }}>
                     {f.key === "engagementRate"
@@ -207,19 +230,23 @@ function Slot({
         {state.status === "error" && (
           <div>
             <div className="flex items-center justify-between mb-0.5">
-              <div className="flex items-center gap-1 text-xs font-semibold"
-                style={{ color: "var(--color-destructive)" }}>
+              <div
+                className="flex items-center gap-1 text-xs font-semibold"
+                style={{ color: "var(--color-destructive)" }}
+              >
                 <AlertCircle size={12} />
                 Failed
               </div>
-              <button type="button" onClick={onClear}
+              <button
+                type="button"
+                onClick={onClear}
                 className="text-xs rounded p-0.5 hover:opacity-70"
-                style={{ color: "var(--color-text-secondary)" }}>
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 <X size={12} />
               </button>
             </div>
-            <div className="text-[11px] leading-snug"
-              style={{ color: "var(--color-destructive)" }}>
+            <div className="text-[11px] leading-snug" style={{ color: "var(--color-destructive)" }}>
               {state.message}
             </div>
           </div>

@@ -9,61 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransformRouteImport } from './routes/transform'
-import { Route as TrackRouteImport } from './routes/track'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SetupRouteImport } from './routes/setup'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RecordRouteImport } from './routes/record'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as DistributeRouteImport } from './routes/distribute'
-import { Route as CompaniesRouteImport } from './routes/companies'
-import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccessRouteImport } from './routes/access'
+import { Route as CompaniesRouteImport } from './routes/companies'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DistributeRouteImport } from './routes/distribute'
+import { Route as GrowthRouteImport } from './routes/growth'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RecordRouteImport } from './routes/record'
+import { Route as ResultsRouteImport } from './routes/results'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as TrackRouteImport } from './routes/track'
+import { Route as TransformRouteImport } from './routes/transform'
+import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 
-const TransformRoute = TransformRouteImport.update({
-  id: '/transform',
-  path: '/transform',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrackRoute = TrackRouteImport.update({
-  id: '/track',
-  path: '/track',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SetupRoute = SetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecordRoute = RecordRouteImport.update({
-  id: '/record',
-  path: '/record',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DistributeRoute = DistributeRouteImport.update({
-  id: '/distribute',
-  path: '/distribute',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompaniesRoute = CompaniesRouteImport.update({
-  id: '/companies',
-  path: '/companies',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccessRoute = AccessRouteImport.update({
@@ -71,9 +36,74 @@ const AccessRoute = AccessRouteImport.update({
   path: '/access',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CompaniesRoute = CompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DistributeRoute = DistributeRouteImport.update({
+  id: '/distribute',
+  path: '/distribute',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GrowthRoute = GrowthRouteImport.update({
+  id: '/growth',
+  path: '/growth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecordRoute = RecordRouteImport.update({
+  id: '/record',
+  path: '/record',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultsRoute = ResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransformRoute = TransformRouteImport.update({
+  id: '/transform',
+  path: '/transform',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -81,41 +111,56 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
+  '/growth': typeof GrowthRoute
   '/login': typeof LoginRoute
   '/record': typeof RecordRoute
+  '/results': typeof ResultsRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/track': typeof TrackRoute
   '/transform': typeof TransformRoute
+  '/welcome': typeof WelcomeRoute
+  '/api/health': typeof ApiHealthRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
+  '/growth': typeof GrowthRoute
   '/login': typeof LoginRoute
   '/record': typeof RecordRoute
+  '/results': typeof ResultsRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/track': typeof TrackRoute
   '/transform': typeof TransformRoute
+  '/welcome': typeof WelcomeRoute
+  '/api/health': typeof ApiHealthRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
+  '/growth': typeof GrowthRoute
   '/login': typeof LoginRoute
   '/record': typeof RecordRoute
+  '/results': typeof ResultsRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/track': typeof TrackRoute
   '/transform': typeof TransformRoute
+  '/welcome': typeof WelcomeRoute
+  '/api/health': typeof ApiHealthRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -123,119 +168,83 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/companies'
+    | '/demo'
     | '/distribute'
+    | '/growth'
     | '/login'
     | '/record'
+    | '/results'
     | '/settings'
     | '/setup'
     | '/signup'
     | '/track'
     | '/transform'
+    | '/welcome'
+    | '/api/health'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/access'
     | '/companies'
+    | '/demo'
     | '/distribute'
+    | '/growth'
     | '/login'
     | '/record'
+    | '/results'
     | '/settings'
     | '/setup'
     | '/signup'
     | '/track'
     | '/transform'
+    | '/welcome'
+    | '/api/health'
   id:
     | '__root__'
     | '/'
     | '/access'
     | '/companies'
+    | '/demo'
     | '/distribute'
+    | '/growth'
     | '/login'
     | '/record'
+    | '/results'
     | '/settings'
     | '/setup'
     | '/signup'
     | '/track'
     | '/transform'
+    | '/welcome'
+    | '/api/health'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessRoute: typeof AccessRoute
   CompaniesRoute: typeof CompaniesRoute
+  DemoRoute: typeof DemoRoute
   DistributeRoute: typeof DistributeRoute
+  GrowthRoute: typeof GrowthRoute
   LoginRoute: typeof LoginRoute
   RecordRoute: typeof RecordRoute
+  ResultsRoute: typeof ResultsRoute
   SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
   TrackRoute: typeof TrackRoute
   TransformRoute: typeof TransformRoute
+  WelcomeRoute: typeof WelcomeRoute
+  ApiHealthRoute: typeof ApiHealthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/transform': {
-      id: '/transform'
-      path: '/transform'
-      fullPath: '/transform'
-      preLoaderRoute: typeof TransformRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/track': {
-      id: '/track'
-      path: '/track'
-      fullPath: '/track'
-      preLoaderRoute: typeof TrackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/record': {
-      id: '/record'
-      path: '/record'
-      fullPath: '/record'
-      preLoaderRoute: typeof RecordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/distribute': {
-      id: '/distribute'
-      path: '/distribute'
-      fullPath: '/distribute'
-      preLoaderRoute: typeof DistributeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/companies': {
-      id: '/companies'
-      path: '/companies'
-      fullPath: '/companies'
-      preLoaderRoute: typeof CompaniesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/access': {
@@ -245,11 +254,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/companies': {
+      id: '/companies'
+      path: '/companies'
+      fullPath: '/companies'
+      preLoaderRoute: typeof CompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/distribute': {
+      id: '/distribute'
+      path: '/distribute'
+      fullPath: '/distribute'
+      preLoaderRoute: typeof DistributeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/growth': {
+      id: '/growth'
+      path: '/growth'
+      fullPath: '/growth'
+      preLoaderRoute: typeof GrowthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/record': {
+      id: '/record'
+      path: '/record'
+      fullPath: '/record'
+      preLoaderRoute: typeof RecordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/results': {
+      id: '/results'
+      path: '/results'
+      fullPath: '/results'
+      preLoaderRoute: typeof ResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transform': {
+      id: '/transform'
+      path: '/transform'
+      fullPath: '/transform'
+      preLoaderRoute: typeof TransformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -259,14 +359,19 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRoute: AccessRoute,
   CompaniesRoute: CompaniesRoute,
+  DemoRoute: DemoRoute,
   DistributeRoute: DistributeRoute,
+  GrowthRoute: GrowthRoute,
   LoginRoute: LoginRoute,
   RecordRoute: RecordRoute,
+  ResultsRoute: ResultsRoute,
   SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,
   TrackRoute: TrackRoute,
   TransformRoute: TransformRoute,
+  WelcomeRoute: WelcomeRoute,
+  ApiHealthRoute: ApiHealthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,12 +1,36 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import supabase from "./supabase";
 import type { Session } from "@supabase/supabase-js";
+import { DEMO_KEYS, isDemo } from "@/demo/mode";
+import { demoWorkspace } from "@/demo/data";
 
 const KEY = "spectr-state-v1";
 
 export type Format = "Article" | "Post" | "Video Script";
 
-export interface User { id: string; name: string; email: string; }
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface GrowthPrefs {
+  focus: string;
+  weeklyTime: string;
+  formats: string[];
+  topics: string;
+  voice: string;
+  avoid: string;
+}
+
+export const emptyGrowthPrefs: GrowthPrefs = {
+  focus: "",
+  weeklyTime: "",
+  formats: ["Posts", "Articles", "Video scripts"],
+  topics: "",
+  voice: "",
+  avoid: "",
+};
 
 export interface Workspace {
   companyId?: string;
@@ -16,31 +40,60 @@ export interface Workspace {
   primaryPlatform: "LinkedIn";
   startingFromScratch: boolean;
   baseline: {
-    followers: string; followerGrowth: string; weeklyImpressions: string;
-    engagementRate: string; monthlyVisitors: string; weeklyPageSearches: string;
+    followers: string;
+    followerGrowth: string;
+    weeklyImpressions: string;
+    engagementRate: string;
+    monthlyVisitors: string;
+    weeklyPageSearches: string;
   };
   targets: {
-    followers: string; followerGrowth: string; weeklyImpressions: string;
-    engagementRate: string; monthlyVisitors: string; weeklyPageSearches: string;
+    followers: string;
+    followerGrowth: string;
+    weeklyImpressions: string;
+    engagementRate: string;
+    monthlyVisitors: string;
+    weeklyPageSearches: string;
   };
   goalDescription: string;
   companyDescription: string;
   companyPdfUrl: string;
   companyPdfName: string;
   audience: {
-    jobTitles: string; seniority: string; companySize: string; description: string;
+    jobTitles: string;
+    seniority: string;
+    companySize: string;
+    description: string;
   };
+  /** Strategy choices from Setup that shape the growth plan. */
+  growthPrefs: GrowthPrefs;
 }
 
 export interface PerfEntry {
-  id: string; date: string; title: string; format: Format;
+  id: string;
+  date: string;
+  title: string;
+  format: Format;
   source: "Transcript" | "Notes" | "Draft";
-  impressions: number; engagementRate: number; followersGained: number; notes: string;
+  impressions: number;
+  engagementRate: number;
+  followersGained: number;
+  notes: string;
+  /** Growth Engine links (optional until migration 009 is applied). */
+  playId?: string | null;
+  variant?: "a" | "b" | null;
+  /** Created by Mark as posted; waiting for the user to add numbers. Excluded from all stats. */
+  pending?: boolean;
 }
 
 export interface QueueItem {
-  id: string; title: string; format: Format; date: string; time: string;
+  id: string;
+  title: string;
+  format: Format;
+  date: string;
+  time: string;
   status: "Scheduled" | "Published";
+  playId?: string | null;
 }
 
 export interface AppState {
@@ -56,20 +109,44 @@ export interface AppState {
 
 const emptyWorkspace: Workspace = {
   companyId: undefined,
-  companyName: "", companyLogoUrl: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false,
-  baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
-  targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
+  companyName: "",
+  companyLogoUrl: "",
+  industry: "",
+  primaryPlatform: "LinkedIn",
+  startingFromScratch: false,
+  baseline: {
+    followers: "",
+    followerGrowth: "",
+    weeklyImpressions: "",
+    engagementRate: "",
+    monthlyVisitors: "",
+    weeklyPageSearches: "",
+  },
+  targets: {
+    followers: "",
+    followerGrowth: "",
+    weeklyImpressions: "",
+    engagementRate: "",
+    monthlyVisitors: "",
+    weeklyPageSearches: "",
+  },
   goalDescription: "",
   companyDescription: "",
   companyPdfUrl: "",
   companyPdfName: "",
   audience: { jobTitles: "", seniority: "", companySize: "", description: "" },
+  growthPrefs: emptyGrowthPrefs,
 };
 
 const initialState: AppState = {
-  user: null, isAuthenticated: false, authLoading: true,
-  setupComplete: false, setupStep: 1,
-  workspace: emptyWorkspace, entries: [], queue: [],
+  user: null,
+  isAuthenticated: false,
+  authLoading: true,
+  setupComplete: false,
+  setupStep: 1,
+  workspace: emptyWorkspace,
+  entries: [],
+  queue: [],
 };
 
 const Ctx = createContext<{
@@ -78,15 +155,28 @@ const Ctx = createContext<{
   setWorkspace: (patch: Partial<Workspace>) => void;
 } | null>(null);
 
-type StoredState = Pick<AppState, "workspace" | "setupComplete" | "setupStep" | "entries" | "queue">;
+type StoredState = Pick<
+  AppState,
+  "workspace" | "setupComplete" | "setupStep" | "entries" | "queue"
+>;
 
 function load(): StoredState {
   const fallback: StoredState = {
-    workspace: emptyWorkspace, setupComplete: false, setupStep: 1, entries: [], queue: [],
+    workspace: emptyWorkspace,
+    setupComplete: false,
+    setupStep: 1,
+    entries: [],
+    queue: [],
   };
   if (typeof window === "undefined") return fallback;
+  // The demo keeps its own state in this tab only, so it never touches the real app's saved state.
+  if (isDemo()) {
+    fallback.workspace = demoWorkspace();
+    fallback.setupComplete = true;
+    fallback.setupStep = 6;
+  }
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = isDemo() ? sessionStorage.getItem(DEMO_KEYS.state) : localStorage.getItem(KEY);
     if (!raw) return fallback;
     const p = JSON.parse(raw);
     const w = p.workspace || {};
@@ -97,15 +187,18 @@ function load(): StoredState {
         ...emptyWorkspace,
         ...w,
         baseline: { ...emptyWorkspace.baseline, ...(w.baseline || {}) },
-        targets:  { ...emptyWorkspace.targets,  ...(w.targets  || {}) },
+        targets: { ...emptyWorkspace.targets, ...(w.targets || {}) },
         audience: { ...emptyWorkspace.audience, ...(w.audience || {}) },
+        growthPrefs: { ...emptyGrowthPrefs, ...(w.growthPrefs || {}) },
       },
       setupComplete: p.setupComplete ?? false,
       setupStep: p.setupStep ?? 1,
       entries: p.entries || [],
       queue: p.queue || [],
     };
-  } catch { return fallback; }
+  } catch {
+    return fallback;
+  }
 }
 
 function sessionToUser(session: Session | null): User | null {
@@ -120,13 +213,16 @@ function sessionToUser(session: Session | null): User | null {
 export function SpectrProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(initialState);
   const [hydrated, setHydrated] = useState(false);
+  // Which store this tab loaded from. If demo mode flips on or off after load (only /demo does that, right before
+  // a full reload), nothing is written, so real and demo state can never mix.
+  const [loadedAsDemo] = useState(isDemo);
 
   useEffect(() => {
     const stored = load();
     // Flag flips to true once getSession() resolves and the stored workspace is
     // merged into state. Any onAuthStateChange event that fires before that point
     // (INITIAL_SESSION, TOKEN_REFRESHED, etc.) would spread ...s which is still
-    // initialState — no companyId, authLoading:false — causing a false redirect.
+    // initialState (no companyId, authLoading false), causing a false redirect.
     let sessionLoaded = false;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -141,7 +237,9 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
       setHydrated(true);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!sessionLoaded) return;
       setState((s) => ({
         ...s,
@@ -158,9 +256,11 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || isDemo() !== loadedAsDemo || window.location.pathname === "/demo") return;
     const { workspace, setupComplete, setupStep, entries, queue } = state;
-    localStorage.setItem(KEY, JSON.stringify({ workspace, setupComplete, setupStep, entries, queue }));
+    const json = JSON.stringify({ workspace, setupComplete, setupStep, entries, queue });
+    if (isDemo()) sessionStorage.setItem(DEMO_KEYS.state, json);
+    else localStorage.setItem(KEY, json);
   }, [state, hydrated]);
 
   const update = (patch: Partial<AppState>) => setState((s) => ({ ...s, ...patch }));

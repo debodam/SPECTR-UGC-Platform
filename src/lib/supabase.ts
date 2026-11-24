@@ -1,19 +1,35 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createDemoClient } from "@/demo/client";
+import { isDemo } from "@/demo/mode";
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '') as string
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '') as string
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || "") as string;
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || "") as string;
 
-// Lazy singleton — only created in the browser. Supabase's realtime client
+// Lazy singleton, only created in the browser. Supabase's realtime client
 // tries to open a WebSocket on initialization, which throws in Node.js 20
 // (no native WebSocket). All Supabase calls are inside useEffect so this
 // is safe: the client is never needed during SSR.
-let _client: SupabaseClient | null = null
+let _client: SupabaseClient | null = null;
+let _demo: SupabaseClient | null = null;
+
+/** The signed-in user's access token, sent to server functions that spend paid API calls. */
+export async function accessToken(): Promise<string | undefined> {
+  if (isDemo()) return undefined;
+  try {
+    const { data } = await getClient().auth.getSession();
+    return data.session?.access_token;
+  } catch {
+    return undefined;
+  }
+}
 
 function getClient(): SupabaseClient {
+  // Demo mode (only ever switched on by /demo) reads and writes an in-memory sandbox, never Supabase.
+  if (isDemo()) return (_demo ??= createDemoClient());
   if (!_client) {
-    _client = createClient(supabaseUrl, supabaseAnonKey)
+    _client = createClient(supabaseUrl, supabaseAnonKey);
   }
-  return _client
+  return _client;
 }
 
 // Proxy that defers client creation until first property access.
@@ -21,8 +37,8 @@ function getClient(): SupabaseClient {
 // so createClient is never called and WebSocket is never touched.
 export const supabase = new Proxy({} as SupabaseClient, {
   get(_target, prop, receiver) {
-    return Reflect.get(getClient(), prop, receiver)
+    return Reflect.get(getClient(), prop, receiver);
   },
-})
+});
 
-export default supabase
+export default supabase;

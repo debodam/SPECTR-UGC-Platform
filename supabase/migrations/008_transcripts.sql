@@ -9,6 +9,7 @@ create table if not exists public.transcripts (
 
 alter table public.transcripts enable row level security;
 
+drop policy if exists "Users manage their own transcripts" on public.transcripts;
 create policy "Users manage their own transcripts"
   on public.transcripts for all
   using (auth.uid() = user_id)

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Loading workspaces</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+html,body,x-dc,x-dc *,.sc-host,.sc-host *,button,input,textarea,select,option{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif !important}
+@keyframes ws-spin{to{transform:rotate(360deg)}}
+@keyframes ws-pulse{0%,100%{opacity:.35}50%{opacity:.7}}
+.ws-ring{animation:ws-spin .9s linear infinite}
+.ws-pulse{animation:ws-pulse 1.4s ease-in-out infinite}
+.ws-btn:focus-visible{outline:2px solid #ffffff;outline-offset:4px}
+.ws-field::placeholder{color:#5b6b80}
+.ws-field:focus{outline:none;border-color:#0a66c2 !important;background:#ffffff !important;box-shadow:0 0 0 4px rgba(10,102,194,.16)}
+</style>
+</helmet>
+<div style="position:relative;width:1440px;height:960px;overflow:hidden;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#b9d6f8 0%,#4d92e0 48%,#0a4a94 100%);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif;color:#ffffff">
+
+<svg aria-hidden="true" width="1440" height="960" viewBox="0 0 1440 960" style="position:absolute;left:0;top:0">
+<defs>
+<radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+<stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+<stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+</radialGradient>
+</defs>
+<circle cx="260" cy="120" r="520" fill="url(#bgGlow)"/>
+<circle cx="720" cy="480" r="620" fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="1.5"/>
+<circle cx="720" cy="480" r="780" fill="none" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1.5"/>
+<circle cx="720" cy="480" r="940" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1.5"/>
+</svg>
+
+<div style="position:relative;width:1240px;height:760px;box-sizing:border-box;border-radius:44px;overflow:hidden;background:radial-gradient(700px 520px at 30% 45%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%);box-shadow:0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)">
+
+<div style="position:absolute;left:44px;top:36px;display:flex;align-items:center;gap:10px">
+<div style="width:36px;height:36px;border-radius:10px;background:#ffffff;display:flex;align-items:center;justify-content:center">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><polygon points="12,3 21,21 12,21" fill="#0a66c2"/><polygon points="12,3 12,21 3,21" fill="#0a66c2" fill-opacity="0.55"/></svg>
+</div>
+<div style="font-size:18px;font-weight:700;letter-spacing:0.02em">SPECTR</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:64px">
+
+<div style="text-align:center">
+<h1 style="margin:0;font-size:40px;font-weight:300;letter-spacing:-0.02em;color:#ffffff">Select your workspace</h1>
+<p style="margin:12px 0 0;font-size:16px;color:rgba(255,255,255,0.88)">{{ subtitle }}</p>
+</div>
+
+<div style="display:flex;align-items:flex-start;justify-content:center;gap:48px">
+
+<sc-if value="{{ showRow }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ items }}" as="item" hint-placeholder-count="2">
+<div style="width:176px;display:flex;flex-direction:column;align-items:center;gap:16px">
+<div style="position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center">
+<button class="ws-btn" type="button" aria-label="{{ item.openLabel }}" onClick="{{ item.onOpen }}" onMouseEnter="{{ item.onEnter }}" onFocus="{{ item.onEnter }}" style="{{ item.avStyle }}">
+<img src="{{ item.img }}" alt="" style="{{ item.imgStyle }}">
+</button>
+<sc-if value="{{ item.isEntering }}" hint-placeholder-val="{{ false }}">
+<div class="ws-ring" style="position:absolute;left:4px;top:4px;right:4px;bottom:4px;border-radius:50%;border:3px solid transparent;border-top-color:#ffffff"></div>
+</sc-if>
+<sc-if value="{{ item.showTrash }}" hint-placeholder-val="{{ false }}">
+<button class="ws-btn" type="button" aria-label="{{ item.trashLabel }}" onClick="{{ item.onTrash }}" style="position:absolute;right:2px;bottom:2px;width:44px;height:44px;border-radius:50%;border:2px solid #3a82dc;background:#ffffff;color:#0b1220;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+</button>
+</sc-if>
+</div>
+<div style="{{ item.nameStyle }}">{{ item.name }}</div>
+</div>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{ showLoading }}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{ skeletons }}" as="sk" hint-placeholder-count="3">
+<div style="width:176px;display:flex;flex-direction:column;align-items:center;gap:16px">
+<div style="width:150px;height:150px;display:flex;align-items:center;justify-content:center">
+<div class="ws-pulse" style="width:112px;height:112px;border-radius:50%;background:rgba(255,255,255,0.18)"></div>
+</div>
+<div class="ws-pulse" style="width:96px;height:16px;border-radius:8px;background:rgba(255,255,255,0.18)"></div>
+</div>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{ showAdd }}" hint-placeholder-val="{{ true }}">
+<div style="width:176px;display:flex;flex-direction:column;align-items:center;gap:16px">
+<div style="width:150px;height:150px;display:flex;align-items:center;justify-content:center">
+<button class="ws-btn" type="button" aria-label="Add company" onClick="{{ onAdd }}" onMouseEnter="{{ onAddEnter }}" onFocus="{{ onAddEnter }}" style="{{ addStyle }}">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+</button>
+</div>
+<div style="{{ addNameStyle }}">Add company</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+<button class="ws-btn" type="button" style="position:absolute;left:44px;bottom:40px;height:44px;padding:0 20px;border-radius:999px;border:1px solid rgba(255,255,255,0.45);background:rgba(255,255,255,0.06);color:#ffffff;font-size:14px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:10px;cursor:pointer">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>
+<span>Log out</span>
+</button>
+
+<sc-if value="{{ showNew }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(10,50,110,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
+<div role="dialog" aria-label="New company" style="width:420px;box-sizing:border-box;padding:32px;border-radius:28px;background:#f7f9fc;color:#0b1220;box-shadow:0 40px 100px rgba(0,0,0,0.45)">
+<h2 style="margin:0;font-size:24px;font-weight:300;letter-spacing:-0.01em">New company</h2>
+<label for="cname" style="display:block;margin:22px 0 8px;font-size:13px;font-weight:600">Company name</label>
+<input class="ws-field" id="cname" type="text" placeholder="Company name" style="width:100%;height:48px;box-sizing:border-box;padding:0 16px;border-radius:12px;border:1px solid transparent;background:#eaf0f8;font-size:15px;font-family:inherit;color:#0b1220">
+<div style="margin-top:24px;display:flex;gap:12px">
+<button class="ws-btn" type="button" onClick="{{ onCreate }}" style="{{ createStyle }}">
+<sc-if value="{{ creating }}" hint-placeholder-val="{{ false }}">
+<svg class="ws-ring" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
+</sc-if>
+<span>{{ createLabel }}</span>
+</button>
+<button class="ws-btn" type="button" onClick="{{ onClose }}" style="height:48px;padding:0 22px;border-radius:12px;border:1px solid #c3d4ec;background:#ffffff;color:#0b1220;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer">Cancel</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showDelete }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(10,50,110,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
+<div role="alertdialog" aria-label="Delete company" style="width:440px;box-sizing:border-box;padding:32px;border-radius:28px;background:#f7f9fc;color:#0b1220;box-shadow:0 40px 100px rgba(0,0,0,0.45)">
+<div style="width:48px;height:48px;border-radius:50%;background:#fef3f2;color:#d92d20;display:flex;align-items:center;justify-content:center">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+</div>
+<h2 style="margin:18px 0 0;font-size:22px;font-weight:400;letter-spacing:-0.01em">Delete "{{ target }}"?</h2>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.5;color:#475569">Are you sure you want to delete this company? All workspace details, goals, and tracking data will be permanently lost and cannot be recovered.</p>
+<div style="margin-top:26px;display:flex;gap:12px;justify-content:flex-end">
+<button class="ws-btn" type="button" onClick="{{ onClose }}" style="height:48px;padding:0 22px;border-radius:12px;border:1px solid #c3d4ec;background:#ffffff;color:#0b1220;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer">Cancel</button>
+<button class="ws-btn" type="button" onClick="{{ onClose }}" style="height:48px;padding:0 22px;border-radius:12px;border:0;background:#d92d20;color:#ffffff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer">Delete company</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"view":{"editor":"enum","default":"loading","options":["list","new","delete","empty","loading"]},"focus":{"editor":"enum","default":"add","options":["viv","chi","add"]},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._e); }
+  renderVals() {
+    const s = this.state || {};
+    const view = s.view ?? this.props.view ?? 'loading';
+    const focus = s.focus ?? this.props.focus ?? 'add';
+    const target = s.target ?? this.props.target ?? 'Vivordo';
+    const entering = s.entering ?? null;
+    const creating = !!s.creating;
+    const showRow = view === 'list' || view === 'new' || view === 'delete';
+    const showLoading = view === 'loading';
+    const isEmpty = view === 'empty';
+    const data = [
+      { id: 'viv', name: 'Vivordo', img: '/_blob/a7f4db4284ab94bb381e979f87f13992' },
+      { id: 'chi', name: 'Chirality', img: '/_blob/e8554a21e95e52cbbf10f63ebdde190c' }
+    ];
+    const items = data.map((d) => {
+      const f = focus === d.id;
+      const size = f ? 136 : 112;
+      return {
+        key: d.id,
+        name: d.name,
+        img: d.img,
+        openLabel: 'Open ' + d.name + ' workspace',
+        trashLabel: 'Delete ' + d.name,
+        isEntering: entering === d.id,
+        showTrash: f && entering !== d.id,
+        avStyle: 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;padding:0;overflow:hidden;cursor:pointer;background:#ffffff;display:flex;align-items:center;justify-content:center;box-sizing:border-box;transition:all .18s ease;' + (f ? 'border:3px solid #ffffff;box-shadow:0 0 0 8px rgba(255,255,255,0.35),0 0 60px rgba(255,255,255,0.55);' : 'border:2px solid rgba(255,255,255,0.3);opacity:0.72;'),
+        imgStyle: 'width:100%;height:100%;object-fit:contain;border-radius:50%',
+        nameStyle: f ? 'font-size:18px;font-weight:700;color:#ffffff;text-align:center' : 'font-size:16px;font-weight:500;color:rgba(255,255,255,0.88);text-align:center',
+        onEnter: () => this.setState({ focus: d.id }),
+        onOpen: () => {
+          clearTimeout(this._e);
+          this.setState({ entering: d.id, focus: d.id });
+          this._e = setTimeout(() => this.setState({ entering: null }), 1400);
+        },
+        onTrash: () => this.setState({ view: 'delete', target: d.name })
+      };
+    });
+    const addFocus = isEmpty || focus === 'add';
+    const addSize = isEmpty ? 136 : 112;
+    return {
+      subtitle: isEmpty ? 'Add your first company to get started.' : 'Choose a company to enter its content workspace.',
+      showRow, showLoading, showAdd: !showLoading,
+      showNew: view === 'new', showDelete: view === 'delete',
+      items, skeletons: [{ key: 1 }, { key: 2 }, { key: 3 }],
+      target, creating,
+      addStyle: 'width:' + addSize + 'px;height:' + addSize + 'px;border-radius:50%;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;box-sizing:border-box;transition:all .18s ease;color:#ffffff;' + (addFocus ? 'border:2px solid #ffffff;background:rgba(255,255,255,0.22);box-shadow:0 0 0 8px rgba(255,255,255,0.22),0 0 60px rgba(255,255,255,0.5);' : 'border:2px dashed rgba(255,255,255,0.5);background:rgba(255,255,255,0.05);opacity:0.85;'),
+      addNameStyle: addFocus ? 'font-size:18px;font-weight:700;color:#ffffff;text-align:center' : 'font-size:16px;font-weight:500;color:rgba(255,255,255,0.88);text-align:center',
+      onAddEnter: () => this.setState({ focus: 'add' }),
+      onAdd: () => this.setState({ view: 'new' }),
+      onClose: () => this.setState({ view: 'list', creating: false }),
+      createLabel: creating ? 'Creating' : 'Create & set up',
+      createStyle: 'flex:1;height:48px;border-radius:12px;border:0;background:#0a66c2;color:#ffffff;font-size:15px;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 26px rgba(10,102,194,0.35);' + (creating ? 'opacity:0.85;cursor:progress;' : 'cursor:pointer;'),
+      onCreate: () => {
+        if (creating) return;
+        clearTimeout(this._t);
+        this.setState({ creating: true });
+        this._t = setTimeout(() => this.setState({ creating: false, view: 'list' }), 1300);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
