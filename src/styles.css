@@ -482,3 +482,7 @@ html, body, button, input, textarea, select, option {
 .db-sk { animation: spectr-shimmer 1.6s ease-in-out infinite; background: rgba(255,255,255,0.28); border-radius: 8px; }
 .db-card { transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
 .db-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.24) !important; box-shadow: 0 22px 44px rgba(6,42,92,0.22) !important; }
+
+/* ── Record screen ── */
+@keyframes rc-dot { 0%,100%{opacity:.35} 50%{opacity:1} }
+.rc-live { animation: rc-dot 1.2s ease-in-out infinite; }

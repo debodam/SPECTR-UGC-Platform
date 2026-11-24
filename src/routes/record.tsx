@@ -1,17 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, ChevronUp, Download, Mic, Pause, Play, Square, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Check, Download } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
-import { AppShell } from "@/components/spectr/AppShell";
-import { OrbRings } from "@/components/spectr/Orb";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/record")({ component: RecordPage });
-
-function RecordPage() {
-  return <AppShell><Record /></AppShell>;
-}
 
 // --- Helpers ---
 
@@ -60,9 +54,7 @@ async function dlPdf(transcript: string, filename: string) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const ML = 20, MT = 25, CW = 170;
   let y = MT;
-
   const ensureSpace = (n: number) => { if (y + n > 282) { doc.addPage(); y = MT; } };
-
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(10, 102, 194);
@@ -72,11 +64,9 @@ async function dlPdf(transcript: string, filename: string) {
   doc.setLineWidth(0.6);
   doc.line(ML, y, ML + CW, y);
   y += 9;
-
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(30, 30, 30);
-
   for (const para of transcript.split(/\n\n+/).filter(Boolean)) {
     for (const line of doc.splitTextToSize(para.trim(), CW) as string[]) {
       ensureSpace(7);
@@ -85,13 +75,11 @@ async function dlPdf(transcript: string, filename: string) {
     }
     y += 5;
   }
-
   doc.save(filename);
 }
 
 async function dlDocx(transcript: string, filename: string) {
   const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
-
   const children = [
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
@@ -109,7 +97,6 @@ async function dlDocx(transcript: string, filename: string) {
           })
       ),
   ];
-
   const blob = await Packer.toBlob(new Document({ sections: [{ children }] }));
   triggerDl(blob, filename);
 }
@@ -123,7 +110,87 @@ interface TranscriptLog {
   created_at: string;
 }
 
-// --- Log entry component ---
+// --- Orb ---
+
+const ORB_STOPS: [number, string][] = [
+  [0, "#ffffff"],
+  [0.05, "#e3f1ff"],
+  [0.14, "#8cc4fa"],
+  [0.3, "#3b86dc"],
+  [0.45, "#0a5ab4"],
+  [0.56, "#0a4a94"],
+  [0.68, "#3b86dc"],
+  [0.8, "#8fc0f7"],
+  [0.92, "#cfe4fc"],
+  [1, "#eaf3fe"],
+];
+
+function hexToRgb(h: string) {
+  return [
+    parseInt(h.slice(1, 3), 16),
+    parseInt(h.slice(3, 5), 16),
+    parseInt(h.slice(5, 7), 16),
+  ];
+}
+
+function orbColor(t: number): string {
+  for (let i = 1; i < ORB_STOPS.length; i++) {
+    if (t <= ORB_STOPS[i][0]) {
+      const a = ORB_STOPS[i - 1], b = ORB_STOPS[i];
+      const k = (t - a[0]) / (b[0] - a[0]);
+      const ca = hexToRgb(a[1]), cb = hexToRgb(b[1]);
+      return `rgb(${ca.map((c, j) => Math.round(c + (cb[j] - c) * k)).join(",")})`;
+    }
+  }
+  return "#eaf3fe";
+}
+
+function buildOrbLayers(isRec: boolean) {
+  const N = 18, CX = 200, CY = 196, OUT = 352;
+  const coreW = isRec ? 112 : 70;
+  const coreH = isRec ? 112 : 124;
+  const coreR = isRec ? 56 : 30;
+  const layers: {
+    key: string; x: number; y: number; w: number; h: number; rx: number;
+    fill: string; opacity: number; dur: number; delay: number;
+    amp: number; amp2: number; dx: number; dy: number;
+  }[] = [];
+  for (let i = N; i >= 1; i--) {
+    const t = i / N;
+    const e = Math.pow(t, 0.85);
+    const w = coreW + (OUT - coreW) * e;
+    const h = coreH + (OUT - coreH) * e;
+    const rx = Math.min(w, h) / 2;
+    const fade = t > 0.7 ? 1 - ((t - 0.7) / 0.3) * 0.7 : 1;
+    const dur = isRec ? 5.2 : 11;
+    const amp = 1 + (isRec ? 0.012 : 0.006) + t * (isRec ? 0.05 : 0.026);
+    const amp2 = 1 - t * (isRec ? 0.03 : 0.014);
+    layers.push({
+      key: "l" + i,
+      x: CX - w / 2, y: CY - h / 2, w, h, rx,
+      fill: orbColor(t),
+      opacity: fade,
+      dur, delay: -(i * 0.42),
+      amp, amp2,
+      dx: Math.sin(i * 1.7) * (0.8 + t * 2.4),
+      dy: Math.cos(i * 1.3) * (0.8 + t * 2.4),
+    });
+  }
+  return { layers, coreW, coreH, coreR, CX, CY };
+}
+
+// --- Nav ---
+
+const NAV_ITEMS = [
+  { label: "Home", to: "/", d1: "M4 11l8-7 8 7", d2: "M6 10v10h12V10" },
+  { label: "Transform", to: "/transform", d1: "M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z", d2: "M18 16v4M16 18h4" },
+  { label: "Record", to: "/record", d1: "M9 4h6v8a3 3 0 0 1-6 0z", d2: "M6 11a6 6 0 0 0 12 0M12 17v3", active: true },
+  { label: "Track", to: "/track", d1: "M5 20V11M11 20V5M17 20v-7", d2: "M3 20h18" },
+  { label: "Distribute", to: "/distribute", d1: "M5 6h14v14H5z", d2: "M5 10h14M9 3v4M15 3v4" },
+  { label: "Settings", to: "/settings", d1: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z", d2: "M19 12l2-1-1-3-2.3.5-1.4-1.4.5-2.3-3-1-1 2h-2l-1-2-3 1 .5 2.3-1.4 1.4L3 8l-1 3 2 1v2l-2 1 1 3 2.3-.5 1.4 1.4-.5 2.3 3 1 1-2h2l1 2 3-1-.5-2.3 1.4-1.4L21 16l1-3-2-1z" },
+] as const;
+
+// --- Log Entry ---
 
 function LogEntry({
   entry,
@@ -143,90 +210,79 @@ function LogEntry({
 
   return (
     <div
-      className="border-b last:border-b-0"
-      style={{ borderColor: "var(--color-border)" }}
+      style={{
+        boxSizing: "border-box",
+        padding: "16px 18px",
+        borderRadius: 18,
+        background: `rgba(255,255,255,${expanded ? 0.22 : 0.14})`,
+        border: "1px solid rgba(255,255,255,0.34)",
+        cursor: "pointer",
+        flexShrink: 0,
+        transition: "background .2s ease",
+      }}
+      onClick={() => setExpanded((v) => !v)}
     >
-      {/* Collapsed row */}
-      <div
-        className="group flex items-start gap-3 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--color-card-2)]"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="text-xs font-semibold" style={{ color: "var(--color-primary)" }}>
-              {formatLogDate(entry.created_at)}
-            </span>
-            <span
-              className="text-xs px-1.5 py-0.5 rounded-full font-medium"
-              style={{ background: "var(--color-surface)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
-            >
-              {formatDuration(entry.duration_seconds)}
-            </span>
-          </div>
-          <p className="text-xs leading-relaxed truncate" style={{ color: "var(--color-text-secondary)" }}>
-            {entry.transcript_text.slice(0, 120)}{entry.transcript_text.length > 120 ? "…" : ""}
-          </p>
-        </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
-          className="shrink-0 mt-0.5 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[rgba(220,38,38,0.15)]"
-          style={{ color: "var(--color-text-secondary)" }}
-          title="Delete"
-        >
-          <Trash2 size={13} />
-        </button>
-        <span className="shrink-0 mt-1" style={{ color: "var(--color-text-secondary)" }}>
-          {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 600 }}>{formatLogDate(entry.created_at)}</div>
+        <span style={{ height: 22, padding: "0 9px", borderRadius: 999, background: "rgba(255,255,255,0.24)", fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center" }}>
+          {formatDuration(entry.duration_seconds)}
         </span>
-      </div>
-
-      {/* Expanded content */}
-      {expanded && (
-        <div
-          className="px-5 pb-5"
-          style={{ background: "var(--color-card-2)" }}
+        <svg
+          aria-hidden="true"
+          width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"
+          style={{ marginLeft: "auto", transition: "transform .2s ease", transform: expanded ? "rotate(180deg)" : "none" }}
         >
-          <p className="text-sm leading-7 whitespace-pre-wrap mb-4" style={{ color: "var(--color-foreground)" }}>
-            {entry.transcript_text}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => onSendToTransform(entry.transcript_text)}
-              className="spectr-btn-primary"
-              style={{ height: 32, padding: "0 14px", fontSize: 13 }}
-            >
-              Take to Transform
-            </button>
-            <button
-              onClick={() => dlDocx(entry.transcript_text, buildFilename(companyName, userName, "docx", date))}
-              className="spectr-btn-secondary"
-              style={{ height: 32, padding: "0 14px", fontSize: 13 }}
-            >
-              <Download size={13} className="inline mr-1.5" />DOCX
-            </button>
-            <button
-              onClick={() => dlPdf(entry.transcript_text, buildFilename(companyName, userName, "pdf", date))}
-              className="spectr-btn-secondary"
-              style={{ height: 32, padding: "0 14px", fontSize: 13 }}
-            >
-              <Download size={13} className="inline mr-1.5" />PDF
-            </button>
-          </div>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </div>
+      <div style={{
+        marginTop: 8, fontSize: 14, lineHeight: "1.55", color: "rgba(255,255,255,0.94)",
+        ...(expanded ? {} : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }),
+      }}>
+        {entry.transcript_text}
+      </div>
+      {expanded && (
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onSendToTransform(entry.transcript_text)}
+            style={{ height: 34, padding: "0 16px", borderRadius: 999, border: 0, background: "#ffffff", color: "#0a66c2", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+          >
+            Take to Transform
+          </button>
+          <button
+            onClick={() => dlDocx(entry.transcript_text, buildFilename(companyName, userName, "docx", date))}
+            style={{ height: 34, padding: "0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}
+          >
+            <Download size={13} />DOCX
+          </button>
+          <button
+            onClick={() => dlPdf(entry.transcript_text, buildFilename(companyName, userName, "pdf", date))}
+            style={{ height: 34, padding: "0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}
+          >
+            <Download size={13} />PDF
+          </button>
+          <button
+            onClick={() => onDelete(entry.id)}
+            style={{ height: 34, padding: "0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+          >
+            Delete
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-// --- Main component ---
+// --- Main ---
 
-function Record() {
+function RecordPage() {
   const { state } = useApp();
   const navigate = useNavigate();
   const ws = state.workspace;
 
   const [recording, setRecording] = useState(false);
-  const [paused, setPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [interimText, setInterimText] = useState("");
@@ -238,11 +294,9 @@ function Record() {
   const recognitionRef = useRef<any>(null);
   const finalRef = useRef("");
   const stoppedManuallyRef = useRef(false);
-  const pausedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const durationRef = useRef(0);
 
-  // Fetch transcript logs for active company
   useEffect(() => {
     const companyId = ws.companyId;
     const userId = state.user?.id;
@@ -255,7 +309,9 @@ function Record() {
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(50)
-      .then(({ data }) => { if (data) setLogs(data as TranscriptLog[]); });
+      .then(({ data }) => {
+        if (data) setLogs(data as TranscriptLog[]);
+      });
   }, [ws.companyId, state.user?.id]);
 
   useEffect(() => {
@@ -301,92 +357,59 @@ function Record() {
   const startRecording = () => {
     const SpeechRecognitionAPI =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
     if (!SpeechRecognitionAPI) {
       setError("Speech recognition is not supported in this browser. Try Chrome or Edge.");
       return;
     }
-
     setError("");
     setTranscript("");
     setInterimText("");
     setSaved(false);
     finalRef.current = "";
     stoppedManuallyRef.current = false;
-    pausedRef.current = false;
-
     const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
     recognitionRef.current = recognition;
-
     recognition.onresult = (event: any) => {
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalRef.current += t + " ";
-        } else {
-          interim += t;
-        }
+        if (event.results[i].isFinal) finalRef.current += t + " ";
+        else interim += t;
       }
       setTranscript(finalRef.current);
       setInterimText(interim);
     };
-
     recognition.onerror = (event: any) => {
       if (event.error === "not-allowed") {
         setError("Microphone access denied. Please allow microphone access and try again.");
         setRecording(false);
-        setPaused(false);
         if (timerRef.current) clearInterval(timerRef.current);
       }
     };
-
     recognition.onend = () => {
       if (stoppedManuallyRef.current) {
         setInterimText("");
-      } else if (pausedRef.current) {
-        // paused — wait for resume
       } else {
         try { recognition.start(); } catch {}
       }
     };
-
     recognition.start();
     setRecording(true);
-    setPaused(false);
     setSeconds(0);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
   };
 
-  const pauseRecording = () => {
-    pausedRef.current = true;
-    if (timerRef.current) clearInterval(timerRef.current);
-    recognitionRef.current?.stop();
-    setPaused(true);
-    setInterimText("");
-  };
-
-  const resumeRecording = () => {
-    pausedRef.current = false;
-    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    try { recognitionRef.current?.start(); } catch {}
-    setPaused(false);
-  };
-
   const stopRecording = () => {
     stoppedManuallyRef.current = true;
-    pausedRef.current = false;
     if (timerRef.current) clearInterval(timerRef.current);
     recognitionRef.current?.stop();
     setRecording(false);
-    setPaused(false);
     setInterimText("");
     durationRef.current = seconds;
-    const text = finalRef.current.trim();
-    setTranscript(text);
+    setTranscript(finalRef.current.trim());
   };
 
   const handleDelete = async (id: string) => {
@@ -399,218 +422,280 @@ function Record() {
     navigate({ to: "/transform" });
   };
 
-  const userName = state.user?.name ?? "";
-  const isActive = recording || paused;
-  const isDone = !isActive && !!transcript;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/login" });
+  };
+
+  const isRec = recording;
+  const isDone = !recording && !!transcript;
   const liveText = transcript + (interimText ? " " + interimText : "");
+  const hasLogs = logs.length > 0;
+
+  const { layers, coreW, coreH, coreR, CX, CY } = useMemo(() => buildOrbLayers(isRec), [isRec]);
+
+  const geo = { x: CX - coreW / 2, y: CY - coreH / 2, w: coreW, h: coreH, r: coreR };
+  const layerTransition = "x .8s ease, y .8s ease, width .8s ease, height .8s ease, rx .8s ease";
+
+  const userName = state.user?.name ?? "";
+  const userInitials = userName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
+  const companyInitial = (ws.companyName || "C")[0].toUpperCase();
 
   return (
-    <div className="flex flex-col" style={{ minHeight: "100%" }}>
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "linear-gradient(160deg,#b9d6f8 0%,#4d92e0 48%,#0a4a94 100%)",
+      fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif",
+      color: "#ffffff",
+    }}>
+      <div style={{
+        position: "relative",
+        width: 1360,
+        height: 880,
+        borderRadius: 44,
+        overflow: "hidden",
+        background: "radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
+        boxShadow: "0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)",
+      }}>
 
-      {/* ── Recording interface — vertically centered ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 pt-8 pb-6">
-        <div className="w-full max-w-xl">
-          <h1 className="spectr-display text-center" style={{ fontSize: 28 }}>Record</h1>
-          <p className="spectr-eyebrow mb-10 text-center mt-2.5">
-            Record audio and get a live transcript, right in your browser.
-          </p>
-
-          {/* Controls */}
-          <div className="flex flex-col items-center gap-5 mb-8">
-
-            {/* Idle */}
-            {!isActive && !isDone && (
-              <div className="spectr-orb-wrap" style={{ width: 220, height: 220 }}>
-                <div style={{ position: "absolute", inset: 0 }}>
-                  <OrbRings size={220} />
-                </div>
-                <button
-                  onClick={startRecording}
-                  className="rounded-full flex items-center justify-center transition-all relative z-10"
-                  style={{
-                    width: 88,
-                    height: 88,
-                    background: "var(--color-primary)",
-                    boxShadow: "0 0 0 8px rgba(10,102,194,0.10), var(--glow-primary-lg)",
-                    color: "white",
-                  }}
-                >
-                  <Mic size={28} />
-                </button>
-              </div>
-            )}
-
-            {/* Active: timer + Pause/Resume + Stop */}
-            {isActive && (
-              <>
-                <div className="flex items-center gap-2 h-7">
-                  {!paused && (
-                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#EF4444" }} />
-                  )}
-                  <span className="font-mono text-xl font-bold">{formatTime(seconds)}</span>
-                  {paused && (
-                    <span
-                      className="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
-                      style={{ background: "var(--color-surface)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
-                    >
-                      Paused
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-end gap-6">
-                  <div className="flex flex-col items-center gap-2">
-                    <button
-                      onClick={paused ? resumeRecording : pauseRecording}
-                      className="w-16 h-16 rounded-full flex items-center justify-center transition-all"
-                      style={{
-                        background: paused ? "var(--color-primary)" : "var(--color-surface)",
-                        border: `2px solid ${paused ? "var(--color-primary)" : "var(--color-border)"}`,
-                        color: paused ? "white" : "var(--color-foreground)",
-                        boxShadow: paused ? "var(--glow-primary)" : "none",
-                      }}
-                    >
-                      {paused ? <Play size={22} fill="white" /> : <Pause size={22} />}
-                    </button>
-                    <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                      {paused ? "Resume" : "Pause"}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-2">
-                    <button
-                      onClick={stopRecording}
-                      className="w-20 h-20 rounded-full flex items-center justify-center transition-all"
-                      style={{
-                        background: "#EF4444",
-                        boxShadow: "0 0 0 10px rgba(239,68,68,0.12)",
-                        color: "white",
-                      }}
-                    >
-                      <Square size={26} fill="white" />
-                    </button>
-                    <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Stop</span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {!isActive && !transcript && (
-              <p className="spectr-eyebrow">
-                Tap to start recording
-              </p>
-            )}
-
-            {isDone && (
-              <button onClick={startRecording} className="spectr-btn-secondary text-sm">
-                Record again
+        {/* Left rail */}
+        <aside style={{
+          position: "absolute", left: 0, top: 0, bottom: 0, width: 88,
+          boxSizing: "border-box",
+          borderRight: "1px solid rgba(255,255,255,0.28)",
+          background: "rgba(255,255,255,0.1)",
+          display: "flex", flexDirection: "column", alignItems: "center", padding: "26px 0",
+        }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24">
+              <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
+              <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
+            </svg>
+          </div>
+          <nav style={{ marginTop: "auto", marginBottom: "auto", padding: 8, borderRadius: 32, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", flexDirection: "column", gap: 6 }}>
+            {NAV_ITEMS.map((n) => (
+              <button
+                key={n.label}
+                type="button"
+                aria-label={n.label}
+                title={n.label}
+                onClick={() => navigate({ to: n.to as string })}
+                style={{
+                  width: 44, height: 44, borderRadius: "50%", border: 0, padding: 0, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit",
+                  background: n.active ? "#0a66c2" : "transparent",
+                  color: n.active ? "#ffffff" : "rgba(255,255,255,0.9)",
+                  boxShadow: n.active ? "0 8px 20px rgba(6,42,92,0.35)" : "none",
+                }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={n.d1} /><path d={n.d2} />
+                </svg>
               </button>
+            ))}
+          </nav>
+          <button
+            type="button"
+            aria-label="Log out"
+            title="Log out"
+            onClick={handleLogout}
+            style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4" />
+              <path d="M16 8l4 4-4 4" />
+              <path d="M20 12H9" />
+            </svg>
+          </button>
+        </aside>
+
+        {/* Header */}
+        <header style={{
+          position: "absolute", left: 88, right: 0, top: 0, height: 88,
+          boxSizing: "border-box", padding: "0 40px",
+          borderBottom: "1px solid rgba(255,255,255,0.28)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div>
+            <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em", lineHeight: 1.1 }}>Record</div>
+            <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Record audio and get a live transcript directly in your browser.</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button type="button" style={{ height: 44, padding: "0 14px 0 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+              <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#ffffff", color: "#0a66c2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{companyInitial}</span>
+              <span>{ws.companyName || "Company"}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 9l5-5 5 5" /><path d="M7 15l5 5 5-5" />
+              </svg>
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, height: 44, padding: "0 5px 0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z" />
+                <path d="M10 20a2 2 0 0 0 4 0" />
+              </svg>
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(145deg,#ffffff,#b9d6f8)", color: "#0a4a94", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, marginLeft: 6 }}>
+                {userInitials}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Orb */}
+        <div style={{ position: "absolute", left: 168, top: 170, width: 400, height: 400 }}>
+          <button
+            type="button"
+            aria-label={isRec ? "Stop recording" : "Start recording"}
+            onClick={isRec ? stopRecording : startRecording}
+            style={{ position: "absolute", left: 0, top: 0, width: 400, height: 400, border: 0, padding: 0, background: "transparent", cursor: "pointer", borderRadius: "50%", transition: "transform .5s ease" }}
+          >
+            <svg
+              aria-hidden="true"
+              width="400" height="400" viewBox="0 0 400 400"
+              style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }}
+            >
+              <defs>
+                <filter id="rc-soft" x="-10%" y="-10%" width="120%" height="120%">
+                  <feGaussianBlur stdDeviation="0.7" />
+                </filter>
+                <filter id="rc-coreGlow" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="9" />
+                </filter>
+                <radialGradient id="rc-aura" cx="50%" cy="50%" r="50%">
+                  <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
+                  <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <circle cx={CX} cy={CY} r="200" fill="url(#rc-aura)" opacity="0.5" />
+              {isRec && (
+                <>
+                  <circle className="db-hr" cx={CX} cy={CY} r="168" fill="none" stroke="#ffffff" strokeWidth="1.6" />
+                  <circle className="db-hr" cx={CX} cy={CY} r="168" fill="none" stroke="#ffffff" strokeWidth="1.6" style={{ animationDelay: "-2.1s" }} />
+                </>
+              )}
+              <g filter="url(#rc-soft)">
+                {layers.map((l) => (
+                  <rect
+                    key={l.key}
+                    className="db-hl"
+                    x={l.x} y={l.y} width={l.w} height={l.h} rx={l.rx}
+                    fill={l.fill} opacity={l.opacity}
+                    stroke="rgba(255,255,255,0.3)" strokeWidth="1"
+                    style={{
+                      "--amp": l.amp,
+                      "--amp2": l.amp2,
+                      "--dx": `${l.dx.toFixed(2)}px`,
+                      "--dy": `${l.dy.toFixed(2)}px`,
+                      animationDuration: `${l.dur}s`,
+                      animationDelay: `${l.delay.toFixed(2)}s`,
+                      transition: layerTransition,
+                    } as React.CSSProperties}
+                  />
+                ))}
+              </g>
+              <rect
+                x={geo.x} y={geo.y} width={geo.w} height={geo.h} rx={geo.r}
+                fill="#ffffff" opacity="0.7"
+                filter="url(#rc-coreGlow)"
+                style={{ transition: "x .8s ease, y .8s ease, width .8s ease, height .8s ease, rx .8s ease" }}
+              />
+              <rect
+                x={geo.x} y={geo.y} width={geo.w} height={geo.h} rx={geo.r}
+                fill="#ffffff"
+                style={{ transition: "x .8s ease, y .8s ease, width .8s ease, height .8s ease, rx .8s ease" }}
+              />
+              {/* Mic glyph (visible when idle) */}
+              <g style={{ transition: "opacity .5s ease", opacity: isRec ? 0 : 1 }}>
+                <path d="M146 214 V232 C146 270 254 270 254 232 V214" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="200" cy="296" r="7" fill="#ffffff" />
+              </g>
+              {/* Stop glyph (visible when recording) */}
+              <rect x="182" y="178" width="36" height="36" rx="9" fill="#0a66c2" style={{ transition: "opacity .5s ease", opacity: isRec ? 1 : 0 }} />
+            </svg>
+          </button>
+        </div>
+
+        {/* Caption */}
+        <div style={{ position: "absolute", left: 168, top: 546, width: 400, textAlign: "center", pointerEvents: "none" }}>
+          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em" }}>
+            {isRec ? "Recording" : isDone ? "Tap to record again" : "Click to start recording"}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 15, color: "rgba(255,255,255,0.9)" }}>
+            {isRec
+              ? `${formatTime(seconds)} - tap the mic to stop`
+              : "Your words become a live transcript"}
+          </div>
+          {error && (
+            <div style={{ marginTop: 8, fontSize: 13, color: "#fca5a5" }}>{error}</div>
+          )}
+        </div>
+
+        {/* Transcription logs panel */}
+        <div style={{
+          position: "absolute", left: 700, top: 112, width: 620, height: 728,
+          boxSizing: "border-box", padding: 24, borderRadius: 28,
+          background: "rgba(255,255,255,0.14)",
+          border: "1px solid rgba(255,255,255,0.4)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)" as any,
+          boxShadow: "0 10px 30px rgba(6,42,92,0.14)",
+          display: "flex", flexDirection: "column", overflow: "hidden",
+        }}>
+          {/* Panel header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em" }}>Transcription logs</div>
+            {hasLogs && (
+              <span style={{ minWidth: 24, height: 24, padding: "0 8px", boxSizing: "border-box", borderRadius: 12, background: "#ffffff", color: "#0a66c2", fontSize: 13, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                {logs.length}
+              </span>
             )}
           </div>
 
-          {error && <p className="field-error mb-4 text-center">{error}</p>}
-
-          {/* Live transcript while active */}
-          {isActive && (
-            <div
-              className="rounded-xl p-5 mb-4"
-              style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)" }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                {!paused ? (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#EF4444" }} />
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-text-secondary)" }}>
-                      Live
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-text-secondary)" }}>
-                    Captured so far
-                  </span>
-                )}
+          {/* Live transcript while recording */}
+          {isRec && (
+            <div style={{ flexShrink: 0, marginTop: 16, boxSizing: "border-box", padding: "18px 20px", borderRadius: 20, background: "#ffffff", color: "#0b1220", boxShadow: "0 14px 34px rgba(6,42,92,0.22)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}>
+                <span className="rc-live" style={{ width: 9, height: 9, borderRadius: "50%", background: "#d92d20", display: "inline-block" }} />
+                <span style={{ color: "#0b1220" }}>Live transcript</span>
+                <span style={{ marginLeft: "auto", fontSize: 13, color: "#475569", fontWeight: 500 }}>{formatTime(seconds)}</span>
               </div>
-              <p className="text-sm leading-7 min-h-[3rem]" style={{ color: "var(--color-foreground)" }}>
-                {transcript}
-                {!paused && interimText && (
-                  <span style={{ color: "var(--color-text-secondary)" }}>{interimText}</span>
-                )}
-                {!liveText && !paused && (
-                  <span style={{ color: "var(--color-text-secondary)" }}>Listening...</span>
-                )}
-                {paused && !transcript && (
-                  <span style={{ color: "var(--color-text-secondary)" }}>Nothing captured yet.</span>
-                )}
-              </p>
+              <div style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6, color: "#1c2a3f", minHeight: 96 }}>
+                {liveText || <span style={{ color: "#94a3b8" }}>Listening...</span>}
+                <span style={{ display: "inline-block", width: 2, height: 16, marginLeft: 2, verticalAlign: "-3px", background: "#0a66c2" }} />
+              </div>
             </div>
           )}
 
-          {/* Final transcript card */}
+          {/* Done - save new transcript */}
           {isDone && (
-            <div
-              className="rounded-xl p-5"
-              style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}
-            >
-              <h2 className="font-bold text-sm mb-3">Transcript</h2>
-              <p className="text-sm leading-7 whitespace-pre-wrap">{transcript}</p>
-              <div
-                className="flex flex-wrap gap-2 mt-5 pt-4"
-                style={{ borderTop: "1px solid var(--color-border)" }}
-              >
+            <div style={{ flexShrink: 0, marginTop: 16, boxSizing: "border-box", padding: "18px 20px", borderRadius: 20, background: "#ffffff", color: "#0b1220", boxShadow: "0 14px 34px rgba(6,42,92,0.22)" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#0b1220", marginBottom: 10 }}>New transcript</div>
+              <div style={{ fontSize: 14, lineHeight: 1.6, color: "#1c2a3f", maxHeight: 100, overflow: "hidden" }}>
+                {transcript.slice(0, 200)}{transcript.length > 200 ? "..." : ""}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
                 <button
                   onClick={handleSave}
                   disabled={saving || saved}
-                  className="spectr-btn-primary"
-                  style={{ opacity: saved ? 0.8 : 1 }}
+                  style={{ height: 34, padding: "0 16px", borderRadius: 999, border: 0, background: saved ? "#12b76a" : "#0a66c2", color: "#ffffff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, opacity: (saving || saved) ? 0.9 : 1 }}
                 >
-                  {saved ? (
-                    <><Check size={14} className="inline mr-1.5" />Saved</>
-                  ) : saving ? "Saving..." : "Save"}
+                  {saved ? <><Check size={13} />Saved</> : saving ? "Saving..." : "Save"}
                 </button>
-                <button onClick={() => sendToTransform(transcript)} className="spectr-btn-secondary">
+                <button
+                  onClick={() => sendToTransform(transcript)}
+                  style={{ height: 34, padding: "0 16px", borderRadius: 999, border: "1px solid rgba(0,0,0,0.15)", background: "rgba(0,0,0,0.06)", color: "#0b1220", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                >
                   Take to Transform
-                </button>
-                <button
-                  onClick={() => dlDocx(transcript, buildFilename(ws.companyName, userName, "docx"))}
-                  className="spectr-btn-secondary"
-                >
-                  <Download size={14} className="inline mr-1.5" />DOCX
-                </button>
-                <button
-                  onClick={() => dlPdf(transcript, buildFilename(ws.companyName, userName, "pdf"))}
-                  className="spectr-btn-secondary"
-                >
-                  <Download size={14} className="inline mr-1.5" />PDF
                 </button>
               </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* ── Transcription Logs ── */}
-      <div
-        className="px-8 pb-10"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}
-      >
-        <div className="max-w-xl mx-auto pt-8">
-          <h2 className="font-bold text-sm mb-4">Transcription Logs</h2>
-
-          {logs.length === 0 ? (
-            <div
-              className="rounded-xl py-10 text-center"
-              style={{ border: "1px solid var(--color-border)", background: "var(--color-card)" }}
-            >
-              <p className="text-sm font-semibold mb-1">No recordings yet</p>
-              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                Your transcripts will appear here after you record.
-              </p>
-            </div>
-          ) : (
-            <div
-              className="rounded-xl overflow-hidden"
-              style={{ border: "1px solid var(--color-border)", background: "var(--color-card)" }}
-            >
+          {/* Log entries */}
+          {hasLogs && (
+            <div style={{ marginTop: 16, flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
               {logs.map((entry) => (
                 <LogEntry
                   key={entry.id}
@@ -623,9 +708,25 @@ function Record() {
               ))}
             </div>
           )}
-        </div>
-      </div>
 
+          {/* Empty state */}
+          {!hasLogs && !isRec && !isDone && (
+            <div style={{ marginTop: 16, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, borderRadius: 20, border: "1.5px dashed rgba(255,255,255,0.5)" }}>
+              <div style={{ width: 60, height: 60, borderRadius: 20, background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 4h6v8a3 3 0 0 1-6 0z" />
+                  <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
+                </svg>
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 600 }}>No recordings yet</div>
+              <div style={{ maxWidth: 300, fontSize: 14, lineHeight: 1.5, color: "rgba(255,255,255,0.92)" }}>
+                Tap the mic and start talking. Your transcript will show up here.
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }
