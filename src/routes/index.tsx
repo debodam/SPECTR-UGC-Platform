@@ -7,8 +7,10 @@ import { LogOut, ChevronsUpDown, Bell, ChartNoAxesColumn, House, Sparkles, Mic, 
 import { MicHalo } from "@/components/spectr/MicHalo";
 import { PlayCard, InsightRow, ExperimentSummary, nextStep } from "@/components/spectr/GrowthCards";
 import { useGrowth } from "@/lib/use-growth";
-import { advancePlay, isLocalMode, type RepoCtx } from "@/lib/growth-repo";
-import { createGrowthPlan } from "@/lib/growth-service";
+import { advancePlay, createExperiment, isLocalMode, type RepoCtx } from "@/lib/growth-repo";
+import { applyInsight, createGrowthPlan } from "@/lib/growth-service";
+import { ExperimentDialog } from "@/components/spectr/ExperimentDialog";
+import type { Insight } from "@/lib/growth-types";
 import { computeForecast, formatMetric } from "@/lib/growth-forecast";
 import type { Play } from "@/lib/growth-types";
 
@@ -61,6 +63,24 @@ function GrowthHome() {
   );
   const g = useGrowth(ctx);
   const [building, setBuilding] = useState(false);
+  const [expPlay, setExpPlay] = useState<Play | null>(null);
+  const [applying, setApplying] = useState<string | null>(null);
+
+  const startExperiment = async (e: Parameters<React.ComponentProps<typeof ExperimentDialog>["onCreate"]>[0]) => {
+    if (!ctx || !expPlay) return;
+    await createExperiment(ctx, { playId: expPlay.id, ...e });
+    setExpPlay(null);
+    toast.success("Experiment started", { description: "Publish both hooks, then log each one's numbers in Results." });
+    await g.reload();
+  };
+
+  const apply = async (i: Insight) => {
+    if (!ctx || !g.plan) return;
+    setApplying(i.id);
+    try { toast.success("Plan updated", { description: await applyInsight(ctx, g.plan, i) }); await g.reload(); }
+    catch (e: any) { toast.error("Could not apply", { description: e?.message }); }
+    finally { setApplying(null); }
+  };
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -230,7 +250,7 @@ function GrowthHome() {
                 </div>
                 {g.plays.length ? (
                   <div className="gh-plays">
-                    {g.plays.map((p) => <PlayCard key={p.id} play={p} experiment={expByPlay.get(p.id)} onStep={goStep} />)}
+                    {g.plays.map((p) => <PlayCard key={p.id} play={p} experiment={expByPlay.get(p.id)} onStep={goStep} onExperiment={setExpPlay} />)}
                   </div>
                 ) : (
                   <div className="sx-glass gh-state gh-state--inline">
@@ -251,7 +271,7 @@ function GrowthHome() {
                 <section className="sx-glass gh-card" aria-labelledby="gh-ins-h">
                   <div className="gh-card-head"><Lightbulb size={18} aria-hidden="true" /><h2 id="gh-ins-h" className="gh-h3">Latest insight</h2></div>
                   {latestInsight
-                    ? <InsightRow insight={latestInsight} />
+                    ? <InsightRow insight={latestInsight} onApply={apply} applying={applying === latestInsight.id} />
                     : <div className="gh-empty">Insights appear after you log results. They compare formats and pillars using your real numbers.</div>}
                   {g.insights.length > 1 && <Link to="/results" className="gh-link" style={{ marginTop: 12, display: "inline-block" }}>See all insights</Link>}
                 </section>
@@ -260,6 +280,7 @@ function GrowthHome() {
             </>
           )}
         </div></main>
+        {expPlay && <ExperimentDialog play={expPlay} onCancel={() => setExpPlay(null)} onCreate={startExperiment} />}
     </div>
   );
 }

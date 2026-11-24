@@ -4,8 +4,12 @@ import { toast } from "sonner";
 import { Check, X, LogOut, ChevronsUpDown, Bell, Plus, SquarePen, Trash2, House, Sparkles, Mic, ChartNoAxesColumn, Calendar, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import { useApp, type PerfEntry, type Format } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
-import { PlayBanner } from "@/components/spectr/GrowthCards";
-import { perfFromRow, playSearch, usePlay } from "@/lib/use-growth";
+import { ExperimentSummary, InsightRow, PlayBanner } from "@/components/spectr/GrowthCards";
+import { perfFromRow, playSearch, useGrowth, usePlay } from "@/lib/use-growth";
+import { applyInsight, declareWinner, refreshInsights } from "@/lib/growth-service";
+import { variantResult } from "@/lib/growth-insights";
+import { computeForecast } from "@/lib/growth-forecast";
+import type { Experiment, Insight } from "@/lib/growth-types";
 import { loadAllPlays, upsertWithLinks, type RepoCtx } from "@/lib/growth-repo";
 import { syncPlayResults } from "@/lib/growth-service";
 import { toAppFormat, type Play } from "@/lib/growth-types";
@@ -157,6 +161,29 @@ function TrackPage() {
   const [plays, setPlays] = useState<Play[]>([]);
   const [linkPlayId, setLinkPlayId] = useState("");
   const reloadPlays = () => { if (ctx) loadAllPlays(ctx).then(setPlays).catch(() => setPlays([])); };
+  const g = useGrowth(ctx);
+  const [busy, setBusy] = useState<string | null>(null);
+  const runningExp = useMemo(() => g.experiments.find((x) => x.playId === linkPlayId && x.status === "running"), [g.experiments, linkPlayId]);
+  const liveExp = (x: Experiment): Experiment => x.status === "complete" ? x : { ...x, result: { a: variantResult(x, entries, "a"), b: variantResult(x, entries, "b") } };
+
+  const apply = async (i: Insight) => {
+    if (!ctx || !g.plan) return;
+    setBusy(i.id);
+    try { toast.success("Plan updated", { description: await applyInsight(ctx, g.plan, i) }); await g.reload(); }
+    catch (e: any) { toast.error("Could not apply", { description: e?.message }); }
+    finally { setBusy(null); }
+  };
+
+  const declare = async (x: Experiment, winner: "a" | "b") => {
+    if (!ctx) return;
+    setBusy(x.id);
+    try {
+      const title = g.allPlays.find((p) => p.id === x.playId)?.title ?? "this play";
+      toast.success("Winner declared", { description: await declareWinner(ctx, x, winner, entries, title) });
+      await g.reload();
+    } catch (e: any) { toast.error("Could not declare a winner", { description: e?.message }); }
+    finally { setBusy(null); }
+  };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(reloadPlays, [ctx]);
 
@@ -194,6 +221,12 @@ function TrackPage() {
     setEntries(next);
     setAdding(false); setEditingId(null); setDraft(blank()); setLinkPlayId(""); toast.success("Entry saved");
     if (ctx && entry.playId) { await syncPlayResults(ctx, entry.playId, next).catch(() => {}); refreshPlay(); reloadPlays(); }
+    if (ctx) {
+      // Insights are recomputed from the real numbers after every new entry.
+      const fresh = await loadAllPlays(ctx).catch(() => plays);
+      const projectedPct = g.plan ? computeForecast({ key: g.plan.northStarKey, label: g.plan.northStarMetric, ws, entries: next, planCreatedAt: g.plan.createdAt }).projectedPct : undefined;
+      refreshInsights(ctx, ws, { entries: next, plays: fresh, plan: g.plan, projectedPct }).then(() => g.reload()).catch(() => {});
+    }
   };
 
   const del = async (id: string) => {
@@ -327,6 +360,16 @@ function TrackPage() {
                 <option value="">Not from a play</option>
                 {plays.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
               </select>
+              {runningExp && (
+                <>
+                  <label htmlFor="tr-variant">Hook</label>
+                  <select id="tr-variant" className="tf-in" value={draft.variant ?? ""} onChange={(e) => setDraft({ ...draft, variant: (e.target.value || null) as PerfEntry["variant"] })}>
+                    <option value="">Which hook was this?</option>
+                    <option value="a">Hook A: {runningExp.variantA.slice(0, 48)}</option>
+                    <option value="b">Hook B: {runningExp.variantB.slice(0, 48)}</option>
+                  </select>
+                </>
+              )}
             </div>
           )}
           {/* Inline add row */}
@@ -383,6 +426,41 @@ function TrackPage() {
           </div>
           </div></div>
         </div>
+
+        {g.status === "ready" && g.plan && (
+          <div className="tr-growth">
+            <section className="sx-glass" aria-labelledby="tr-ins-h">
+              <h2 id="tr-ins-h" style={{ margin: "0 0 14px", fontSize: 17, fontWeight: 600 }}>Insights</h2>
+              {g.insights.length
+                ? g.insights.slice(0, 6).map((i) => <InsightRow key={i.id} insight={i} onApply={apply} applying={busy === i.id} />)
+                : <div className="gh-empty">Insights appear once you have logged results across at least two formats or plays.</div>}
+            </section>
+            <section className="sx-glass" aria-labelledby="tr-exp-h">
+              <h2 id="tr-exp-h" style={{ margin: "0 0 14px", fontSize: 17, fontWeight: 600 }}>Experiments</h2>
+              {g.experiments.length ? g.experiments.slice(0, 4).map((x) => {
+                const live = liveExp(x);
+                const ready = !!(live.result.a && live.result.b);
+                const lead = ready ? (live.result.a!.value >= live.result.b!.value ? "a" : "b") : null;
+                return (
+                  <div key={x.id} className="tr-exp">
+                    <ExperimentSummary experiment={live} play={g.allPlays.find((p) => p.id === x.playId)} />
+                    {x.status === "running" && (
+                      <div className="tr-exp-actions">
+                        {ready ? (
+                          <>
+                            <span>Hook {lead!.toUpperCase()} is ahead. Declare the winner:</span>
+                            <button type="button" className="gh-btn gh-btn--small" disabled={busy === x.id} onClick={() => declare(x, "a")}>Hook A wins</button>
+                            <button type="button" className="gh-btn gh-btn--small" disabled={busy === x.id} onClick={() => declare(x, "b")}>Hook B wins</button>
+                          </>
+                        ) : <span>Log results for both hooks to compare them. Pick the play and the hook when you add an entry.</span>}
+                      </div>
+                    )}
+                  </div>
+                );
+              }) : <div className="gh-empty">No experiments yet. On Growth, pick a play and choose Run as experiment.</div>}
+            </section>
+          </div>
+        )}
 
         <div className="tr-bottom">
         {/* Format intelligence */}

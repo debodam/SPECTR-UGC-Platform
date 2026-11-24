@@ -1,8 +1,9 @@
 import type { PerfEntry, Workspace } from "./spectr-store";
-import type { GrowthPlan, PlanInputs, Play } from "./growth-types";
+import type { Experiment, GrowthPlan, Insight, PlanInputs, Play } from "./growth-types";
 import { buildFallbackPlan } from "./growth-plan";
-import { generateGrowthPlan } from "./growth-fn";
-import { advancePlay, loadActivePlan, loadExperiments, loadInsights, savePlanWithPlays, type RepoCtx } from "./growth-repo";
+import { generateGrowthPlan, phraseInsights } from "./growth-fn";
+import { computeInsights, experimentLearning, shiftPillarShare, variantResult } from "./growth-insights";
+import { advancePlay, loadActivePlan, loadExperiments, loadInsights, markInsightApplied, saveInsights, savePlanWithPlays, updateExperiment, updatePlan, type RepoCtx } from "./growth-repo";
 
 export function planInputsFromWorkspace(ws: Workspace, learnings: string[] = []): PlanInputs {
   return {
@@ -69,4 +70,45 @@ export async function syncPlayResults(ctx: RepoCtx, playId: string, entries: Per
     entries: mine.length,
   };
   await advancePlay(ctx, playId, "measured", { results });
+}
+
+/** Recomputes insights from the latest data, lets Claude phrase them, and stores them. */
+export async function refreshInsights(ctx: RepoCtx, ws: Workspace, data: { entries: PerfEntry[]; plays: Play[]; plan: GrowthPlan | null; projectedPct?: number }): Promise<number> {
+  const candidates = computeInsights(data);
+  if (!candidates.length) return 0;
+  let texts = candidates.map((c) => c.text);
+  try {
+    const r = await phraseInsights({ data: { company: ws.companyName, audience: ws.audience.jobTitles, texts } });
+    texts = r.texts;
+  } catch { /* keep computed wording */ }
+  await saveInsights(ctx, candidates.map((c, i) => ({ ...c, text: texts[i] })));
+  return candidates.length;
+}
+
+/** Applies a recommendation to the plan (cadence or pillar share) and records it in the plan history. */
+export async function applyInsight(ctx: RepoCtx, plan: GrowthPlan, insight: Insight): Promise<string> {
+  const action = insight.evidence.action;
+  if (!action) throw new Error("This insight has no action to apply");
+  let change: string;
+  if (action.type === "cadence") {
+    change = `Cadence changed from ${plan.cadencePerWeek} to ${action.value} pieces a week`;
+    await updatePlan(ctx, plan.id, { cadencePerWeek: action.value, history: [{ at: new Date().toISOString(), change, source: "insight" }, ...plan.history] });
+  } else {
+    const before = plan.pillars.find((p) => p.name === action.pillar)?.share ?? 0;
+    const pillars = shiftPillarShare(plan.pillars, action.pillar, action.delta);
+    const after = pillars.find((p) => p.name === action.pillar)?.share ?? before;
+    change = `${action.pillar} share changed from ${before}% to ${after}%`;
+    await updatePlan(ctx, plan.id, { pillars, history: [{ at: new Date().toISOString(), change, source: "insight" }, ...plan.history] });
+  }
+  await markInsightApplied(ctx, insight.id);
+  return change;
+}
+
+/** Declares an experiment winner from logged numbers and writes the learning. */
+export async function declareWinner(ctx: RepoCtx, exp: Experiment, winner: "a" | "b", entries: PerfEntry[], playTitle: string): Promise<string> {
+  const a = variantResult(exp, entries, "a"), b = variantResult(exp, entries, "b");
+  if (!a || !b) throw new Error("Both hooks need results before you can declare a winner");
+  const learning = experimentLearning(exp, winner, a, b, playTitle);
+  await updateExperiment(ctx, exp.id, { result: { a, b }, winner, learning, status: "complete" });
+  return learning;
 }

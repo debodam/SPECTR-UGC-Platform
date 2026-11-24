@@ -6,6 +6,7 @@ export const STATUS_LABEL: Record<PlayStatus, string> = {
   suggested: "Suggested", "in progress": "In progress", recorded: "Recorded", transformed: "Transformed",
   scheduled: "Scheduled", posted: "Posted", measured: "Measured",
 };
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const FORMAT_LABEL = { article: "Article", post: "Post", "video script": "Video script" } as const;
 
 export function StatusChip({ status }: { status: PlayStatus }) {
@@ -38,7 +39,7 @@ export function PlayCard({ play, experiment, onStep, onExperiment }: {
   return (
     <article className="sx-glass gh-play">
       <div className="gh-play-top">
-        <span className="gh-eyebrow">{play.type}</span>
+        <span className="gh-eyebrow">{sentence(play.type)}</span>
         <StatusChip status={play.status} />
       </div>
       <h3 className="gh-play-title">{play.title}</h3>
@@ -120,7 +121,7 @@ export function PlayBanner({ play, prompts, note, onClear, action }: { play: Pla
   return (
     <section className="gh-banner" aria-label={`Play: ${play.title}`}>
       <div className="gh-banner-head">
-        <span className="gh-eyebrow">This week's play · {play.type}</span>
+        <span className="gh-eyebrow">This week's play · {sentence(play.type)}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <FormatChip format={play.format} />
           <StatusChip status={play.status} />

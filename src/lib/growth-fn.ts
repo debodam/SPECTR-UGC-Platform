@@ -89,3 +89,38 @@ export const generateGrowthPlan = createServerFn({ method: "POST" })
       return fallback(err?.message ?? "AI call failed");
     }
   });
+
+export interface PhraseInput { company: string; audience: string; texts: string[] }
+
+const numbersIn = (s: string) => (s.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((n) => n.replace(/,/g, "")).sort();
+
+/**
+ * Lets Claude rephrase computed insights for this company. The numbers are fixed: any rephrased text whose numbers
+ * differ from the computed text is discarded and the computed wording is kept.
+ */
+export const phraseInsights = createServerFn({ method: "POST" })
+  .inputValidator((v: PhraseInput) => v)
+  .handler(async ({ data }): Promise<{ texts: string[]; source: "ai" | "computed" }> => {
+    const computed = { texts: data.texts, source: "computed" as const };
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === "your-api-key-here" || !data.texts.length) return computed;
+    try {
+      const { default: Anthropic } = await import("@anthropic-ai/sdk");
+      const client = new Anthropic({ apiKey });
+      const msg = await client.messages.create({
+        model: MODEL, max_tokens: 800, system: SYSTEM,
+        messages: [{ role: "user", content: `Rephrase each insight below for the team at ${data.company || "this company"}, who write for ${data.audience || "their audience"}. Keep every number exactly as written, keep each to one or two short sentences, plain and direct. Return JSON {"texts": [...]} with the same count and order.\n\n${JSON.stringify(data.texts)}` }],
+      });
+      const raw = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+      const parsed = (extractJson(raw) as { texts?: unknown }).texts;
+      if (!Array.isArray(parsed) || parsed.length !== data.texts.length) return computed;
+      const texts = data.texts.map((orig, i) => {
+        const t = typeof parsed[i] === "string" ? noDashes(parsed[i] as string).trim() : "";
+        return t && JSON.stringify(numbersIn(t)) === JSON.stringify(numbersIn(orig)) ? t : orig;
+      });
+      return { texts, source: "ai" };
+    } catch (err) {
+      console.error("Insight phrasing error:", err);
+      return computed;
+    }
+  });
