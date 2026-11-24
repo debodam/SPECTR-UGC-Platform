@@ -741,26 +741,28 @@ function RecordPage() {
                         Stop
                       </button>
                     )}
-                    {demo && !isRec && (
-                      <button
-                        type="button"
-                        className="gh-btn gh-btn--primary rc-sample"
-                        onClick={playSample}
-                        data-tour="sample-recording"
-                      >
-                        <Play size={15} aria-hidden="true" />
-                        Use sample recording
-                      </button>
-                    )}
                     {!isRec && (
-                      <button
-                        type="button"
-                        className="rc-paste"
-                        onClick={() => setTyping(true)}
-                        data-tour="paste-instead"
-                      >
-                        Paste or type instead
-                      </button>
+                      <div className="rc-alt">
+                        {demo && (
+                          <button
+                            type="button"
+                            className="gh-btn gh-btn--primary"
+                            onClick={playSample}
+                            data-tour="sample-recording"
+                          >
+                            <Play size={15} aria-hidden="true" />
+                            Use sample recording
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className={demo ? "gh-btn gh-btn--ghost" : "rc-paste"}
+                          onClick={() => setTyping(true)}
+                          data-tour="paste-instead"
+                        >
+                          Paste or type instead
+                        </button>
+                      </div>
                     )}
                   </>
                 )}

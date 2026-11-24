@@ -3693,8 +3693,20 @@ select.gx-input {
   color: rgba(255, 255, 255, 0.92);
   text-align: center;
 }
-.rc-sample {
-  margin: 16px auto 0;
+/* Record: the alternatives to the mic, one centered row of equal height buttons. */
+.rc-alt {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.rc-alt .gh-btn {
+  white-space: nowrap;
+}
+.rc-alt .rc-paste {
+  margin-top: 0;
 }
 
 /* ── Record: live transcript and new transcript cards (glass, white text) ── */
