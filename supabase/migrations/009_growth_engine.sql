@@ -69,15 +69,19 @@ alter table public.experiments  enable row level security;
 alter table public.insights     enable row level security;
 
 -- Owner can do everything, and only inside a workspace they own.
+drop policy if exists "Users manage own growth_plans" on public.growth_plans;
 create policy "Users manage own growth_plans" on public.growth_plans for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id and exists (select 1 from public.workspaces w where w.id = workspace_id and w.user_id = auth.uid()));
+drop policy if exists "Users manage own plays" on public.plays;
 create policy "Users manage own plays" on public.plays for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id and exists (select 1 from public.workspaces w where w.id = workspace_id and w.user_id = auth.uid()));
+drop policy if exists "Users manage own experiments" on public.experiments;
 create policy "Users manage own experiments" on public.experiments for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id and exists (select 1 from public.workspaces w where w.id = workspace_id and w.user_id = auth.uid()));
+drop policy if exists "Users manage own insights" on public.insights;
 create policy "Users manage own insights" on public.insights for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id and exists (select 1 from public.workspaces w where w.id = workspace_id and w.user_id = auth.uid()));

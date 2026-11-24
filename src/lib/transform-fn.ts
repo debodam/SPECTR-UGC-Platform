@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { errMessage } from "./utils";
+import { checkPayload, isSignedIn } from "./server-auth";
 
 export interface TransformInput {
   content?: string;
@@ -188,7 +189,7 @@ function refinePrompt(data: TransformInput) {
 
 function stripEmDashes(obj: TransformOutput): TransformOutput {
   // Replace em dash with a comma where it falls mid-sentence (word—word), else just a space.
-  // This is a safety net only — the model is instructed not to produce them at all.
+  // This is a safety net only; the model is instructed not to produce them at all.
   const fix = (s?: string) =>
     s
       ?.replace(/(\w)\s*—\s*(\w)/g, "$1, $2")
@@ -203,7 +204,9 @@ function stripEmDashes(obj: TransformOutput): TransformOutput {
 }
 
 export const transformContent = createServerFn({ method: "POST" })
-  .inputValidator((v: TransformInput) => v)
+  .inputValidator((v: TransformInput & { token?: string }) =>
+    checkPayload<TransformInput & { token?: string }>(v, 15_000_000),
+  )
   .handler(async ({ data }): Promise<TransformOutput> => {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
 
@@ -211,6 +214,8 @@ export const transformContent = createServerFn({ method: "POST" })
     if (!apiKey || apiKey === "your-api-key-here") {
       return { error: "ANTHROPIC_API_KEY is not configured." };
     }
+    if (!(await isSignedIn(data.token)))
+      return { error: "Your session has expired. Sign in again." };
 
     const client = new Anthropic({ apiKey });
 

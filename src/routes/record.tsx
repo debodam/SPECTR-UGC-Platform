@@ -10,6 +10,7 @@ import { PlayBanner } from "@/components/spectr/GrowthCards";
 import { playSearch, usePlay } from "@/lib/use-growth";
 import { advancePlay, insertWithLinks, type RepoCtx } from "@/lib/growth-repo";
 import { guidedPrompts } from "@/lib/growth-prompts";
+import { useEscape } from "@/lib/use-escape";
 
 interface SpeechResultEvent {
   resultIndex: number;
@@ -346,6 +347,7 @@ function RecordPage() {
   const [typing, setTyping] = useState(false);
   const [typed, setTyped] = useState("");
   const [typedErr, setTypedErr] = useState(false);
+  useEscape(typing, () => setTyping(false));
 
   const recognitionRef = useRef<SpeechRecognizer | null>(null);
   const finalRef = useRef("");

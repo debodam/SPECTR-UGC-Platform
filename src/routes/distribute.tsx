@@ -365,7 +365,12 @@ function DistributePage() {
         subtitle="Plan each post, then copy it or open LinkedIn when it is time."
         actions={
           notifyPerm === "default" ? (
-            <button type="button" className="gh-btn gh-btn--ghost" onClick={askNotify}>
+            <button
+              type="button"
+              className="gh-btn gh-btn--ghost"
+              onClick={askNotify}
+              aria-label="Remind me when a post is due"
+            >
               <Bell size={15} aria-hidden="true" />
               <span className="sx-hide-sm">Remind me when due</span>
             </button>

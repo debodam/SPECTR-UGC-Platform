@@ -13,6 +13,7 @@ import { computeForecast, formatMetric } from "@/lib/growth-forecast";
 import { variantResult } from "@/lib/growth-insights";
 import type { Experiment, Insight, Play, PlayFormat } from "@/lib/growth-types";
 import { errMessage, friendlyError } from "@/lib/utils";
+import { useEscape } from "@/lib/use-escape";
 
 export const Route = createFileRoute("/growth")({ component: RootPage });
 
@@ -81,6 +82,7 @@ function GrowthPlanPage() {
   const g = useGrowth(ctx);
   const [building, setBuilding] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
+  useEscape(confirmRegen, () => setConfirmRegen(false));
   const [expPlay, setExpPlay] = useState<Play | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -190,6 +192,7 @@ function GrowthPlanPage() {
               className="gh-btn gh-btn--ghost"
               disabled={building}
               onClick={() => setConfirmRegen(true)}
+              aria-label={building ? "Regenerating plan" : "Regenerate plan"}
             >
               <RefreshCw size={15} className={building ? "animate-spin" : ""} aria-hidden="true" />
               <span className="sx-hide-sm">{building ? "Regenerating" : "Regenerate plan"}</span>

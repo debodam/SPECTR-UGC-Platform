@@ -122,7 +122,7 @@ export function LinkedInUploadSlots({ ws, setWorkspace }: Props) {
       </div>
 
       <p className="text-[11px] mt-2" style={{ color: "var(--color-text-secondary)" }}>
-        Files are parsed in your browser — nothing is uploaded or stored. You can still edit the
+        Files are parsed in your browser. Nothing is uploaded or stored. You can still edit the
         numbers manually below.
       </p>
     </div>

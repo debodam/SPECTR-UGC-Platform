@@ -211,7 +211,7 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
     // Flag flips to true once getSession() resolves and the stored workspace is
     // merged into state. Any onAuthStateChange event that fires before that point
     // (INITIAL_SESSION, TOKEN_REFRESHED, etc.) would spread ...s which is still
-    // initialState — no companyId, authLoading:false — causing a false redirect.
+    // initialState (no companyId, authLoading false), causing a false redirect.
     let sessionLoaded = false;
 
     supabase.auth.getSession().then(({ data: { session } }) => {

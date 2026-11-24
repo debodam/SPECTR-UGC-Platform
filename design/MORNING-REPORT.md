@@ -29,13 +29,21 @@ Commits 85e40df and the "Make it work C to E" commit.
   - A new `friendlyError` helper replaces raw database and API messages across Transform, Results, Distribute, Growth, Settings, Setup, Companies, the experiment dialog, LinkedIn upload and the error page.
 - D. The layout and polish work was mostly done before this run. Rechecked at 1440x900 and 1280x720.
 - E. `npm run e2e` (and `npm run e2e:migrated`) drives the full loop in headless Chrome against a mocked Supabase: Dashboard plan, Growth page, start a play, record, save, paste fallback, Transform, queue a due post, copy, mark posted, pending result, validation, log numbers, back to the Dashboard. 16 of 16 checks pass in both modes. Screenshots go to design/e2e (git-ignored).
-### Step 3: Audit: pending
+### Step 3: Audit (03-audit.md): done
+Full report in design/audit-report.md. 18 findings: 1 blocker, 6 major, 11 minor. The blocker, every major and 6 minors are fixed. The rest are logged with reasons.
+- Blocker: an unused server function let anyone overwrite profiles with the service-role key. Deleted.
+- AI server functions now require a signed-in session token, so strangers cannot spend Anthropic credits. Payload sizes are checked.
+- Migration 009 is now idempotent (drop policy if exists).
+- Raw errors replaced with friendly messages app-wide. Missing labels, icon-only buttons and Escape-to-close dialogs fixed.
+- Sweep at 1440x900, 1280x720, 1920x1080 and 390x844: no overflow, console errors, wrong fonts, black active states or large white surfaces.
 ### Step 4: Demo mode: pending
 
 ## 2. What to do first in the morning
 (written at the end of the run)
 
 ## 3. Decisions made on your behalf
+- 3: deleted src/lib/auth-fn.ts and src/lib/transcribe-fn.ts. Both were unused, and both exposed paid or privileged calls with no auth.
+- 3: left the client-side access code unchanged. See audit-report.md, "Needs your decision".
 - 1b: the Growth plan card sits where the Dashboard's "AI suggested" line was, under the orb. That line was growth guidance and the spot is the only place a card fits without a scroll at 1280x720. The suggestion copy now lives in the card's forecast and the See ideas helper text.
 - 1b: Dashboard cards that showed placeholder numbers (a hardcoded sparkline, 0% goal, empty week) now read real data, with empty states when there is none.
 - 1b: Strategy fields went into a new fifth Setup step rather than crowding Goals or Audience. Only focus and at least one format are required.

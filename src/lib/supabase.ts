@@ -9,6 +9,16 @@ const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || "") as string
 // is safe: the client is never needed during SSR.
 let _client: SupabaseClient | null = null;
 
+/** The signed-in user's access token, sent to server functions that spend paid API calls. */
+export async function accessToken(): Promise<string | undefined> {
+  try {
+    const { data } = await getClient().auth.getSession();
+    return data.session?.access_token;
+  } catch {
+    return undefined;
+  }
+}
+
 function getClient(): SupabaseClient {
   if (!_client) {
     _client = createClient(supabaseUrl, supabaseAnonKey);

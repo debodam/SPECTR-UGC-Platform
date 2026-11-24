@@ -91,6 +91,7 @@ export async function launch({
     ...seed,
   };
   const log = [];
+  const failWrites = new Set(); // tables whose writes return a 500, for failure-path tests
 
   function matchFilters(row, params) {
     for (const [k, v] of params) {
@@ -147,6 +148,8 @@ export async function launch({
       if (lim) list = list.slice(0, lim);
       return reply(list);
     }
+    if (failWrites.has(table))
+      return { status: 500, body: JSON.stringify({ code: "XX000", message: "simulated failure" }) };
     const payload = body ? JSON.parse(body) : {};
     const items = Array.isArray(payload) ? payload : [payload];
     if (!migrated && !GROWTH.includes(table)) {
@@ -338,5 +341,5 @@ export async function launch({
     if (m.method === "Runtime.exceptionThrown")
       consoleErrors.push(m.params.exceptionDetails?.exception?.description?.slice(0, 200));
   });
-  return { send, ev, shot, go, click, type, sleep, close, db, log, consoleErrors };
+  return { send, ev, shot, go, click, type, sleep, close, db, log, consoleErrors, failWrites };
 }

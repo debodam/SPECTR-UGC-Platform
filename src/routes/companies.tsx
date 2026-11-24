@@ -4,6 +4,7 @@ import supabase from "@/lib/supabase";
 import { emptyGrowthPrefs, useApp } from "@/lib/spectr-store";
 import { Building2, Trash2, Plus, LogOut, LoaderCircle } from "lucide-react";
 import { friendlyError } from "@/lib/utils";
+import { useEscape } from "@/lib/use-escape";
 
 interface Company {
   id: string;
@@ -293,6 +294,7 @@ function CompaniesPage() {
   const [focus, setFocus] = useState<string | null>(null);
   const [entering, setEntering] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
+  useEscape(showNew, () => setShowNew(false));
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");

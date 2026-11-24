@@ -403,6 +403,7 @@ function Settings() {
                         <input
                           style={inStyle}
                           type="text"
+                          aria-label="Company name"
                           value={ws.companyName}
                           onChange={(e) => setWs({ companyName: e.target.value })}
                         />
@@ -414,6 +415,7 @@ function Settings() {
                         <input
                           style={inStyle}
                           type="text"
+                          aria-label="Industry"
                           value={ws.industry}
                           onChange={(e) => setWs({ industry: e.target.value })}
                         />

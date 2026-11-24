@@ -24,7 +24,8 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { transformContent, type TransformInput } from "@/lib/transform-fn";
-import supabase from "@/lib/supabase";
+import supabase, { accessToken } from "@/lib/supabase";
+import { useEscape } from "@/lib/use-escape";
 
 export const Route = createFileRoute("/transform")({
   component: () => (
@@ -813,6 +814,7 @@ function TransformPage() {
   const [showSaveInput, setShowSaveInput] = useState(false);
   const ctxMenuRef = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(false);
+  useEscape(showHistory, () => setShowHistory(false));
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
@@ -911,7 +913,7 @@ function TransformPage() {
   }, [ws]);
 
   async function callTransform(input: TransformInput) {
-    const data = await transformContent({ data: input });
+    const data = await transformContent({ data: { ...input, token: await accessToken() } });
     if (data.error) throw new Error(data.error);
     return data;
   }
@@ -1219,6 +1221,7 @@ function TransformPage() {
                   <textarea
                     className="tf-in"
                     placeholder="Who is this for, and what should it say?"
+                    aria-label="Context"
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
                     style={{ ...inStyle, marginTop: 10, height: 112 }}
@@ -1245,6 +1248,7 @@ function TransformPage() {
                   <textarea
                     className="tf-in"
                     placeholder="Add instructions"
+                    aria-label="Content instructions"
                     value={instructions}
                     onChange={(e) => setInstructions(e.target.value)}
                     style={{ ...inStyle, marginTop: 10, height: 112 }}
@@ -1530,6 +1534,7 @@ function TransformPage() {
                 <textarea
                   className="tf-in"
                   placeholder="Paste your transcript, notes, or draft here..."
+                  aria-label="Source text"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   disabled={!!file}
@@ -1764,6 +1769,7 @@ function TransformPage() {
                 <textarea
                   className="tf-in"
                   placeholder="Paste your transcript, notes, or draft here..."
+                  aria-label="Source text"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   disabled={!!file}

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { errMessage } from "./utils";
 import { AiPlanSchema, type AiPlan, type PlanInputs } from "./growth-types";
 import { applyPrefs, buildFallbackPlan } from "./growth-plan";
+import { checkPayload, isSignedIn } from "./server-auth";
 
 export interface PlanResult {
   plan: AiPlan;
@@ -96,7 +97,9 @@ function sanitize(plan: AiPlan): AiPlan {
 }
 
 export const generateGrowthPlan = createServerFn({ method: "POST" })
-  .inputValidator((v: PlanInputs) => v)
+  .inputValidator((v: PlanInputs & { token?: string }) =>
+    checkPayload<PlanInputs & { token?: string }>(v, 60_000),
+  )
   .handler(async ({ data }): Promise<PlanResult> => {
     const fallback = (reason: string): PlanResult => ({
       plan: buildFallbackPlan(data),
@@ -106,6 +109,7 @@ export const generateGrowthPlan = createServerFn({ method: "POST" })
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey || apiKey === "your-api-key-here")
       return fallback("ANTHROPIC_API_KEY is not configured");
+    if (!(await isSignedIn(data.token))) return fallback("Not signed in");
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
       const client = new Anthropic({ apiKey });
@@ -142,11 +146,16 @@ const numbersIn = (s: string) =>
  * differ from the computed text is discarded and the computed wording is kept.
  */
 export const phraseInsights = createServerFn({ method: "POST" })
-  .inputValidator((v: PhraseInput) => v)
+  .inputValidator((v: PhraseInput & { token?: string }) => {
+    const p = checkPayload<PhraseInput & { token?: string }>(v, 40_000);
+    if (!Array.isArray(p.texts) || p.texts.length > 20) throw new Error("Invalid request");
+    return p;
+  })
   .handler(async ({ data }): Promise<{ texts: string[]; source: "ai" | "computed" }> => {
     const computed = { texts: data.texts, source: "computed" as const };
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey || apiKey === "your-api-key-here" || !data.texts.length) return computed;
+    if (!(await isSignedIn(data.token))) return computed;
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
       const client = new Anthropic({ apiKey });
