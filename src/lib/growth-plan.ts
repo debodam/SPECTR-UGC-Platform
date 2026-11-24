@@ -9,7 +9,10 @@ const NORTH_STAR_LABELS: Record<NorthStarKey, string> = {
   monthlyVisitors: "Monthly profile visitors",
 };
 
-const num = (v?: string) => { const n = Number(String(v ?? "").replace(/[^\d.]/g, "")); return Number.isFinite(n) ? n : 0; };
+const num = (v?: string) => {
+  const n = Number(String(v ?? "").replace(/[^\d.]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+};
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 const first = (s: string, fallback: string) => clean(s.split(/[,;/]| and /i)[0] || "") || fallback;
 
@@ -22,7 +25,9 @@ export function pickNorthStar(inputs: PlanInputs): NorthStarKey {
   return "followers";
 }
 
-export function northStarLabel(key: NorthStarKey) { return NORTH_STAR_LABELS[key]; }
+export function northStarLabel(key: NorthStarKey) {
+  return NORTH_STAR_LABELS[key];
+}
 
 function audienceParts(inputs: PlanInputs) {
   const role = first(inputs.audience.jobTitles, "operators");
@@ -30,17 +35,25 @@ function audienceParts(inputs: PlanInputs) {
   const size = clean(inputs.audience.companySize);
   const sector = clean(inputs.sector) || "your market";
   const roleLabel = /s$/i.test(role) ? role : `${role}s`;
-  const who = [seniority && !role.toLowerCase().includes(seniority.toLowerCase()) ? seniority : "", roleLabel].filter(Boolean).join(" ");
+  const who = [
+    seniority && !role.toLowerCase().includes(seniority.toLowerCase()) ? seniority : "",
+    roleLabel,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return { role: roleLabel, who, size, sector };
 }
 
 function goalPhrase(inputs: PlanInputs, key: NorthStarKey) {
-  const b = num(inputs.baseline[key]), t = num(inputs.targets[key]);
+  const b = num(inputs.baseline[key]),
+    t = num(inputs.targets[key]);
   const label = NORTH_STAR_LABELS[key].replace(/^(?!LinkedIn)./, (c) => c.toLowerCase());
   if (t && b) return `grow ${label} from ${b.toLocaleString()} to ${t.toLocaleString()}`;
   if (t) return `reach ${t.toLocaleString()} ${label}`;
   const g = clean(inputs.goalDescription);
-  return g ? g.replace(/[.!]+$/, "").replace(/^./, (c) => c.toLowerCase()) : `build a steady audience of ${label}`;
+  return g
+    ? g.replace(/[.!]+$/, "").replace(/^./, (c) => c.toLowerCase())
+    : `build a steady audience of ${label}`;
 }
 
 export function buildFallbackPlan(inputs: PlanInputs): AiPlan {
@@ -48,18 +61,39 @@ export function buildFallbackPlan(inputs: PlanInputs): AiPlan {
   const company = clean(inputs.companyName) || "our company";
   const { role, who, size, sector } = audienceParts(inputs);
   const goal = goalPhrase(inputs, key);
-  const gap = num(inputs.targets[key]) && num(inputs.baseline[key]) ? num(inputs.targets[key]) / Math.max(1, num(inputs.baseline[key])) : 0;
+  const gap =
+    num(inputs.targets[key]) && num(inputs.baseline[key])
+      ? num(inputs.targets[key]) / Math.max(1, num(inputs.baseline[key]))
+      : 0;
   const cadence = inputs.startingFromScratch ? 3 : gap > 3 ? 5 : gap > 1.5 ? 4 : 3;
   const sizeLabel = size ? `${size}` : "growing";
 
   const pillars = [
-    { name: "Proof from the field", description: `Real outcomes ${company} creates for ${who} in ${sector}, told with numbers.`, share: 35 },
-    { name: "Point of view", description: `Clear, sometimes contrarian takes on how ${sector} is changing and what ${role} should do about it.`, share: 25 },
-    { name: `Building ${company}`, description: `Honest build in public updates that show the team, decisions and lessons behind ${company}.`, share: 25 },
-    { name: "Playbooks", description: `Practical how-to content ${role} can use the same day.`, share: 15 },
+    {
+      name: "Proof from the field",
+      description: `Real outcomes ${company} creates for ${who} in ${sector}, told with numbers.`,
+      share: 35,
+    },
+    {
+      name: "Point of view",
+      description: `Clear, sometimes contrarian takes on how ${sector} is changing and what ${role} should do about it.`,
+      share: 25,
+    },
+    {
+      name: `Building ${company}`,
+      description: `Honest build in public updates that show the team, decisions and lessons behind ${company}.`,
+      share: 25,
+    },
+    {
+      name: "Playbooks",
+      description: `Practical how-to content ${role} can use the same day.`,
+      share: 15,
+    },
   ];
 
-  const learned = inputs.learnings?.length ? ` It also builds on what already worked: ${inputs.learnings[0]}` : "";
+  const learned = inputs.learnings?.length
+    ? ` It also builds on what already worked: ${inputs.learnings[0]}`
+    : "";
 
   return {
     northStarMetric: NORTH_STAR_LABELS[key],
@@ -83,7 +117,7 @@ export function buildFallbackPlan(inputs: PlanInputs): AiPlan {
         format: "post",
         pillar: "Point of view",
         hook: `Unpopular opinion for ${who} in ${sector}: the playbook everyone copies is quietly slowing your team down.`,
-        rationale: `A sharp point of view starts conversations in the comments, which widens reach toward the ${NORTH_STAR_LABELS[key].toLowerCase()} goal.`,
+        rationale: `A sharp point of view starts conversations in the comments, which widens reach toward the ${NORTH_STAR_LABELS[key].replace(/^(?!LinkedIn)./, (c) => c.toLowerCase())} goal.`,
       },
       {
         title: `How a ${sizeLabel} ${sector} team got results with ${company}`,

@@ -17,11 +17,19 @@ export function SpectrLogo({ size = 32, showTag = false }: { size?: number; show
       <div className="flex items-center gap-2">
         <div
           className="rounded-md flex items-center justify-center"
-          style={{ width: size, height: size, background: "var(--color-primary)", boxShadow: "var(--glow-primary-sm)" }}
+          style={{
+            width: size,
+            height: size,
+            background: "var(--color-primary)",
+            boxShadow: "var(--glow-primary-sm)",
+          }}
         >
           <SpectrMark size={size} />
         </div>
-        <span className="font-bold tracking-tight" style={{ fontSize: size * 0.7, color: "var(--color-foreground)" }}>
+        <span
+          className="font-bold tracking-tight"
+          style={{ fontSize: size * 0.7, color: "var(--color-foreground)" }}
+        >
           SPECTR
         </span>
       </div>

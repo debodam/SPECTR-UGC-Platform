@@ -41,7 +41,8 @@ function useOrbMotion(
     const el = orb.current;
     if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    let cancelled = false, raf = 0;
+    let cancelled = false,
+      raf = 0;
     let stream: MediaStream | null = null;
     let ctx: AudioContext | null = null;
     let analyser: AnalyserNode | null = null;
@@ -49,18 +50,28 @@ function useOrbMotion(
 
     if (listening && navigator.mediaDevices?.getUserMedia) {
       // The speech recognizer exposes no stream; this reuses the origin's existing mic permission.
-      navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => {
-        if (cancelled) { s.getTracks().forEach((t) => t.stop()); return; }
-        stream = s;
-        ctx = new AudioContext();
-        analyser = ctx.createAnalyser();
-        analyser.fftSize = 1024;
-        ctx.createMediaStreamSource(s).connect(analyser);
-        buf = new Float32Array(analyser.fftSize);
-      }).catch(() => {});
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((s) => {
+          if (cancelled) {
+            s.getTracks().forEach((t) => t.stop());
+            return;
+          }
+          stream = s;
+          ctx = new AudioContext();
+          analyser = ctx.createAnalyser();
+          analyser.fftSize = 1024;
+          ctx.createMediaStreamSource(s).connect(analyser);
+          buf = new Float32Array(analyser.fftSize);
+        })
+        .catch(() => {});
     }
 
-    let smooth = 0, lvl = 0, vel = 0, rate = 1, frame = 0;
+    let smooth = 0,
+      lvl = 0,
+      vel = 0,
+      rate = 1,
+      frame = 0;
     let anims: Animation[] = [];
     let rippleAnims: Animation[] = [];
 
@@ -74,7 +85,10 @@ function useOrbMotion(
         analyser.getFloatTimeDomainData(buf);
         let sum = 0;
         for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-        target = Math.pow(Math.min(1, Math.max(0, (Math.sqrt(sum / buf.length) - 0.006) / 0.12)), 0.7);
+        target = Math.pow(
+          Math.min(1, Math.max(0, (Math.sqrt(sum / buf.length) - 0.006) / 0.12)),
+          0.7,
+        );
       }
       smooth += (target - smooth) * (target > smooth ? 0.25 : 0.06);
       // Under-damped spring: a little overshoot so the core feels elastic rather than jittery.
@@ -101,7 +115,11 @@ function useOrbMotion(
   }, [orb, blobs, ripples, listening]);
 }
 
-export function MicHalo({ state, onClick, liveAudio = false }: {
+export function MicHalo({
+  state,
+  onClick,
+  liveAudio = false,
+}: {
   state: OrbState;
   onClick: () => void;
   /** React to the live microphone level while recording. */
@@ -111,27 +129,48 @@ export function MicHalo({ state, onClick, liveAudio = false }: {
   const blobs = useRef<HTMLSpanElement>(null);
   const ripples = useRef<HTMLSpanElement>(null);
   const [noise, setNoise] = useState<string | null>(null);
-  useEffect(() => { setNoise(makeNoise()); }, []);
+  useEffect(() => {
+    setNoise(makeNoise());
+  }, []);
   useOrbMotion(orb, blobs, ripples, state === "recording" && liveAudio);
 
   return (
     <div className="mo-slot">
-      <button ref={orb} type="button" className={`mo mo--${state}`} aria-label={LABELS[state]} aria-busy={state === "loading"} onClick={onClick}>
+      <button
+        ref={orb}
+        type="button"
+        className={`mo mo--${state}`}
+        aria-label={LABELS[state]}
+        aria-busy={state === "loading"}
+        onClick={onClick}
+      >
         <span className="mo-ambient" />
         <span className="mo-x mo-ripples" ref={ripples}>
-          <span className="mo-ripple" /><span className="mo-ripple" /><span className="mo-ripple" />
+          <span className="mo-ripple" />
+          <span className="mo-ripple" />
+          <span className="mo-ripple" />
         </span>
-        <span className="mo-x mo-aurax"><span className="mo-l mo-aura" /></span>
+        <span className="mo-x mo-aurax">
+          <span className="mo-l mo-aura" />
+        </span>
         <span className="mo-l mo-core" />
         <span className="mo-sheen" />
-        <span className="mo-grain" style={noise ? { backgroundImage: `url(${noise})` } : undefined} />
+        <span
+          className="mo-grain"
+          style={noise ? { backgroundImage: `url(${noise})` } : undefined}
+        />
         <span className="mo-orbcore">
           <span className="mo-cbloom" />
           <span className="mo-sphere" />
           <span className="mo-blobs" ref={blobs}>
-            <span className="mo-blob b1" /><span className="mo-blob b2" /><span className="mo-blob b3" /><span className="mo-blob b4" />
+            <span className="mo-blob b1" />
+            <span className="mo-blob b2" />
+            <span className="mo-blob b3" />
+            <span className="mo-blob b4" />
           </span>
-          <span className="mo-hotx"><span className="mo-hot" /></span>
+          <span className="mo-hotx">
+            <span className="mo-hot" />
+          </span>
         </span>
       </button>
     </div>

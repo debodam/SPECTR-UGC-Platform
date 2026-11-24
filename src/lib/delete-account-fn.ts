@@ -14,7 +14,10 @@ export const deleteAccount = createServerFn({ method: "POST" })
     // Verify the caller's token to get their user ID
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY!;
     const userClient = createClient(supabaseUrl, anonKey);
-    const { data: { user }, error: authError } = await userClient.auth.getUser(data.token);
+    const {
+      data: { user },
+      error: authError,
+    } = await userClient.auth.getUser(data.token);
 
     if (authError || !user) {
       return { error: "Invalid or expired session." };

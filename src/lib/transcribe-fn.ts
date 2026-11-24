@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { errMessage } from "./utils";
 
 interface TranscribeInput {
   audioBase64: string;
@@ -24,8 +25,8 @@ export const transcribeAudio = createServerFn({ method: "POST" })
       const ext = data.mimeType.includes("ogg")
         ? "ogg"
         : data.mimeType.includes("mp4")
-        ? "mp4"
-        : "webm";
+          ? "mp4"
+          : "webm";
 
       const formData = new FormData();
       formData.append("file", new Blob([buffer], { type: data.mimeType }), `audio.${ext}`);
@@ -45,8 +46,8 @@ export const transcribeAudio = createServerFn({ method: "POST" })
 
       const json = (await response.json()) as { text: string };
       return { transcript: json.text };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Transcribe error:", err);
-      return { error: err.message ?? "Transcription failed." };
+      return { error: errMessage(err) ?? "Transcription failed." };
     }
   });

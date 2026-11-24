@@ -1,8 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
+import { errMessage } from "./utils";
 import { AiPlanSchema, type AiPlan, type PlanInputs } from "./growth-types";
 import { buildFallbackPlan } from "./growth-plan";
 
-export interface PlanResult { plan: AiPlan; source: "ai" | "fallback"; reason?: string }
+export interface PlanResult {
+  plan: AiPlan;
+  source: "ai" | "fallback";
+  reason?: string;
+}
 
 const MODEL = "claude-sonnet-4-6";
 
@@ -19,8 +24,11 @@ function planPrompt(i: PlanInputs) {
     `Baseline: ${JSON.stringify(i.baseline)}`,
     `Targets: ${JSON.stringify(i.targets)}`,
     i.startingFromScratch && "They are starting from scratch on LinkedIn.",
-    i.learnings?.length && `What has already worked for them (build on this): ${i.learnings.join(" | ")}`,
-  ].filter(Boolean).join("\n");
+    i.learnings?.length &&
+      `What has already worked for them (build on this): ${i.learnings.join(" | ")}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return `${lines}
 
@@ -47,11 +55,20 @@ function extractJson(raw: string): unknown {
   return JSON.parse(obj ? obj[0] : body);
 }
 
-const noDashes = (s: string) => s.replace(/(\w)\s*[—–]\s*(\w)/g, "$1, $2").replace(/[—–]/g, " ").replace(/ {2,}/g, " ");
+const noDashes = (s: string) =>
+  s
+    .replace(/(\w)\s*[—–]\s*(\w)/g, "$1, $2")
+    .replace(/[—–]/g, " ")
+    .replace(/ {2,}/g, " ");
 
 function sanitize(plan: AiPlan): AiPlan {
   const total = plan.pillars.reduce((s, p) => s + p.share, 0) || 1;
-  const pillars = plan.pillars.map((p) => ({ ...p, name: noDashes(p.name), description: noDashes(p.description), share: Math.round((p.share / total) * 100) }));
+  const pillars = plan.pillars.map((p) => ({
+    ...p,
+    name: noDashes(p.name),
+    description: noDashes(p.description),
+    share: Math.round((p.share / total) * 100),
+  }));
   const names = new Set(pillars.map((p) => p.name));
   return {
     ...plan,
@@ -61,7 +78,9 @@ function sanitize(plan: AiPlan): AiPlan {
     pillars,
     plays: plan.plays.map((p) => ({
       ...p,
-      title: noDashes(p.title), hook: noDashes(p.hook), rationale: noDashes(p.rationale),
+      title: noDashes(p.title),
+      hook: noDashes(p.hook),
+      rationale: noDashes(p.rationale),
       pillar: names.has(p.pillar) ? p.pillar : pillars[0].name,
     })),
   };
@@ -70,29 +89,44 @@ function sanitize(plan: AiPlan): AiPlan {
 export const generateGrowthPlan = createServerFn({ method: "POST" })
   .inputValidator((v: PlanInputs) => v)
   .handler(async ({ data }): Promise<PlanResult> => {
-    const fallback = (reason: string): PlanResult => ({ plan: buildFallbackPlan(data), source: "fallback", reason });
+    const fallback = (reason: string): PlanResult => ({
+      plan: buildFallbackPlan(data),
+      source: "fallback",
+      reason,
+    });
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey || apiKey === "your-api-key-here") return fallback("ANTHROPIC_API_KEY is not configured");
+    if (!apiKey || apiKey === "your-api-key-here")
+      return fallback("ANTHROPIC_API_KEY is not configured");
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
       const client = new Anthropic({ apiKey });
       const msg = await client.messages.create({
-        model: MODEL, max_tokens: 2500, system: SYSTEM,
+        model: MODEL,
+        max_tokens: 2500,
+        system: SYSTEM,
         messages: [{ role: "user", content: planPrompt(data) }],
       });
       const raw = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
       const parsed = AiPlanSchema.safeParse(extractJson(raw));
-      if (!parsed.success) return fallback(`AI response failed validation: ${parsed.error.issues[0]?.message ?? "invalid"}`);
+      if (!parsed.success)
+        return fallback(
+          `AI response failed validation: ${parsed.error.issues[0]?.message ?? "invalid"}`,
+        );
       return { plan: sanitize(parsed.data), source: "ai" };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Growth plan error:", err);
-      return fallback(err?.message ?? "AI call failed");
+      return fallback(errMessage(err) ?? "AI call failed");
     }
   });
 
-export interface PhraseInput { company: string; audience: string; texts: string[] }
+export interface PhraseInput {
+  company: string;
+  audience: string;
+  texts: string[];
+}
 
-const numbersIn = (s: string) => (s.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((n) => n.replace(/,/g, "")).sort();
+const numbersIn = (s: string) =>
+  (s.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((n) => n.replace(/,/g, "")).sort();
 
 /**
  * Lets Claude rephrase computed insights for this company. The numbers are fixed: any rephrased text whose numbers
@@ -108,8 +142,15 @@ export const phraseInsights = createServerFn({ method: "POST" })
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
       const client = new Anthropic({ apiKey });
       const msg = await client.messages.create({
-        model: MODEL, max_tokens: 800, system: SYSTEM,
-        messages: [{ role: "user", content: `Rephrase each insight below for the team at ${data.company || "this company"}, who write for ${data.audience || "their audience"}. Keep every number exactly as written, keep each to one or two short sentences, plain and direct. Return JSON {"texts": [...]} with the same count and order.\n\n${JSON.stringify(data.texts)}` }],
+        model: MODEL,
+        max_tokens: 800,
+        system: SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: `Rephrase each insight below for the team at ${data.company || "this company"}, who write for ${data.audience || "their audience"}. Keep every number exactly as written, keep each to one or two short sentences, plain and direct. Return JSON {"texts": [...]} with the same count and order.\n\n${JSON.stringify(data.texts)}`,
+          },
+        ],
       });
       const raw = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
       const parsed = (extractJson(raw) as { texts?: unknown }).texts;

@@ -1,10 +1,31 @@
 import { z } from "zod";
 import type { Format } from "./spectr-store";
 
-export const PLAY_TYPES = ["founder story", "contrarian take", "customer win", "build in public", "launch", "hiring", "how-to"] as const;
+export const PLAY_TYPES = [
+  "founder story",
+  "contrarian take",
+  "customer win",
+  "build in public",
+  "launch",
+  "hiring",
+  "how-to",
+] as const;
 export const PLAY_FORMATS = ["article", "post", "video script"] as const;
-export const PLAY_STATUSES = ["suggested", "in progress", "recorded", "transformed", "scheduled", "posted", "measured"] as const;
-export const NORTH_STAR_KEYS = ["followers", "weeklyImpressions", "engagementRate", "monthlyVisitors"] as const;
+export const PLAY_STATUSES = [
+  "suggested",
+  "in progress",
+  "recorded",
+  "transformed",
+  "scheduled",
+  "posted",
+  "measured",
+] as const;
+export const NORTH_STAR_KEYS = [
+  "followers",
+  "weeklyImpressions",
+  "engagementRate",
+  "monthlyVisitors",
+] as const;
 export const EXPERIMENT_METRICS = ["impressions", "engagementRate", "followersGained"] as const;
 
 export type PlayType = (typeof PLAY_TYPES)[number];
@@ -13,8 +34,16 @@ export type PlayStatus = (typeof PLAY_STATUSES)[number];
 export type NorthStarKey = (typeof NORTH_STAR_KEYS)[number];
 export type ExperimentMetric = (typeof EXPERIMENT_METRICS)[number];
 
-export interface Pillar { name: string; description: string; share: number }
-export interface PlanChange { at: string; change: string; source: "generated" | "regenerated" | "insight" }
+export interface Pillar {
+  name: string;
+  description: string;
+  share: number;
+}
+export interface PlanChange {
+  at: string;
+  change: string;
+  source: "generated" | "regenerated" | "insight";
+}
 
 export interface GrowthPlan {
   id: string;
@@ -30,7 +59,12 @@ export interface GrowthPlan {
   createdAt: string;
 }
 
-export interface PlayResults { impressions: number; engagementRate: number; followersGained: number; entries: number }
+export interface PlayResults {
+  impressions: number;
+  engagementRate: number;
+  followersGained: number;
+  entries: number;
+}
 
 export interface Play {
   id: string;
@@ -50,7 +84,10 @@ export interface Play {
   createdAt: string;
 }
 
-export interface VariantResult { value: number; entries: number }
+export interface VariantResult {
+  value: number;
+  entries: number;
+}
 
 export interface Experiment {
   id: string;
@@ -68,8 +105,7 @@ export interface Experiment {
 }
 
 export type InsightAction =
-  | { type: "cadence"; value: number }
-  | { type: "pillar_share"; pillar: string; delta: number };
+  { type: "cadence"; value: number } | { type: "pillar_share"; pillar: string; delta: number };
 
 export interface InsightEvidence {
   key: string;
@@ -117,7 +153,16 @@ export const AiPlanSchema = z.object({
   northStarKey: z.enum(NORTH_STAR_KEYS),
   goalSummary: z.string().min(10).max(320),
   audienceSummary: z.string().min(5).max(240),
-  pillars: z.array(z.object({ name: z.string().min(2).max(60), description: z.string().min(5).max(220), share: z.number().min(5).max(80) })).min(3).max(4),
+  pillars: z
+    .array(
+      z.object({
+        name: z.string().min(2).max(60),
+        description: z.string().min(5).max(220),
+        share: z.number().min(5).max(80),
+      }),
+    )
+    .min(3)
+    .max(4),
   cadencePerWeek: z.number().int().min(1).max(10),
   plays: z.array(AiPlaySchema).min(4).max(5),
 });
@@ -126,11 +171,19 @@ export type AiPlan = z.infer<typeof AiPlanSchema>;
 
 // ── Format mapping between plays (lowercase, per schema) and the app's Format ──
 
-export const toAppFormat = (f: PlayFormat): Format => (f === "article" ? "Article" : f === "post" ? "Post" : "Video Script");
-export const toPlayFormat = (f: Format): PlayFormat => (f === "Article" ? "article" : f === "Post" ? "post" : "video script");
+export const toAppFormat = (f: PlayFormat): Format =>
+  f === "article" ? "Article" : f === "post" ? "Post" : "Video Script";
+export const toPlayFormat = (f: Format): PlayFormat =>
+  f === "Article" ? "article" : f === "Post" ? "post" : "video script";
 
 export const PLAY_STATUS_ORDER: Record<PlayStatus, number> = {
-  suggested: 0, "in progress": 1, recorded: 2, transformed: 3, scheduled: 4, posted: 5, measured: 6,
+  suggested: 0,
+  "in progress": 1,
+  recorded: 2,
+  transformed: 3,
+  scheduled: 4,
+  posted: 5,
+  measured: 6,
 };
 
 /** Monday of the week containing `d`, as YYYY-MM-DD. */

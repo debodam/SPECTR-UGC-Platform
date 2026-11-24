@@ -6,7 +6,11 @@ const KEY = "spectr-state-v1";
 
 export type Format = "Article" | "Post" | "Video Script";
 
-export interface User { id: string; name: string; email: string; }
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
 export interface Workspace {
   companyId?: string;
@@ -16,32 +20,54 @@ export interface Workspace {
   primaryPlatform: "LinkedIn";
   startingFromScratch: boolean;
   baseline: {
-    followers: string; followerGrowth: string; weeklyImpressions: string;
-    engagementRate: string; monthlyVisitors: string; weeklyPageSearches: string;
+    followers: string;
+    followerGrowth: string;
+    weeklyImpressions: string;
+    engagementRate: string;
+    monthlyVisitors: string;
+    weeklyPageSearches: string;
   };
   targets: {
-    followers: string; followerGrowth: string; weeklyImpressions: string;
-    engagementRate: string; monthlyVisitors: string; weeklyPageSearches: string;
+    followers: string;
+    followerGrowth: string;
+    weeklyImpressions: string;
+    engagementRate: string;
+    monthlyVisitors: string;
+    weeklyPageSearches: string;
   };
   goalDescription: string;
   companyDescription: string;
   companyPdfUrl: string;
   companyPdfName: string;
   audience: {
-    jobTitles: string; seniority: string; companySize: string; description: string;
+    jobTitles: string;
+    seniority: string;
+    companySize: string;
+    description: string;
   };
 }
 
 export interface PerfEntry {
-  id: string; date: string; title: string; format: Format;
+  id: string;
+  date: string;
+  title: string;
+  format: Format;
   source: "Transcript" | "Notes" | "Draft";
-  impressions: number; engagementRate: number; followersGained: number; notes: string;
+  impressions: number;
+  engagementRate: number;
+  followersGained: number;
+  notes: string;
   /** Growth Engine links (optional until migration 009 is applied). */
-  playId?: string | null; variant?: "a" | "b" | null;
+  playId?: string | null;
+  variant?: "a" | "b" | null;
 }
 
 export interface QueueItem {
-  id: string; title: string; format: Format; date: string; time: string;
+  id: string;
+  title: string;
+  format: Format;
+  date: string;
+  time: string;
   status: "Scheduled" | "Published";
   playId?: string | null;
 }
@@ -59,9 +85,27 @@ export interface AppState {
 
 const emptyWorkspace: Workspace = {
   companyId: undefined,
-  companyName: "", companyLogoUrl: "", industry: "", primaryPlatform: "LinkedIn", startingFromScratch: false,
-  baseline: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
-  targets: { followers: "", followerGrowth: "", weeklyImpressions: "", engagementRate: "", monthlyVisitors: "", weeklyPageSearches: "" },
+  companyName: "",
+  companyLogoUrl: "",
+  industry: "",
+  primaryPlatform: "LinkedIn",
+  startingFromScratch: false,
+  baseline: {
+    followers: "",
+    followerGrowth: "",
+    weeklyImpressions: "",
+    engagementRate: "",
+    monthlyVisitors: "",
+    weeklyPageSearches: "",
+  },
+  targets: {
+    followers: "",
+    followerGrowth: "",
+    weeklyImpressions: "",
+    engagementRate: "",
+    monthlyVisitors: "",
+    weeklyPageSearches: "",
+  },
   goalDescription: "",
   companyDescription: "",
   companyPdfUrl: "",
@@ -70,9 +114,14 @@ const emptyWorkspace: Workspace = {
 };
 
 const initialState: AppState = {
-  user: null, isAuthenticated: false, authLoading: true,
-  setupComplete: false, setupStep: 1,
-  workspace: emptyWorkspace, entries: [], queue: [],
+  user: null,
+  isAuthenticated: false,
+  authLoading: true,
+  setupComplete: false,
+  setupStep: 1,
+  workspace: emptyWorkspace,
+  entries: [],
+  queue: [],
 };
 
 const Ctx = createContext<{
@@ -81,11 +130,18 @@ const Ctx = createContext<{
   setWorkspace: (patch: Partial<Workspace>) => void;
 } | null>(null);
 
-type StoredState = Pick<AppState, "workspace" | "setupComplete" | "setupStep" | "entries" | "queue">;
+type StoredState = Pick<
+  AppState,
+  "workspace" | "setupComplete" | "setupStep" | "entries" | "queue"
+>;
 
 function load(): StoredState {
   const fallback: StoredState = {
-    workspace: emptyWorkspace, setupComplete: false, setupStep: 1, entries: [], queue: [],
+    workspace: emptyWorkspace,
+    setupComplete: false,
+    setupStep: 1,
+    entries: [],
+    queue: [],
   };
   if (typeof window === "undefined") return fallback;
   try {
@@ -100,7 +156,7 @@ function load(): StoredState {
         ...emptyWorkspace,
         ...w,
         baseline: { ...emptyWorkspace.baseline, ...(w.baseline || {}) },
-        targets:  { ...emptyWorkspace.targets,  ...(w.targets  || {}) },
+        targets: { ...emptyWorkspace.targets, ...(w.targets || {}) },
         audience: { ...emptyWorkspace.audience, ...(w.audience || {}) },
       },
       setupComplete: p.setupComplete ?? false,
@@ -108,7 +164,9 @@ function load(): StoredState {
       entries: p.entries || [],
       queue: p.queue || [],
     };
-  } catch { return fallback; }
+  } catch {
+    return fallback;
+  }
 }
 
 function sessionToUser(session: Session | null): User | null {
@@ -144,7 +202,9 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
       setHydrated(true);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!sessionLoaded) return;
       setState((s) => ({
         ...s,
@@ -163,7 +223,10 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     const { workspace, setupComplete, setupStep, entries, queue } = state;
-    localStorage.setItem(KEY, JSON.stringify({ workspace, setupComplete, setupStep, entries, queue }));
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ workspace, setupComplete, setupStep, entries, queue }),
+    );
   }, [state, hydrated]);
 
   const update = (patch: Partial<AppState>) => setState((s) => ({ ...s, ...patch }));

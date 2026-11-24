@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
+import { errMessage } from "./utils";
 
 export interface TransformInput {
   content?: string;
@@ -165,13 +167,16 @@ function regenPrompt(data: TransformInput) {
 const FORMAT_CAPS: Record<string, string> = {
   Article: "Hard maximum: 2000 words. Never exceed 2000 words.",
   Post: "Exactly 3 posts separated by ---. Never generate more than 3 posts.",
-  "Video Script": "Hard maximum: 5 minutes of spoken content (approximately 750 spoken words). Never exceed this.",
+  "Video Script":
+    "Hard maximum: 5 minutes of spoken content (approximately 750 spoken words). Never exceed this.",
 };
 
 function refinePrompt(data: TransformInput) {
   const format = data.format!;
   const key = jsonKey(format);
-  const capLine = FORMAT_CAPS[format] ? `\n\nOutput limit (non-negotiable): ${FORMAT_CAPS[format]}` : "";
+  const capLine = FORMAT_CAPS[format]
+    ? `\n\nOutput limit (non-negotiable): ${FORMAT_CAPS[format]}`
+    : "";
   const instrLine = data.instructions?.trim()
     ? `\n\nStanding content instructions (maintain throughout): ${data.instructions.trim()}`
     : "";
@@ -185,8 +190,16 @@ function stripEmDashes(obj: TransformOutput): TransformOutput {
   // Replace em dash with a comma where it falls mid-sentence (word—word), else just a space.
   // This is a safety net only — the model is instructed not to produce them at all.
   const fix = (s?: string) =>
-    s?.replace(/(\w)\s*—\s*(\w)/g, "$1, $2").replace(/—/g, " ").replace(/ {2,}/g, " ");
-  return { ...obj, article: fix(obj.article), posts: fix(obj.posts), videoScript: fix(obj.videoScript) };
+    s
+      ?.replace(/(\w)\s*—\s*(\w)/g, "$1, $2")
+      .replace(/—/g, " ")
+      .replace(/ {2,}/g, " ");
+  return {
+    ...obj,
+    article: fix(obj.article),
+    posts: fix(obj.posts),
+    videoScript: fix(obj.videoScript),
+  };
 }
 
 export const transformContent = createServerFn({ method: "POST" })
@@ -205,14 +218,15 @@ export const transformContent = createServerFn({ method: "POST" })
       // Refine existing output
       if (data.refine) {
         const { prompt, key } = refinePrompt(data);
-        const refineTok = data.format === "Article" ? 3200 : data.format === "Video Script" ? 1500 : 1500;
+        const refineTok =
+          data.format === "Article" ? 3200 : data.format === "Video Script" ? 1500 : 1500;
         const msg = await client.messages.create({
           model: "claude-sonnet-4-6",
           max_tokens: refineTok,
           system: SYSTEM,
           messages: [{ role: "user", content: prompt }],
         });
-        const raw = (msg.content[0] as any).text ?? "";
+        const raw = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
         const result = parseResult(raw, key);
         return stripEmDashes({ [key]: result[key] ?? raw } as TransformOutput);
       }
@@ -220,32 +234,59 @@ export const transformContent = createServerFn({ method: "POST" })
       // Single format - generate or regenerate
       if (data.format) {
         const { prompt, key } = data.regenerate ? regenPrompt(data) : generateOnePrompt(data);
-        const messages: any[] = data.pdfBase64
-          ? [{ role: "user", content: [
-              { type: "document", source: { type: "base64", media_type: "application/pdf", data: data.pdfBase64 } },
-              { type: "text", text: prompt },
-            ]}]
+        const messages: MessageParam[] = data.pdfBase64
+          ? [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "document",
+                    source: { type: "base64", media_type: "application/pdf", data: data.pdfBase64 },
+                  },
+                  { type: "text", text: prompt },
+                ],
+              },
+            ]
           : [{ role: "user", content: `${prompt}\n\nSource content:\n${data.content ?? ""}` }];
-        const maxTok = data.format === "Article" ? 3200 : data.format === "Video Script" ? 1500 : 1500;
-        const msg = await client.messages.create({ model: "claude-sonnet-4-6", max_tokens: maxTok, system: SYSTEM, messages });
-        const raw = (msg.content[0] as any).text ?? "";
+        const maxTok =
+          data.format === "Article" ? 3200 : data.format === "Video Script" ? 1500 : 1500;
+        const msg = await client.messages.create({
+          model: "claude-sonnet-4-6",
+          max_tokens: maxTok,
+          system: SYSTEM,
+          messages,
+        });
+        const raw = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
         const result = parseResult(raw, key);
         return stripEmDashes({ [key]: result[key] ?? raw } as TransformOutput);
       }
 
       // Fallback: full generation (kept for compatibility)
       const prompt = generateAllPrompt(data);
-      const messages: any[] = data.pdfBase64
-        ? [{ role: "user", content: [
-            { type: "document", source: { type: "base64", media_type: "application/pdf", data: data.pdfBase64 } },
-            { type: "text", text: prompt },
-          ]}]
+      const messages: MessageParam[] = data.pdfBase64
+        ? [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "document",
+                  source: { type: "base64", media_type: "application/pdf", data: data.pdfBase64 },
+                },
+                { type: "text", text: prompt },
+              ],
+            },
+          ]
         : [{ role: "user", content: `${prompt}\n\nSource content:\n${data.content ?? ""}` }];
-      const msg = await client.messages.create({ model: "claude-sonnet-4-6", max_tokens: 4000, system: SYSTEM, messages });
-      const raw = (msg.content[0] as any).text ?? "";
+      const msg = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4000,
+        system: SYSTEM,
+        messages,
+      });
+      const raw = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
       return stripEmDashes(parseResult(raw) as TransformOutput);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Transform error:", err);
-      return { error: err.message ?? "Generation failed." };
+      return { error: errMessage(err) ?? "Generation failed." };
     }
   });

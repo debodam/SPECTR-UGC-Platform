@@ -1,41 +1,43 @@
-import { execSync } from 'node:child_process'
-import { cpSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { build } from 'esbuild'
+import { execSync } from "node:child_process";
+import { cpSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { resolve } from "node:path";
+import { build } from "esbuild";
 
-const root = process.cwd()
+const root = process.cwd();
 
 // 1. Vite build -> dist/client + dist/server
-console.log('Building app...')
-execSync('npm run build', { stdio: 'inherit' })
+console.log("Building app...");
+execSync("npm run build", { stdio: "inherit" });
 
-const out = resolve(root, '.vercel/output')
-rmSync(out, { recursive: true, force: true })
+const out = resolve(root, ".vercel/output");
+rmSync(out, { recursive: true, force: true });
 
 // 2. Static assets
-mkdirSync(`${out}/static`, { recursive: true })
-cpSync(resolve(root, 'dist/client'), `${out}/static`, { recursive: true })
+mkdirSync(`${out}/static`, { recursive: true });
+cpSync(resolve(root, "dist/client"), `${out}/static`, { recursive: true });
 
 // 3. Bundle server + all deps into a single CJS file
-const funcDir = `${out}/functions/__catch__.func`
-mkdirSync(funcDir, { recursive: true })
+const funcDir = `${out}/functions/__catch__.func`;
+mkdirSync(funcDir, { recursive: true });
 
-console.log('Bundling server...')
+console.log("Bundling server...");
 await build({
-  entryPoints: [resolve(root, 'dist/server/server.js')],
+  entryPoints: [resolve(root, "dist/server/server.js")],
   bundle: true,
-  platform: 'node',
-  target: 'node20',
-  format: 'cjs',
+  platform: "node",
+  target: "node20",
+  format: "cjs",
   outfile: `${funcDir}/server.cjs`,
-  external: ['node:*'],
+  external: ["node:*"],
   // Packages declare sideEffects:false but their bare imports in the server
   // bundle DO matter (h3-v2 event handlers, router registration, etc.)
   ignoreAnnotations: true,
-})
+});
 
 // 4. Vercel Node.js function wrapper
-writeFileSync(`${funcDir}/index.js`, `
+writeFileSync(
+  `${funcDir}/index.js`,
+  `
 'use strict'
 let handler
 try {
@@ -96,22 +98,34 @@ module.exports = async (req, res) => {
     res.end('Internal server error: ' + (e && e.message || String(e)))
   }
 }
-`)
+`,
+);
 
-writeFileSync(`${funcDir}/.vc-config.json`, JSON.stringify({
-  runtime: 'nodejs20.x',
-  handler: 'index.js',
-  launcherType: 'Nodejs',
-  supportsResponseStreaming: false,
-}, null, 2))
+writeFileSync(
+  `${funcDir}/.vc-config.json`,
+  JSON.stringify(
+    {
+      runtime: "nodejs20.x",
+      handler: "index.js",
+      launcherType: "Nodejs",
+      supportsResponseStreaming: false,
+    },
+    null,
+    2,
+  ),
+);
 
 // 5. Routing: static files first, then SSR catch-all
-writeFileSync(`${out}/config.json`, JSON.stringify({
-  version: 3,
-  routes: [
-    { handle: 'filesystem' },
-    { src: '/(.*)', dest: '/__catch__' },
-  ],
-}, null, 2))
+writeFileSync(
+  `${out}/config.json`,
+  JSON.stringify(
+    {
+      version: 3,
+      routes: [{ handle: "filesystem" }, { src: "/(.*)", dest: "/__catch__" }],
+    },
+    null,
+    2,
+  ),
+);
 
-console.log('✅ Vercel output ready at .vercel/output')
+console.log("✅ Vercel output ready at .vercel/output");

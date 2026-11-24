@@ -3,14 +3,24 @@ import { ArrowRight, FlaskConical, Lightbulb, TriangleAlert, TrendingUp } from "
 import type { Experiment, Insight, Play, PlayStatus } from "@/lib/growth-types";
 
 export const STATUS_LABEL: Record<PlayStatus, string> = {
-  suggested: "Suggested", "in progress": "In progress", recorded: "Recorded", transformed: "Transformed",
-  scheduled: "Scheduled", posted: "Posted", measured: "Measured",
+  suggested: "Suggested",
+  "in progress": "In progress",
+  recorded: "Recorded",
+  transformed: "Transformed",
+  scheduled: "Scheduled",
+  posted: "Posted",
+  measured: "Measured",
 };
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const FORMAT_LABEL = { article: "Article", post: "Post", "video script": "Video script" } as const;
 
 export function StatusChip({ status }: { status: PlayStatus }) {
-  const tone = status === "measured" || status === "posted" ? "done" : status === "suggested" ? "neutral" : "active";
+  const tone =
+    status === "measured" || status === "posted"
+      ? "done"
+      : status === "suggested"
+        ? "neutral"
+        : "active";
   return <span className={`gh-chip gh-chip--${tone}`}>{STATUS_LABEL[status]}</span>;
 }
 
@@ -19,20 +29,37 @@ export function FormatChip({ format }: { format: Play["format"] }) {
 }
 
 /** The next step in the loop for a play, as a button label and destination. */
-export function nextStep(p: Play): { label: string; to: "/record" | "/transform" | "/distribute" | "/results" } {
+export function nextStep(p: Play): {
+  label: string;
+  to: "/record" | "/transform" | "/distribute" | "/results";
+} {
   switch (p.status) {
-    case "suggested": return { label: "Start play", to: "/record" };
-    case "in progress": return { label: "Continue recording", to: "/record" };
-    case "recorded": return { label: "Transform it", to: "/transform" };
-    case "transformed": return { label: "Schedule it", to: "/distribute" };
+    case "suggested":
+      return { label: "Start play", to: "/record" };
+    case "in progress":
+      return { label: "Continue recording", to: "/record" };
+    case "recorded":
+      return { label: "Transform it", to: "/transform" };
+    case "transformed":
+      return { label: "Schedule it", to: "/distribute" };
     case "scheduled":
-    case "posted": return { label: "Log results", to: "/results" };
-    default: return { label: "View results", to: "/results" };
+    case "posted":
+      return { label: "Log results", to: "/results" };
+    default:
+      return { label: "View results", to: "/results" };
   }
 }
 
-export function PlayCard({ play, experiment, onStep, onExperiment }: {
-  play: Play; experiment?: Experiment; onStep: (p: Play) => void; onExperiment?: (p: Play) => void;
+export function PlayCard({
+  play,
+  experiment,
+  onStep,
+  onExperiment,
+}: {
+  play: Play;
+  experiment?: Experiment;
+  onStep: (p: Play) => void;
+  onExperiment?: (p: Play) => void;
 }) {
   const step = nextStep(play);
   const r = play.results;
@@ -47,23 +74,35 @@ export function PlayCard({ play, experiment, onStep, onExperiment }: {
       <p className="gh-play-why">{play.rationale}</p>
       {play.status === "measured" && r.entries ? (
         <div className="gh-play-results">
-          <span><strong>{(r.impressions ?? 0).toLocaleString()}</strong> impressions</span>
-          <span><strong>{r.engagementRate ?? 0}%</strong> engagement</span>
-          <span><strong>+{r.followersGained ?? 0}</strong> followers</span>
+          <span>
+            <strong>{(r.impressions ?? 0).toLocaleString()}</strong> impressions
+          </span>
+          <span>
+            <strong>{r.engagementRate ?? 0}%</strong> engagement
+          </span>
+          <span>
+            <strong>+{r.followersGained ?? 0}</strong> followers
+          </span>
         </div>
       ) : null}
       <div className="gh-play-meta">
         <FormatChip format={play.format} />
         {play.pillar && <span className="gh-pillar">{play.pillar}</span>}
-        {experiment && <span className="gh-chip gh-chip--active"><FlaskConical size={12} aria-hidden="true" /> A/B test</span>}
+        {experiment && (
+          <span className="gh-chip gh-chip--active">
+            <FlaskConical size={12} aria-hidden="true" /> A/B test
+          </span>
+        )}
       </div>
       <div className="gh-play-actions">
         <button type="button" className="gh-btn gh-btn--primary" onClick={() => onStep(play)}>
-          {step.label}<ArrowRight size={16} aria-hidden="true" />
+          {step.label}
+          <ArrowRight size={16} aria-hidden="true" />
         </button>
         {onExperiment && !experiment && play.status !== "measured" && (
           <button type="button" className="gh-btn gh-btn--ghost" onClick={() => onExperiment(play)}>
-            <FlaskConical size={15} aria-hidden="true" />Run as experiment
+            <FlaskConical size={15} aria-hidden="true" />
+            Run as experiment
           </button>
         )}
       </div>
@@ -71,20 +110,40 @@ export function PlayCard({ play, experiment, onStep, onExperiment }: {
   );
 }
 
-const INSIGHT_ICON = { pattern: TrendingUp, recommendation: Lightbulb, warning: TriangleAlert } as const;
+const INSIGHT_ICON = {
+  pattern: TrendingUp,
+  recommendation: Lightbulb,
+  warning: TriangleAlert,
+} as const;
 
-export function InsightRow({ insight, onApply, applying }: { insight: Insight; onApply?: (i: Insight) => void; applying?: boolean }) {
+export function InsightRow({
+  insight,
+  onApply,
+  applying,
+}: {
+  insight: Insight;
+  onApply?: (i: Insight) => void;
+  applying?: boolean;
+}) {
   const Icon = INSIGHT_ICON[insight.kind];
-  const canApply = insight.kind === "recommendation" && !!insight.evidence.action && !insight.applied && onApply;
+  const canApply =
+    insight.kind === "recommendation" && !!insight.evidence.action && !insight.applied && onApply;
   return (
     <div className={`gh-insight gh-insight--${insight.kind}`}>
-      <span className="gh-insight-icon"><Icon size={16} aria-hidden="true" /></span>
+      <span className="gh-insight-icon">
+        <Icon size={16} aria-hidden="true" />
+      </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="gh-insight-text">{insight.text}</div>
         {insight.applied && <div className="gh-insight-note">Applied to your plan</div>}
       </div>
       {canApply && (
-        <button type="button" className="gh-btn gh-btn--small" disabled={applying} onClick={() => onApply!(insight)}>
+        <button
+          type="button"
+          className="gh-btn gh-btn--small"
+          disabled={applying}
+          onClick={() => onApply!(insight)}
+        >
           {applying ? "Applying" : "Apply"}
         </button>
       )}
@@ -93,8 +152,14 @@ export function InsightRow({ insight, onApply, applying }: { insight: Insight; o
 }
 
 export function ExperimentSummary({ experiment, play }: { experiment: Experiment; play?: Play }) {
-  const a = experiment.result.a, b = experiment.result.b;
-  const metric = experiment.metric === "engagementRate" ? "engagement" : experiment.metric === "followersGained" ? "followers gained" : "impressions";
+  const a = experiment.result.a,
+    b = experiment.result.b;
+  const metric =
+    experiment.metric === "engagementRate"
+      ? "engagement"
+      : experiment.metric === "followersGained"
+        ? "followers gained"
+        : "impressions";
   return (
     <div className="gh-exp">
       {play && <div className="gh-eyebrow">{play.title}</div>}
@@ -104,9 +169,18 @@ export function ExperimentSummary({ experiment, play }: { experiment: Experiment
           const won = experiment.winner === k;
           return (
             <div key={k} className={`gh-exp-variant${won ? " is-winner" : ""}`}>
-              <div className="gh-exp-label">Hook {k.toUpperCase()}{won ? " wins" : ""}</div>
-              <div className="gh-exp-hook">"{k === "a" ? experiment.variantA : experiment.variantB}"</div>
-              <div className="gh-exp-value">{v ? `${experiment.metric === "engagementRate" ? `${v.value}%` : v.value.toLocaleString()} ${metric}` : "No results yet"}</div>
+              <div className="gh-exp-label">
+                Hook {k.toUpperCase()}
+                {won ? " wins" : ""}
+              </div>
+              <div className="gh-exp-hook">
+                "{k === "a" ? experiment.variantA : experiment.variantB}"
+              </div>
+              <div className="gh-exp-value">
+                {v
+                  ? `${experiment.metric === "engagementRate" ? `${v.value}%` : v.value.toLocaleString()} ${metric}`
+                  : "No results yet"}
+              </div>
             </div>
           );
         })}
@@ -117,7 +191,19 @@ export function ExperimentSummary({ experiment, play }: { experiment: Experiment
 }
 
 /** Shown on Record, Transform, Distribute and Results when the page was opened from a play. */
-export function PlayBanner({ play, prompts, note, onClear, action }: { play: Play; prompts?: string[]; note?: string; onClear?: () => void; action?: ReactNode }) {
+export function PlayBanner({
+  play,
+  prompts,
+  note,
+  onClear,
+  action,
+}: {
+  play: Play;
+  prompts?: string[];
+  note?: string;
+  onClear?: () => void;
+  action?: ReactNode;
+}) {
   return (
     <section className="gh-banner" aria-label={`Play: ${play.title}`}>
       <div className="gh-banner-head">
@@ -125,7 +211,16 @@ export function PlayBanner({ play, prompts, note, onClear, action }: { play: Pla
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <FormatChip format={play.format} />
           <StatusChip status={play.status} />
-          {onClear && <button type="button" className="gh-banner-clear" onClick={onClear} aria-label="Stop working on this play">Clear</button>}
+          {onClear && (
+            <button
+              type="button"
+              className="gh-banner-clear"
+              onClick={onClear}
+              aria-label="Stop working on this play"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
       <div className="gh-banner-title">{play.title}</div>
@@ -134,7 +229,9 @@ export function PlayBanner({ play, prompts, note, onClear, action }: { play: Pla
       {action && <div style={{ marginTop: 12 }}>{action}</div>}
       {prompts && prompts.length > 0 && (
         <ol className="gh-banner-prompts">
-          {prompts.map((p) => <li key={p}>{p}</li>)}
+          {prompts.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
         </ol>
       )}
     </section>

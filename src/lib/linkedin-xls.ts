@@ -13,15 +13,21 @@ type Row = (string | number | boolean | null | undefined)[];
 
 // Keywords that identify a LinkedIn analytics header row
 const LINKEDIN_SIGNALS = [
-  "impression", "click", "engag", "follower",
-  "visitor", "page view", "date", "lead", "share", "reaction",
+  "impression",
+  "click",
+  "engag",
+  "follower",
+  "visitor",
+  "page view",
+  "date",
+  "lead",
+  "share",
+  "reaction",
 ];
 
 function isLinkedInHeader(row: Row): boolean {
   const strs = row.filter((c): c is string => typeof c === "string");
-  return LINKEDIN_SIGNALS.some((sig) =>
-    strs.some((s) => s.toLowerCase().includes(sig))
-  );
+  return LINKEDIN_SIGNALS.some((sig) => strs.some((s) => s.toLowerCase().includes(sig)));
 }
 
 // Search every sheet in the workbook; return the sheet rows that contain
@@ -35,9 +41,7 @@ function findDataRows(wb: XLSX.WorkBook): { headers: Row; dataRows: Row[] } | nu
     if (hi < 0) continue;
 
     const headers = allRows[hi];
-    const dataRows = allRows
-      .slice(hi + 1)
-      .filter((r) => r.some((c) => c != null && c !== ""));
+    const dataRows = allRows.slice(hi + 1).filter((r) => r.some((c) => c != null && c !== ""));
 
     if (dataRows.length) return { headers, dataRows };
   }
@@ -46,9 +50,7 @@ function findDataRows(wb: XLSX.WorkBook): { headers: Row; dataRows: Row[] } | nu
 
 function findCol(headers: Row, ...terms: string[]): number {
   return headers.findIndex(
-    (h) =>
-      typeof h === "string" &&
-      terms.some((t) => h.toLowerCase().includes(t.toLowerCase()))
+    (h) => typeof h === "string" && terms.some((t) => h.toLowerCase().includes(t.toLowerCase())),
   );
 }
 
@@ -144,7 +146,7 @@ function parseLeads(dataRows: Row[], headers: Row): ParsedMetrics {
 
 export async function parseLinkedInFile(
   file: File,
-  type: LinkedInFileType
+  type: LinkedInFileType,
 ): Promise<ParsedMetrics> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -156,22 +158,28 @@ export async function parseLinkedInFile(
 
         const found = findDataRows(wb);
         if (!found) {
-          reject(new Error("Couldn't find column headers across any sheet. Is this a LinkedIn analytics export?"));
+          reject(
+            new Error(
+              "Couldn't find column headers across any sheet. Is this a LinkedIn analytics export?",
+            ),
+          );
           return;
         }
 
         const { headers, dataRows } = found;
 
         const metrics =
-          type === "content" ? parseContent(dataRows, headers) :
-          type === "visitors" ? parseVisitors(dataRows, headers) :
-          parseLeads(dataRows, headers);
+          type === "content"
+            ? parseContent(dataRows, headers)
+            : type === "visitors"
+              ? parseVisitors(dataRows, headers)
+              : parseLeads(dataRows, headers);
 
         if (!Object.keys(metrics).length) {
           reject(
             new Error(
-              `Expected columns not found. Make sure this is the ${type} analytics export from LinkedIn.`
-            )
+              `Expected columns not found. Make sure this is the ${type} analytics export from LinkedIn.`,
+            ),
           );
           return;
         }
