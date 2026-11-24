@@ -36,6 +36,8 @@ export interface PerfEntry {
   id: string; date: string; title: string; format: Format;
   source: "Transcript" | "Notes" | "Draft";
   impressions: number; engagementRate: number; followersGained: number; notes: string;
+  /** Growth Engine links (optional until migration 009 is applied). */
+  playId?: string | null; variant?: "a" | "b" | null;
 }
 
 export interface QueueItem {

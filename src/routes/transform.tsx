@@ -31,10 +31,10 @@ interface Source {
 // --- Nav ---
 
 const NAV_ITEMS: { label: string; to: string; icon: LucideIcon; active?: boolean }[] = [
-  { label: "Home", to: "/", icon: House },
+  { label: "Growth", to: "/", icon: House },
   { label: "Transform", to: "/transform", icon: Sparkles, active: true },
   { label: "Record", to: "/record", icon: Mic },
-  { label: "Track", to: "/track", icon: ChartNoAxesColumn },
+  { label: "Results", to: "/results", icon: ChartNoAxesColumn },
   { label: "Distribute", to: "/distribute", icon: Calendar },
   { label: "Settings", to: "/settings", icon: SettingsIcon },
 ];

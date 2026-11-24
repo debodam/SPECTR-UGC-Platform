@@ -1,9 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
-import { LogOut, ChevronsUpDown, Bell, ArrowUpRight, ArrowUp, ChartNoAxesColumn, Plus, File, House, Sparkles, Mic, Calendar, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, ChevronsUpDown, Bell, ChartNoAxesColumn, House, Sparkles, Mic, Calendar, Settings as SettingsIcon, RefreshCw, Target, FlaskConical, Lightbulb, CircleAlert } from "lucide-react";
 import { MicHalo } from "@/components/spectr/MicHalo";
+import { PlayCard, InsightRow, ExperimentSummary, nextStep } from "@/components/spectr/GrowthCards";
+import { useGrowth } from "@/lib/use-growth";
+import { advancePlay, isLocalMode, type RepoCtx } from "@/lib/growth-repo";
+import { createGrowthPlan } from "@/lib/growth-service";
+import { computeForecast, formatMetric } from "@/lib/growth-forecast";
+import type { Play } from "@/lib/growth-types";
 
 export const Route = createFileRoute("/")({ component: RootPage });
 
@@ -21,15 +28,15 @@ function RootPage() {
   if (state.authLoading) return <div style={{ minHeight: "100vh" }} />;
   if (!state.isAuthenticated || !state.setupComplete) return null;
 
-  return <Dashboard />;
+  return <GrowthHome />;
 }
 
 /* ─────────────────── Nav definitions ─────────────────── */
 const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: House },
+  { to: "/", label: "Growth", icon: House },
   { to: "/transform", label: "Transform", icon: Sparkles },
   { to: "/record", label: "Record", icon: Mic },
-  { to: "/track", label: "Track", icon: ChartNoAxesColumn },
+  { to: "/results", label: "Results", icon: ChartNoAxesColumn },
   { to: "/distribute", label: "Distribute", icon: Calendar },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
@@ -39,63 +46,21 @@ function initials(name?: string | null) {
   return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
 }
 
-/* ─────────────────── Week calendar helper ─────────────────── */
-function buildWeek() {
-  const today = new Date().getDay(); // 0=Sun
-  return ["S", "M", "T", "W", "T", "F", "S"].map((name, i) => ({ name, isToday: i === today, hasPost: false }));
-}
+const weekLabel = (iso?: string) => iso ? new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
 
-/* ─────────────────── Sparkline helper ─────────────────── */
-function sparklinePath(data: number[], W = 240, H = 72) {
-  const mn = Math.min(...data) - 1, mx = Math.max(...data) + 1;
-  const pts: [number, number][] = data.map((v, i) => [i * (W / (data.length - 1)), H - 8 - ((v - mn) / (mx - mn)) * (H - 16)]);
-  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] ?? p2;
-    d += ` C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
-  }
-  return { line: d, area: d + ` L${W} ${H} L0 ${H} Z`, last: pts[pts.length - 1] };
-}
-
-/* ─────────────────── Dashboard ─────────────────── */
-function Dashboard() {
+/* ─────────────────── Growth home ─────────────────── */
+function GrowthHome() {
   const { state } = useApp();
   const navigate = useNavigate();
-  const [isRec, setIsRec] = useState(false);
-  const [secs, setSecs] = useState(0);
-  const ivRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => () => { if (ivRef.current) clearInterval(ivRef.current); }, []);
-
   const ws = state.workspace;
   const firstName = state.user?.name?.split(" ")[0] || "there";
   const compName = ws.companyName || "";
-
-  const handleMic = () => {
-    if (isRec) {
-      clearInterval(ivRef.current!);
-      setIsRec(false);
-      navigate({ to: "/record" });
-    } else {
-      setIsRec(true);
-      setSecs(0);
-      ivRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
-    }
-  };
-
-  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
-  const ss = String(secs % 60).padStart(2, "0");
-
-
-  /* Analytics data */
-  const hasImpressions = !!ws.baseline?.weeklyImpressions && String(ws.baseline.weeklyImpressions).trim() !== "" && String(ws.baseline.weeklyImpressions) !== "0";
-  const hasGoal = !!ws.goalDescription;
-  const sparkData = [9.2, 10.1, 8.7, 11.4, 12.9, 12.2, 14.8];
-  const { line: sparkLine, area: sparkArea, last: sparkLast } = sparklinePath(sparkData);
-  const week = buildWeek();
-
-  const goalPct = 0;
-  const goalDash = (() => { const C = 2 * Math.PI * 56; return `${(C * goalPct).toFixed(1)} ${C.toFixed(1)}`; })();
+  const ctx: RepoCtx | null = useMemo(
+    () => (ws.companyId && state.user?.id ? { companyId: ws.companyId, userId: state.user.id } : null),
+    [ws.companyId, state.user?.id],
+  );
+  const g = useGrowth(ctx);
+  const [building, setBuilding] = useState(false);
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -103,18 +68,36 @@ function Dashboard() {
     navigate({ to: "/access" });
   };
 
-  /* card shared style */
-  const cardStyle: React.CSSProperties = {
-    boxSizing: "border-box", minWidth: 0, padding: "20px 20px 18px",
-    borderRadius: 26, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.4)",
-    backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-    boxShadow: "0 10px 30px rgba(6,42,92,0.14)", cursor: "pointer",
-    color: "#ffffff", overflow: "hidden",
+  const buildPlan = async (regenerate: boolean) => {
+    if (!ctx) return;
+    setBuilding(true);
+    try {
+      const r = await createGrowthPlan(ctx, ws, { regenerate });
+      toast.success(regenerate ? "Plan regenerated" : "Your growth plan is ready", {
+        description: r.source === "fallback" ? "Built from your workspace inputs. AI was unavailable." : undefined,
+      });
+      await g.reload();
+    } catch (e: any) {
+      toast.error("Could not build your plan", { description: e?.message });
+    } finally {
+      setBuilding(false);
+    }
   };
-  const arrowBtn: React.CSSProperties = {
-    width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)",
-    border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", flexShrink: 0,
+
+  const goStep = async (p: Play) => {
+    const step = nextStep(p);
+    if (ctx && p.status === "suggested") await advancePlay(ctx, p.id, "in progress").catch(() => {});
+    navigate({ to: step.to, search: { play: p.id } as any });
   };
+
+  const forecast = useMemo(() => g.plan ? computeForecast({
+    key: g.plan.northStarKey, label: g.plan.northStarMetric, ws, entries: g.entries, planCreatedAt: g.plan.createdAt,
+  }) : null, [g.plan, ws, g.entries]);
+
+  const expByPlay = useMemo(() => new Map(g.experiments.map((e) => [e.playId, e])), [g.experiments]);
+  const latestExp = g.experiments[0];
+  const latestInsight = g.insights.find((i) => !i.applied) ?? g.insights[0];
+  const done = g.plays.filter((p) => p.status !== "suggested").length;
 
   return (
     <div className="sx-shell">
@@ -146,7 +129,10 @@ function Dashboard() {
 
         {/* ── Header ── */}
         <header className="sx-header">
-          <div className="sx-header-title"><div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em" }}>Hi, {firstName}</div></div>
+          <div className="sx-header-title">
+            <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em", lineHeight: 1.1 }}>Growth</div>
+            <div className="sx-hide-sm" style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Hi {firstName}. Here is your plan and this week's plays.</div>
+          </div>
           <div className="sx-header-actions">
             <button type="button" onClick={() => navigate({ to: "/companies" })}
               style={{ height: 44, padding: "0 14px 0 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
@@ -161,169 +147,133 @@ function Dashboard() {
           </div>
         </header>
 
-        <main className="sx-main sx-fit sx-fit-db"><div className="sx-page"><div className="db-layout">
-        <div className="db-left">
-        <div style={{ width: "100%" }}>
-          <MicHalo state={isRec ? "recording" : "idle"} onClick={handleMic} />
-          <div style={{ marginTop: 18, textAlign: "center" }}>
-            <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }} aria-live="polite">
-              {isRec && <span className="mo-status-dot" aria-hidden="true" />}
-              {isRec ? "Recording" : "Tap to record"}
-              {isRec && <span style={{ fontWeight: 500, fontVariantNumeric: "tabular-nums", color: "rgba(255,255,255,0.9)" }}>{mm}:{ss}</span>}
+        <main className="sx-main"><div className="sx-page gh-page">
+          {g.status === "loading" && <GrowthSkeleton />}
+
+          {g.status === "error" && (
+            <div className="sx-glass gh-state" role="alert">
+              <CircleAlert size={28} aria-hidden="true" />
+              <div className="gh-state-title">We could not load your growth plan</div>
+              <div className="gh-state-sub">{g.error}</div>
+              <button type="button" className="gh-btn gh-btn--primary" onClick={() => g.reload()}>Try again</button>
             </div>
-            <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.88)" }}>
-              {isRec ? "Tap the mic to stop" : "Turn a conversation into LinkedIn content"}
+          )}
+
+          {g.status === "ready" && !g.plan && (
+            <div className="sx-glass gh-state">
+              <Target size={30} aria-hidden="true" />
+              <div className="gh-state-title">Let's build your growth plan</div>
+              <div className="gh-state-sub">SPECTR turns your goal, audience and targets into a north star, content pillars and this week's plays. It takes a few seconds.</div>
+              <button type="button" className="gh-btn gh-btn--primary" disabled={building} onClick={() => buildPlan(false)}>
+                {building ? "Building your plan" : "Build my growth plan"}
+              </button>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* ── AI headline ── */}
-        <div className="db-headline">
-          <div style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.88)" }}>AI suggested</div>
-          <div style={{ marginTop: 10, fontSize: "clamp(22px, 2.4vw, 32px)", lineHeight: 1.2, fontWeight: 300, letterSpacing: "-0.015em" }}>
-            {hasGoal
-              ? "Record your first take. SPECTR turns it into LinkedIn content."
-              : "Record your first take. SPECTR turns it into LinkedIn content."}
-          </div>
-        </div>
-
-        </div>
-
-        <div className="db-right">
-        {/* ── 2×2 Cards ── */}
-        <div className="db-cards">
-
-          {/* LinkedIn impressions */}
-          <div className="db-card" role="link" tabIndex={0} onClick={() => navigate({ to: "/track" })} style={cardStyle}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>LinkedIn impressions</div>
-              <div style={arrowBtn}><ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" /></div>
-            </div>
-            {hasImpressions ? (
-              <>
-                <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 10 }}>
-                  <div style={{ fontSize: 46, fontWeight: 300, letterSpacing: "-0.03em", lineHeight: 1 }}>{ws.baseline.weeklyImpressions}</div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 5, height: 24, padding: "0 9px", borderRadius: 999, background: "rgba(255,255,255,0.92)", color: "#067647", fontSize: 12, fontWeight: 700 }}>
-                    <ArrowUp size={12} strokeWidth={3} aria-hidden="true" />
-                    &mdash;
-                  </div>
-                </div>
-                <div style={{ marginTop: 2, fontSize: 13, color: "rgba(255,255,255,0.88)" }}>This week vs last week</div>
-                <svg aria-hidden="true" className="db-spark" width="100%" height="72" viewBox="0 0 240 72" preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}>
-                  <defs><linearGradient id="spk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" stopOpacity="0.38" /><stop offset="1" stopColor="#ffffff" stopOpacity="0" /></linearGradient></defs>
-                  <path d={sparkArea} fill="url(#spk)" />
-                  <path d={sparkLine} fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx={sparkLast[0]} cy={sparkLast[1]} r="4.5" fill="#ffffff" />
-                </svg>
-              </>
-            ) : (
-              <>
-                <div style={{ marginTop: 18, fontSize: 46, fontWeight: 300, letterSpacing: "-0.03em", lineHeight: 1, color: "rgba(255,255,255,0.55)" }}>0</div>
-                <svg aria-hidden="true" className="db-spark" width="100%" height="72" viewBox="0 0 240 72" preserveAspectRatio="none" style={{ display: "block" }}>
-                  <path d="M0 56 H240" stroke="#ffffff" strokeOpacity="0.5" strokeWidth="2" strokeDasharray="3 7" strokeLinecap="round" />
-                </svg>
-                <div style={{ marginTop: 16, fontSize: 14, lineHeight: 1.45, color: "rgba(255,255,255,0.92)" }}>Stats show up after your first LinkedIn posts go live.</div>
-              </>
-            )}
-          </div>
-
-          {/* 12-week goal */}
-          <div className="db-card" role="link" tabIndex={0} onClick={() => navigate({ to: "/track" })} style={cardStyle}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>12-week goal</div>
-              <div style={arrowBtn}><ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" /></div>
-            </div>
-            {hasGoal ? (
-              <>
-                <div style={{ marginTop: 14, display: "flex", justifyContent: "center" }}>
-                  <div className="db-ring" style={{ position: "relative" }}>
-                    <svg aria-hidden="true" width="100%" height="100%" viewBox="0 0 132 132" style={{ transform: "rotate(-90deg)", display: "block" }}>
-                      <circle cx="66" cy="66" r="56" fill="none" stroke="#ffffff" strokeOpacity="0.22" strokeWidth="10" />
-                      <circle cx="66" cy="66" r="56" fill="none" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" strokeDasharray={goalDash} style={{ transition: "stroke-dasharray .8s ease", opacity: goalPct > 0 ? 1 : 0.3 }} />
-                    </svg>
-                    <div style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: "-0.02em", lineHeight: 1 }}>{Math.round(goalPct * 100)}%</div>
-                      <div style={{ marginTop: 4, fontSize: 12, color: "rgba(255,255,255,0.9)" }}>Week 1 of 12</div>
+          {g.status === "ready" && g.plan && forecast && (
+            <>
+              <div className="gh-top">
+                {/* Goal and forecast */}
+                <section className="sx-glass gh-goal" aria-labelledby="gh-goal-h">
+                  <div className="gh-section-head">
+                    <div>
+                      <div className="gh-eyebrow">North star</div>
+                      <h2 id="gh-goal-h" className="gh-h2">{g.plan.northStarMetric}</h2>
                     </div>
+                    <button type="button" className="gh-btn gh-btn--ghost" disabled={building} onClick={() => buildPlan(true)}>
+                      <RefreshCw size={15} className={building ? "animate-spin" : ""} aria-hidden="true" />{building ? "Regenerating" : "Regenerate plan"}
+                    </button>
+                  </div>
+                  <p className="gh-goal-summary">{g.plan.goalSummary}</p>
+                  {forecast.state === "no-target" ? (
+                    <div className="gh-forecast-note">{forecast.sentence} <Link to="/settings" className="gh-link">Open Settings</Link></div>
+                  ) : (
+                    <>
+                      <div className="gh-goal-numbers">
+                        <span className="gh-big">{formatMetric(forecast.current, forecast.unit)}</span>
+                        <span className="gh-of">of {formatMetric(forecast.target, forecast.unit)} target</span>
+                      </div>
+                      <div className="gh-progress" role="progressbar" aria-valuenow={Math.round(forecast.progressPct)} aria-valuemin={0} aria-valuemax={100} aria-label="Progress to target">
+                        <div style={{ width: `${forecast.progressPct}%` }} />
+                        {forecast.state === "ok" && <i style={{ left: `${Math.min(100, forecast.projectedPct)}%` }} title="Projected" />}
+                      </div>
+                      <div className="gh-forecast">
+                        <div className="gh-forecast-main">{forecast.sentence}{forecast.gapSentence ? ` ${forecast.gapSentence}` : ""}</div>
+                        {forecast.state === "ok" && <div className="gh-forecast-note">{forecast.assumption}</div>}
+                        {forecast.state === "starter" && <Link to="/results" className="gh-link">Log a result</Link>}
+                      </div>
+                    </>
+                  )}
+                  <div className="gh-pillars">
+                    {g.plan.pillars.map((p) => (
+                      <span key={p.name} className="gh-pillar-chip" title={p.description}>{p.name}<b>{p.share}%</b></span>
+                    ))}
+                    <span className="gh-pillar-chip gh-pillar-chip--muted">{g.plan.cadencePerWeek} pieces a week</span>
+                  </div>
+                </section>
+
+                {/* Record entry */}
+                <section className="sx-glass gh-record" aria-label="Record">
+                  <div className="gh-record-orb"><MicHalo state="idle" onClick={() => navigate({ to: "/record" })} /></div>
+                  <div className="gh-record-title">Tap to record</div>
+                  <div className="gh-record-sub">Talk through an idea. SPECTR turns it into content.</div>
+                </section>
+              </div>
+
+              {/* This week's plays */}
+              <section aria-labelledby="gh-plays-h">
+                <div className="gh-section-head gh-section-head--bare">
+                  <div>
+                    <h2 id="gh-plays-h" className="gh-h2">This week's plays</h2>
+                    <div className="gh-sub">Week of {weekLabel(g.plays[0]?.weekStart)} · {done} of {g.plays.length} started · aim for {g.plan.cadencePerWeek} pieces this week</div>
                   </div>
                 </div>
-                <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ fontSize: 14 }}>Goal: {ws.goalDescription.split(" ").slice(0, 5).join(" ")}…</div>
-                  <div style={{ height: 22, padding: "0 9px", borderRadius: 999, display: "inline-flex", alignItems: "center", flexShrink: 0, whiteSpace: "nowrap", fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.9)", color: "#475569" }}>Just started</div>
-                </div>
-              </>
-            ) : (
-              <div style={{ marginTop: 40, textAlign: "center" }}>
-                <div style={{ width: 80, height: 80, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.5)", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <ChartNoAxesColumn size={28} strokeWidth={1.6} color="#ffffff" aria-hidden="true" />
-                </div>
-                <div style={{ marginTop: 16, fontSize: 14, lineHeight: 1.45, color: "rgba(255,255,255,0.92)" }}>Set a goal in your workspace to track 12-week progress.</div>
-              </div>
-            )}
-          </div>
+                {g.plays.length ? (
+                  <div className="gh-plays">
+                    {g.plays.map((p) => <PlayCard key={p.id} play={p} experiment={expByPlay.get(p.id)} onStep={goStep} />)}
+                  </div>
+                ) : (
+                  <div className="sx-glass gh-state gh-state--inline">
+                    <div className="gh-state-title">No plays for this week yet</div>
+                    <div className="gh-state-sub">Generate fresh plays from your plan and latest results.</div>
+                    <button type="button" className="gh-btn gh-btn--primary" disabled={building} onClick={() => buildPlan(true)}>{building ? "Generating" : "Generate this week's plays"}</button>
+                  </div>
+                )}
+              </section>
 
-          {/* Distribute */}
-          <div className="db-card" role="link" tabIndex={0} onClick={() => navigate({ to: "/distribute" })} style={cardStyle}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>Distribute</div>
-              <div style={arrowBtn}><ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" /></div>
-            </div>
-            <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 68, height: 68, borderRadius: "50%", background: "#ffffff", color: "#0a66c2", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 14px 30px rgba(6,42,92,0.28)", flexShrink: 0 }}>
-                <Plus size={30} strokeWidth={2.2} aria-hidden="true" />
+              <div className="gh-bottom">
+                <section className="sx-glass gh-card" aria-labelledby="gh-exp-h">
+                  <div className="gh-card-head"><FlaskConical size={18} aria-hidden="true" /><h2 id="gh-exp-h" className="gh-h3">Latest experiment</h2></div>
+                  {latestExp
+                    ? <ExperimentSummary experiment={latestExp} play={g.allPlays.find((p) => p.id === latestExp.playId)} />
+                    : <div className="gh-empty">Pick a play and choose Run as experiment to test two hooks against each other.</div>}
+                </section>
+                <section className="sx-glass gh-card" aria-labelledby="gh-ins-h">
+                  <div className="gh-card-head"><Lightbulb size={18} aria-hidden="true" /><h2 id="gh-ins-h" className="gh-h3">Latest insight</h2></div>
+                  {latestInsight
+                    ? <InsightRow insight={latestInsight} />
+                    : <div className="gh-empty">Insights appear after you log results. They compare formats and pillars using your real numbers.</div>}
+                  {g.insights.length > 1 && <Link to="/results" className="gh-link" style={{ marginTop: 12, display: "inline-block" }}>See all insights</Link>}
+                </section>
               </div>
-              <div>
-                <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em" }}>Create a post</div>
-                <div style={{ marginTop: 3, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Nothing scheduled yet</div>
-              </div>
-            </div>
-            <div style={{ marginTop: 22, display: "flex", justifyContent: "space-between" }}>
-              {week.map((d, i) => (
-                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)" }}>{d.name}</div>
-                  <div style={{
-                    width: 28, height: 44, borderRadius: 14, boxSizing: "border-box",
-                    display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 6,
-                    fontSize: 12, fontWeight: 700,
-                    background: d.hasPost ? "#ffffff" : "rgba(255,255,255,0.14)",
-                    color: d.hasPost ? "#0a66c2" : "transparent",
-                    ...(d.isToday ? { boxShadow: "0 0 0 2px rgba(255,255,255,0.95),0 0 0 4px rgba(255,255,255,0.3)" } : {}),
-                  }} />
-                </div>
-              ))}
-            </div>
-          </div>
+              {isLocalMode() && <div className="gh-local-note">Growth data is saved on this device until the growth database migration is applied.</div>}
+            </>
+          )}
+        </div></main>
+    </div>
+  );
+}
 
-          {/* Ready to publish */}
-          <div className="db-card" role="link" tabIndex={0} onClick={() => navigate({ to: "/transform" })} style={cardStyle}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>Ready to publish</div>
-              <div style={arrowBtn}><ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" /></div>
-            </div>
-            <div style={{ marginTop: 22, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12 }}>
-              <div style={{ width: 56, height: 56, borderRadius: 18, border: "1.5px dashed rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <File size={24} strokeWidth={1.8} color="#ffffff" aria-hidden="true" />
-              </div>
-              <div style={{ fontSize: 14, lineHeight: 1.45, color: "rgba(255,255,255,0.92)" }}>No drafts yet. Record a take or paste a transcript to make your first one.</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Helper text + CTA ── */}
-        <div className="db-cta">
-          <div style={{ fontSize: 14, lineHeight: 1.5, color: "rgba(255,255,255,0.9)", maxWidth: 380 }}>
-            {hasGoal
-              ? "Two more posts this week keeps you on pace for your 12-week goal."
-              : "Ideas come from your goals and what your audience reacts to. Record once to unlock them."}
-          </div>
-          <button type="button" onClick={() => navigate({ to: "/transform" })}
-            style={{ height: 52, padding: "0 28px", borderRadius: 999, border: 0, background: "#ffffff", color: "#0a4a94", fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 14px 30px rgba(6,42,92,0.25)", whiteSpace: "nowrap" }}>
-            See ideas
-          </button>
-        </div>
-        </div>
-        </div></div></main>
-
+function GrowthSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading your growth plan" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div className="gh-top">
+        <div className="sx-glass gh-goal"><div className="tf-sk gh-sk" style={{ width: "40%", height: 26 }} /><div className="tf-sk gh-sk" style={{ width: "80%", height: 14, marginTop: 18 }} /><div className="tf-sk gh-sk" style={{ width: "100%", height: 10, marginTop: 26 }} /><div className="tf-sk gh-sk" style={{ width: "70%", height: 14, marginTop: 18 }} /></div>
+        <div className="sx-glass gh-record"><div className="tf-sk gh-sk" style={{ width: 160, height: 160, borderRadius: "50%" }} /></div>
+      </div>
+      <div className="gh-plays">
+        {[0, 1, 2].map((i) => <div key={i} className="sx-glass gh-play"><div className="tf-sk gh-sk" style={{ width: "50%", height: 12 }} /><div className="tf-sk gh-sk" style={{ width: "85%", height: 20, marginTop: 14 }} /><div className="tf-sk gh-sk" style={{ width: "100%", height: 54, marginTop: 14 }} /></div>)}
+      </div>
     </div>
   );
 }

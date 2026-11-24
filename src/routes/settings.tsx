@@ -24,10 +24,10 @@ const TABS: [string, string, string][] = [
 ];
 
 const NAV_ITEMS = [
-  { label: "Home",       to: "/",          icon: House,             active: false },
+  { label: "Growth",       to: "/",          icon: House,             active: false },
   { label: "Transform",  to: "/transform", icon: Sparkles, active: false },
   { label: "Record",     to: "/record",    icon: Mic, active: false },
-  { label: "Track",      to: "/track",     icon: ChartNoAxesColumn,        active: false },
+  { label: "Results",      to: "/results",     icon: ChartNoAxesColumn,        active: false },
   { label: "Distribute", to: "/distribute",icon: Calendar,       active: false },
   { label: "Settings",   to: "/settings",  icon: SettingsIcon, active: true },
 ];
