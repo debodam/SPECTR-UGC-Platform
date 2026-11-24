@@ -76,3 +76,36 @@ Headless Chrome renders without a GPU, so it shows main-thread jank well but und
   - The tour card only appears once its position is known.
   - The live transcript box has a fixed minimum height.
   - Skeletons were already in place for Transform and the growth plan card.
+
+## 11: demo polish (tour from step 1 to the closing card)
+Measured with `node scripts/perf/measure.mjs <label> <WxH> tour` on the dev server, headless Chrome. Frames are counted for 1.6 s after every step change.
+
+| Size | Frames under 20 ms | Dropped (>33 ms) | Worst frame | Long tasks over 50 ms (worst) |
+|---|---|---|---|---|
+| 1440x900, before | 99.7% | 2 | 233 ms | 2 (256 ms) |
+| 1440x900, after | 99.7% | 2 | 150 ms | 3 (173 ms) |
+| 390x844, before | 99.8% | 2 | 417 ms | 2 (164 ms) |
+| 390x844, after | 99.9% | 3 | 150 ms | 2 (179 ms) |
+
+The target of at least 95% of frames under 20 ms is met at both sizes. The worst frame dropped from 233 and 417 ms to 150 ms. The 417 ms frame at 390 came from the "plan updated" step and is gone.
+
+The remaining long tasks are in three places:
+- **Opening Record from a play.** This is mostly the one-time AudioContext setup in headless Chrome (13 ms in a real browser; see 09 above), plus the Record page's first render.
+- **"Mark as posted".** About 50 ms, which is right at the threshold.
+- **A few transitions with one 50 to 55 ms long animation frame.** These come from React rendering the next page during route changes on the dev server.
+
+What changed:
+- **The spotlight glides in every browser.** `useGlidingSpotlight` (`src/demo/useGlidingSpotlight.ts`) replaces the CSS `transition: d`, which only works in Chrome, and the ring's width and height transitions, which were layout work.
+  - It runs a requestAnimationFrame tween over 420 ms with an ease-out quartic curve, and writes the path `d` and each ring's transform, width and height straight to the DOM. React does not re-render per frame.
+  - It glides only when the step changes. Within a step it follows the target at once.
+  - The first appearance and reduced motion snap.
+  - A timer lands the spotlight on its target even if animation frames are paused.
+  - Checked in headless Chrome: going from Pillars to Cadence, the ring passed through 23 intermediate positions over about 400 ms.
+- **The card never shows at a stale position.** On each new step it is measured and placed while hidden (`.is-placing`: hidden, no transition), then shown on the next frame. A timer is the fallback. Measured: the card first appeared at exactly its final position.
+- **Entrances.**
+  - The tour's dim layer fades in over 300 ms.
+  - The closing card's backdrop fades in, and the card lifts in from 12px down at 0.98 scale (400 ms, shared ease-out).
+  - The Resume chip fades in.
+  - The blurred layers (the backdrop scrim and the card) sit still inside animating wrappers.
+- **Live transcript.** The box has a fixed height (150 px) and scrolls itself to the newest words, so the logs below it never shift. Looping animations still pause when the tab is hidden.
+- **Demo bar.** Verified at 360, 390, 600, 820 and 1440 wide: no sideways scroll, and every button stays inside the bar (`npm run e2e:demo-bar`, screenshots in `design/e2e/demo-bar/`).

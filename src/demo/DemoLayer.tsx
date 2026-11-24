@@ -7,6 +7,7 @@ import { useRouter, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, ExternalLink, Flag, Play, RotateCcw, X } from "lucide-react";
 import { DEMO_KEYS, demoEvent, exitDemo, startDemo } from "./mode";
 import { TOUR, TOUR_TOTAL, type TourStep } from "./tour";
+import { buildDimPath, type Box, useGlidingSpotlight } from "./useGlidingSpotlight";
 import { DEMO_END } from "./seed/recruiter.config";
 
 type Status = "running" | "paused" | "skipped" | "closing" | "done";
@@ -16,8 +17,7 @@ interface TourState {
 }
 
 const PAD = 10;
-/** Corner radius of the spotlight; matches .demo-ring in styles.css. */
-const RING_RADIUS = 18;
+
 /** Space kept between the card and the viewport edges, and between the card and the spotlight. */
 const MARGIN = 16;
 const GAP = 14;
@@ -45,7 +45,7 @@ function loadTour(): TourState {
   return { i: 0, status: "running" };
 }
 
-export type Box = { x: number; y: number; w: number; h: number };
+export type { Box };
 
 const toBox = (r: DOMRect): Box => ({ x: r.left, y: r.top, w: r.width, h: r.height });
 
@@ -485,9 +485,23 @@ export default function DemoLayer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [running, step, tour.i, next, back, skip]);
 
+  // The card is measured while hidden, placed, and only then shown, so it never appears (or glides in) from a
+  // position worked out for the previous step's card.
+  const [placedFor, setPlacedFor] = useState(-1);
   useLayoutEffect(() => {
-    if (cardRef.current) setCardH(cardRef.current.offsetHeight);
-  }, [tour.i, tour.status, holes, missing, confirmSkip, viewport]);
+    if (!cardRef.current) return;
+    setCardH(cardRef.current.offsetHeight);
+    if (placedFor !== tour.i) {
+      // Show it on the next frame; the timer covers browsers that pause animation frames (background tabs).
+      const show = () => setPlacedFor(tour.i);
+      const raf = requestAnimationFrame(show);
+      const t = window.setTimeout(show, 80);
+      return () => {
+        cancelAnimationFrame(raf);
+        window.clearTimeout(t);
+      };
+    }
+  }, [tour.i, tour.status, holes, missing, confirmSkip, viewport, placedFor]);
 
   const vw = viewport.w;
   const vh = viewport.h;
@@ -499,21 +513,7 @@ export default function DemoLayer() {
     [holes, avoidBoxes, cardW, cardH, vw, vh], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const path = useMemo(() => {
-    const outer = `M0 0H${vw}V${vh}H0Z`;
-    // Rounded like the ring (.demo-ring, 18px), so no undimmed corner shows outside it.
-    const cut = (holes ?? [])
-      .map((b) => {
-        const r = Math.min(RING_RADIUS, b.w / 2, b.h / 2);
-        return (
-          `M${b.x + r} ${b.y}h${b.w - 2 * r}a${r} ${r} 0 0 1 ${r} ${r}v${b.h - 2 * r}` +
-          `a${r} ${r} 0 0 1 ${-r} ${r}h${-(b.w - 2 * r)}a${r} ${r} 0 0 1 ${-r} ${-r}` +
-          `v${-(b.h - 2 * r)}a${r} ${r} 0 0 1 ${r} ${-r}Z`
-        );
-      })
-      .join("");
-    return outer + cut;
-  }, [holes, vw, vh]);
+  const { pathRef, ringRefs } = useGlidingSpotlight(holes, holesFor, vw, vh);
 
   const body = step ? (Array.isArray(step.body) ? step.body : [step.body]) : [];
 
@@ -551,7 +551,7 @@ export default function DemoLayer() {
       {running && step && (
         <div className="demo-tour" aria-live="polite">
           <svg className="demo-dim" width={vw} height={vh} aria-hidden="true">
-            <path d={path} fillRule="evenodd" />
+            <path ref={pathRef} d={buildDimPath(vw, vh, holes)} fillRule="evenodd" />
           </svg>
           {/* Explanation steps: the spotlight is visible but not clickable, so the tour stays in control. */}
           {step.advance === "button" &&
@@ -566,6 +566,9 @@ export default function DemoLayer() {
           {holes?.map((b, k) => (
             <div
               key={`r${k}`}
+              ref={(el) => {
+                ringRefs.current[k] = el;
+              }}
               className="demo-ring"
               style={{ transform: `translate3d(${b.x}px, ${b.y}px, 0)`, width: b.w, height: b.h }}
             />
@@ -573,7 +576,7 @@ export default function DemoLayer() {
           {!waitingForTarget && (
             // The wrapper glides to the new position; the blurred card inside never moves itself.
             <div
-              className="demo-card-pos"
+              className={`demo-card-pos${placedFor === tour.i ? "" : " is-placing"}`}
               style={{ transform: `translate3d(${pos.left}px, ${pos.top}px, 0)`, width: cardW }}
             >
               <div
@@ -705,40 +708,44 @@ export default function DemoLayer() {
 
       {tour.status === "closing" && (
         <div className="demo-end-wrap">
-          <div
-            className="demo-end"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="demo-end-title"
-          >
-            <h2 id="demo-end-title">{DEMO_END.title}</h2>
-            <p>{DEMO_END.body}</p>
-            <a
-              className="gh-btn gh-btn--primary demo-end-primary"
-              href={DEMO_END.primaryUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              autoFocus
-              onClick={() => demoEvent("closing link opened")}
+          {/* The fade and lift run on plain wrappers; the blurred layers inside never animate themselves. */}
+          <div className="demo-end-scrim" aria-hidden="true" />
+          <div className="demo-end-lift">
+            <div
+              className="demo-end"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="demo-end-title"
             >
-              {DEMO_END.primaryLabel}
-              <ExternalLink size={15} aria-hidden="true" />
-            </a>
-            <div className="demo-end-row">
-              <button type="button" className="gh-btn gh-btn--ghost" onClick={replay}>
-                Replay the tour
-              </button>
-              <button type="button" className="gh-btn gh-btn--ghost" onClick={() => exitDemo()}>
-                Exit demo
+              <h2 id="demo-end-title">{DEMO_END.title}</h2>
+              <p>{DEMO_END.body}</p>
+              <a
+                className="gh-btn gh-btn--primary demo-end-primary"
+                href={DEMO_END.primaryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                autoFocus
+                onClick={() => demoEvent("closing link opened")}
+              >
+                {DEMO_END.primaryLabel}
+                <ExternalLink size={15} aria-hidden="true" />
+              </a>
+              <div className="demo-end-row">
+                <button type="button" className="gh-btn gh-btn--ghost" onClick={replay}>
+                  Replay the tour
+                </button>
+                <button type="button" className="gh-btn gh-btn--ghost" onClick={() => exitDemo()}>
+                  Exit demo
+                </button>
+              </div>
+              <button
+                type="button"
+                className="demo-end-close"
+                onClick={() => setTour({ i: tour.i, status: "done" })}
+              >
+                Keep exploring the demo
               </button>
             </div>
-            <button
-              type="button"
-              className="demo-end-close"
-              onClick={() => setTour({ i: tour.i, status: "done" })}
-            >
-              Keep exploring the demo
-            </button>
           </div>
         </div>
       )}

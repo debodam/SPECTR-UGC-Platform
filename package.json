@@ -14,7 +14,8 @@
     "e2e:migrated": "node scripts/e2e/full-loop.mjs migrated",
     "e2e:demo": "node scripts/e2e/demo-tour.mjs",
     "shots:landing": "node scripts/landing/shots.mjs",
-    "e2e:landing": "node scripts/e2e/landing.mjs"
+    "e2e:landing": "node scripts/e2e/landing.mjs",
+    "e2e:demo-bar": "node scripts/e2e/demo-bar.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",

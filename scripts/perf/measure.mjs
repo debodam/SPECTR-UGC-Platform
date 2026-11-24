@@ -12,6 +12,9 @@ import path from "node:path";
 import { launch } from "../e2e/harness.mjs";
 
 const label = process.argv[2] || "run";
+// Optional: a screen size (WxH) and "tour" to record only the guided tour.
+const [W, H] = (process.argv[3] || "1440x900").split("x").map(Number);
+const tourOnly = process.argv[4] === "tour";
 const outDir = path.resolve("design/perf");
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -42,7 +45,7 @@ const summarize = (name, d) => {
 };
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "spectr-perf-"));
-const h = await launch({ out: tmp, width: 1440, height: 900, port: 9660 });
+const h = await launch({ out: tmp, width: W, height: H, port: 9660 + (W % 31) });
 await h.send("Page.addScriptToEvaluateOnNewDocument", { source: PROBE });
 const start = () =>
   h.ev(
@@ -70,17 +73,19 @@ const mouse = async (sel) => {
 
 const results = [];
 try {
-  // 1. Landing: two full carousel cycles plus a pill click.
-  await h.go("/welcome", 3000);
-  await start();
-  await h.sleep(9000);
-  await mouse(".ld-pill:nth-child(3)");
-  await h.sleep(1500);
-  results.push(summarize("landing", await stop()));
-
+  if (!tourOnly) {
+    // 1. Landing: two full carousel cycles plus a pill click.
+    await h.go("/welcome", 3000);
+    await start();
+    await h.sleep(9000);
+    await mouse(".ld-pill:nth-child(3)");
+    await h.sleep(1500);
+    results.push(summarize("landing", await stop()));
+  }
   // 2. Guided tour, start to the closing card. Frames are only counted while the tour is moving between steps.
   await h.go("/demo", 4500);
   const tour = { frames: [], long: [], loaf: [] };
+  const visited = [];
   for (let n = 0; n < 40; n++) {
     if (await h.ev(`!!document.querySelector('.demo-end')`)) break;
     let c = null;
@@ -90,7 +95,11 @@ try {
       );
       if (!c) await h.sleep(200);
     }
-    if (!c) break;
+    if (!c) {
+      console.log("note: no tour card after", visited.at(-1));
+      break;
+    }
+    visited.push(c.id);
     await h.sleep(500);
     if (c.id === "listening") {
       await h.ev(`(() => { const s = document.documentElement.dataset.sample; return s; })()`);
@@ -114,19 +123,23 @@ try {
     tour.long.push(...d.long);
     tour.loaf.push(...d.loaf);
   }
-  results.push(summarize("tour transitions", tour));
+  results.push(summarize(`tour transitions ${W}x${H}`, tour));
+  const closed = await h.ev(`!!document.querySelector('.demo-end')`);
+  if (!closed) console.log("note: the tour did not reach the closing card:", visited.join(" > "));
   if (tour.where) console.log("tour long tasks at:", tour.where.join(" | "));
 
-  // 3. Record: the orb and live transcript while the sample take plays.
-  await h.ev(
-    `sessionStorage.setItem('spectr-demo-tour', JSON.stringify({ i: 0, status: 'skipped' }))`,
-  );
-  await h.go("/record?play=demo-play-sixweek", 3000);
-  await mouse('[data-tour="sample-recording"]');
-  await h.sleep(800);
-  await start();
-  await h.sleep(10000);
-  results.push(summarize("record orb and transcript", await stop()));
+  if (!tourOnly) {
+    // 3. Record: the orb and live transcript while the sample take plays.
+    await h.ev(
+      `sessionStorage.setItem('spectr-demo-tour', JSON.stringify({ i: 0, status: 'skipped' }))`,
+    );
+    await h.go("/record?play=demo-play-sixweek", 3000);
+    await mouse('[data-tour="sample-recording"]');
+    await h.sleep(800);
+    await start();
+    await h.sleep(10000);
+    results.push(summarize("record orb and transcript", await stop()));
+  }
 } finally {
   await h.close();
   fs.rmSync(tmp, { recursive: true, force: true });

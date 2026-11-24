@@ -1,0 +1,13 @@
+[
+  {
+    "scenario": "tour transitions 390x844",
+    "frames": 1907,
+    "under20ms": 99.8,
+    "dropped": 2,
+    "p95ms": 16.8,
+    "worstFrameMs": 416.8,
+    "longTasks": 2,
+    "worstLongTaskMs": 164,
+    "longAnimationFrames": 3
+  }
+]

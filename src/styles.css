@@ -3975,9 +3975,10 @@ select.gx-input {
 }
 .rc-live-text {
   margin-top: 10px;
-  min-height: 96px;
-  max-height: 210px;
+  /* Fixed height: new words never push the logs below it down; the box scrolls to the newest line instead. */
+  height: 150px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   font-size: 15.5px;
   line-height: 1.6;
   color: #ffffff;
@@ -4246,6 +4247,13 @@ select.gx-input {
   inset: 0;
   z-index: 10000;
   pointer-events: none;
+  /* The dim (and everything on it) fades in when the tour starts. */
+  animation: demo-fade-in calc(var(--dur-2) + 50ms) var(--ease-out) both;
+}
+@keyframes demo-fade-in {
+  from {
+    opacity: 0;
+  }
 }
 .demo-dim {
   position: absolute;
@@ -4255,7 +4263,7 @@ select.gx-input {
 .demo-dim path {
   fill: rgba(4, 28, 66, 0.58);
   pointer-events: auto;
-  transition: d var(--dur-3) var(--ease-out);
+  /* The glide is a requestAnimationFrame tween (useGlidingSpotlight), so it works outside Chrome too. */
 }
 .demo-ring {
   position: absolute;
@@ -4266,11 +4274,7 @@ select.gx-input {
     0 0 0 7px rgba(255, 255, 255, 0.22);
   left: 0;
   top: 0;
-  will-change: transform;
-  transition:
-    transform var(--dur-3) var(--ease-out),
-    width var(--dur-3) var(--ease-out),
-    height var(--dur-3) var(--ease-out);
+  /* Position and size are written each frame by useGlidingSpotlight; no CSS transition. */
 }
 .demo-hole-block {
   position: absolute;
@@ -4288,6 +4292,10 @@ select.gx-input {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 24px 60px rgba(4, 28, 66, 0.45);
+}
+.demo-card-pos.is-placing {
+  visibility: hidden;
+  transition: none;
 }
 .demo-card-pos {
   position: fixed;
@@ -4402,6 +4410,7 @@ select.gx-input {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 12px 30px rgba(4, 28, 66, 0.35);
+  animation: demo-fade-in var(--dur-3) var(--ease-out) both;
 }
 .demo-resume:focus-visible {
   outline: 2px solid #fff;
@@ -4410,19 +4419,35 @@ select.gx-input {
 
 .demo-end-wrap {
   position: fixed;
-  inset: 40px 0 0;
+  inset: var(--demo-banner-h) 0 0;
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  animation: demo-fade-in var(--dur-3) var(--ease-out) both;
+}
+/* The blurred backdrop and card sit still inside the animating wrappers. */
+.demo-end-scrim {
+  position: absolute;
+  inset: 0;
   background: rgba(4, 28, 66, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
+.demo-end-lift {
+  position: relative;
+  width: min(480px, 100%);
+  animation: demo-lift-in var(--dur-3) var(--ease-out) both;
+}
+@keyframes demo-lift-in {
+  from {
+    transform: translateY(12px) scale(0.98);
+  }
+}
 .demo-end {
   box-sizing: border-box;
-  width: min(480px, 100%);
+  width: 100%;
   padding: 32px 30px 22px;
   border-radius: 28px;
   text-align: center;

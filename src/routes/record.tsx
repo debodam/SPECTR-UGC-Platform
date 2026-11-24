@@ -363,6 +363,7 @@ function RecordPage() {
   const [sampleState, setSampleState] = useState<"idle" | "playing" | "ended" | "stopped">("idle");
   const [muted, setMuted] = useState(false);
   const sampleOn = sampleState === "playing" || sampleState === "ended";
+  const liveTextRef = useRef<HTMLDivElement>(null);
 
   // Demo: build the sample's audio graph in idle time, so the button press only starts playback.
   useEffect(() => {
@@ -644,6 +645,11 @@ function RecordPage() {
       : "idle";
   const liveText = transcript + (interimText ? " " + interimText : "");
   const sampleText = SAMPLE_WORDS.slice(0, sampleWords);
+  // Keep the newest words in view inside the fixed-height transcript box.
+  useEffect(() => {
+    const el = liveTextRef.current;
+    if (el && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
+  }, [sampleWords, liveText]);
   const hasLogs = logs.length > 0;
 
   const userName = state.user?.name ?? "";
@@ -867,7 +873,11 @@ function RecordPage() {
                     )}
                     <span className="rc-time">{formatTime(seconds)}</span>
                   </div>
-                  <div className="rc-live-text" data-words={sampleOn ? sampleWords : undefined}>
+                  <div
+                    ref={liveTextRef}
+                    className="rc-live-text"
+                    data-words={sampleOn ? sampleWords : undefined}
+                  >
                     {sampleOn ? (
                       sampleText.length ? (
                         sampleText.map((w, k) => (
