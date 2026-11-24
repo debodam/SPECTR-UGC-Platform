@@ -105,7 +105,8 @@ export interface Experiment {
 }
 
 export type InsightAction =
-  { type: "cadence"; value: number } | { type: "pillar_share"; pillar: string; delta: number };
+  | { type: "cadence"; value: number }
+  | { type: "pillar_share"; pillar: string; delta: number };
 
 export interface InsightEvidence {
   key: string;

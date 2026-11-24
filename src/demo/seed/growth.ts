@@ -62,7 +62,13 @@ export const PLAN_HISTORY = [
 ];
 
 export type PlayStatus =
-  "suggested" | "in progress" | "recorded" | "transformed" | "scheduled" | "posted" | "measured";
+  | "suggested"
+  | "in progress"
+  | "recorded"
+  | "transformed"
+  | "scheduled"
+  | "posted"
+  | "measured";
 
 export interface SeedPlay {
   key: string;
