@@ -4,7 +4,7 @@
  */
 export const TOUR_TOTAL = 9;
 
-const PLAY = "demo-play-signals";
+const PLAY = "demo-play-sixweek";
 const DUE = '[data-queue-id="demo-queue-9"]';
 const INSIGHT = '[data-insight-id="demo-ins-4"]';
 
@@ -42,7 +42,7 @@ export const TOUR: TourStep[] = [
     num: 1,
     route: "/",
     title: "Welcome to SPECTR",
-    body: "SPECTR turns a few minutes of talking into a week of LinkedIn content, then learns from the results. This tour takes about 4 minutes and uses a made up company called Rampwise.",
+    body: "SPECTR turns a few minutes of talking into a week of LinkedIn content, then learns from the results. This tour takes about 4 minutes and uses a made up company called Fastbreak AI, an AI coach for basketball and team athletes.",
     advance: "button",
     nextLabel: "Start the tour",
   },
@@ -52,7 +52,7 @@ export const TOUR: TourStep[] = [
     route: "/",
     targets: ['[data-tour="growth-card"]'],
     title: "Everything starts from a growth plan",
-    body: "The plan has one north star metric. For Rampwise it is followers from customer success leaders: 3,123 today against a 4,000 target. The forecast line projects the current pace to the end of the 12 weeks.",
+    body: "The plan has one north star metric. For Fastbreak AI it is followers from coaches, performance staff and club directors: 3,123 today against a 4,000 target. The forecast line projects the current pace to the end of the 12 weeks.",
     advance: "button",
   },
   {
@@ -90,7 +90,7 @@ export const TOUR: TourStep[] = [
     targets: [`[data-play-id="${PLAY}"]`],
     click: `[data-play-id="${PLAY}"] .gh-btn--primary`,
     title: "This week's plays",
-    body: "Each play is one specific piece: a hook to open with and the reason it should work for this audience, based on past results. Click Start on this one.",
+    body: "Each play is one specific piece: a hook to open with and the reason it should work for coaches, based on past results. This one is the 6 week basketball program that added 3.5 inches to a vertical. Click Start on it.",
     advance: "click",
   },
   {
@@ -110,7 +110,7 @@ export const TOUR: TourStep[] = [
     go: `/record?play=${PLAY}`,
     targets: ['[data-tour="sample-recording"]'],
     title: "Record a take",
-    body: "Normally you talk for a minute. Click Use sample recording to hear a prepared 43 second take, with sound.",
+    body: "Normally you talk for a minute. Click Use sample recording to hear a prepared 49 second take, with sound.",
     advance: "click",
   },
   {
@@ -207,7 +207,7 @@ export const TOUR: TourStep[] = [
     route: "/results",
     targets: ['[data-tour="format-intel"]'],
     title: "Format intelligence",
-    body: "For Rampwise, video scripts earn about 2.4 times the impressions of posts. This is the kind of pattern the plan learns from.",
+    body: "For Fastbreak AI, video scripts earn about 2.4 times the impressions of posts. This is the kind of pattern the plan learns from.",
     advance: "button",
   },
   {
@@ -227,7 +227,7 @@ export const TOUR: TourStep[] = [
     targets: [INSIGHT],
     click: `${INSIGHT} button`,
     title: "Insights change the plan",
-    body: "Insights are computed from the same numbers you just saw. This one says customer wins convert followers best. Click Apply.",
+    body: "Insights are computed from the same numbers you just saw. This one says athlete wins convert followers best. Click Apply.",
     advance: "click",
   },
   {
@@ -236,7 +236,7 @@ export const TOUR: TourStep[] = [
     route: "/growth",
     targets: ['[data-tour="growth-pillars"]'],
     title: "The plan updated",
-    body: "Customer wins moved from 20 to 25 percent of the plan, and the change is in the plan history. As new results are logged, the forecast moves the same way.",
+    body: "Athlete wins moved from 20 to 25 percent of the plan, and the change is in the plan history. As new results are logged, the forecast moves the same way.",
     advance: "button",
   },
   {

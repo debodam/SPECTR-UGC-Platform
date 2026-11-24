@@ -236,3 +236,21 @@ Screenshots from the e2e scripts go to `design/e2e/`, which is git-ignored.
 - **Prewritten outputs and closest-match for typed text:** `src/demo/generate.ts`
 - **Sample recording audio and timings:** `public/demo/sample-recording.m4a`, `src/demo/seed/sampleRecordingTimings.json`, rebuilt by `scripts/demo/make-sample-recording.py`
 - **Where the tour card should keep clear:** the `avoid` list on each step in `src/demo/tour.ts`
+
+## 06 swap to Fastbreak AI
+- **Seed.** The seed in `src/demo/seed` is now Fastbreak AI, copied from `design/demo-seed`. The only app-side change to it was the repo's Prettier formatting. The README's tutorial play line now names the 6 week basketball program.
+- **Renamed keys.** All the old keys were renamed across `src` and `scripts/e2e`. For example, `play-signals` is now `play-sixweek` and `demo-workspace-rampwise` is now `demo-workspace-fastbreak`.
+- **Copy.** Tour copy and `data.ts` labels now tell the Fastbreak story: athlete wins, coaches and the 6 week program. The INSIGHT_ACTION pillar is now "Athlete wins with numbers".
+  - The step count, targets, order and the zero token spend guards are unchanged.
+  - The real Setup placeholder that mentioned customer onboarding is now neutral.
+- **Not done as written: pillar shares.** `PILLAR_SHARE` is still 40/20/20/20, not the 35/25/20/20 the brief asks for. The new insight ins-4 says "Raise athlete wins from 20 to 25 percent of the plan". At 35/25, athlete wins would already be 25, Apply would move it to 30, and the insight would contradict the plan. Change `PILLAR_SHARE` in `src/demo/data.ts` if you prefer the seed's numbers, and reword ins-4 to match.
+- **Sample recording.** The sample recording was re-rendered for the new script with the same pipeline (Samantha, 49.4 s). It is replaced again in 07 below.
+- **Setup values.** "Software & SaaS", "Manager" and "SMB" all exist in the Setup option lists. No change was needed.
+- **Tests.**
+  - `npm run e2e:demo` passes at all four sizes: 21 cards, transcript within 18 ms of the audio, Stop step, Markdown, zero AI and Supabase requests, layout fits.
+  - `npm run e2e` (real app) passes 16 of 16.
+  - Typecheck, lint (0 errors) and build pass.
+- **Visual check.** A headless walk of every demo page found no Rampwise, onboarding, Maya, Okafor, Tideline or CSM text.
+  - The pages show 3,123 vs 4,000, 2.4x, and 3.5% vs 4.5%.
+  - The closing card says Fastbreak AI and links to https://debodam.com, with the "Built by Debojeet Dam" footer.
+- **Final grep.** It returns only a CSS comment about SPECTR's own auth and Setup pages. There is no top-level `e2e/` folder; the tests live in `scripts/e2e/`.

@@ -1278,7 +1278,7 @@ function StepStrategy({ ws, setWorkspace, showErrors }: StepProps) {
         <input
           id="su-topics"
           className="spectr-input"
-          placeholder="For example: customer onboarding, time to first value, founder lessons"
+          placeholder="For example: product lessons, customer stories, founder lessons"
           value={prefs.topics}
           onChange={(e) => set({ topics: e.target.value })}
         />

@@ -1,5 +1,5 @@
 /**
- * Turns the Rampwise seed (src/demo/seed, built by buildDemoSeed) into the same rows the real app reads
+ * Turns the Fastbreak AI seed (src/demo/seed, built by buildDemoSeed) into the same rows the real app reads
  * from Supabase, so every real page renders unchanged in the demo.
  */
 import { buildDemoSeed } from "./seed";
@@ -12,7 +12,7 @@ export type DemoRow = Record<string, unknown>;
 export type DemoTables = Record<string, DemoRow[]>;
 
 const DAY = 86400000;
-export const DEMO_WS_ID = "demo-workspace-rampwise";
+export const DEMO_WS_ID = "demo-workspace-fastbreak";
 export const DEMO_PLAN_ID = "demo-plan-v3";
 
 const at = (now: Date, daysAgo: number, hour = 9) => {
@@ -21,13 +21,13 @@ const at = (now: Date, daysAgo: number, hour = 9) => {
   return t.toISOString();
 };
 
-/** Pillar shares are set so the open "customer wins" insight raises it from 20 to 25 percent, as its text says. */
+/** Pillar shares are set so the open "athlete wins" insight raises it from 20 to 25 percent, as its text says. */
 const PILLAR_SHARE: Record<string, number> = { p1: 40, p2: 20, p3: 20, p4: 20 };
 
 /** Actions for the insights that can be applied from the Growth plan. */
 const INSIGHT_ACTION: Record<string, unknown> = {
   "ins-1": { type: "cadence", value: 5 },
-  "ins-4": { type: "pillar_share", pillar: "Customer wins with numbers", delta: 5 },
+  "ins-4": { type: "pillar_share", pillar: "Athlete wins with numbers", delta: 5 },
 };
 
 const earlier = (time: string, now: Date) => {

@@ -313,10 +313,10 @@ for (const [width, height] of sizes) {
       if (f.railOut === false) issues.push(`${name}: the rail's Exit demo button is clipped`);
     }
     // Transform result view and the closing card.
-    await h.go("/transform?play=demo-play-signals", 2500);
+    await h.go("/transform?play=demo-play-sixweek", 2500);
     await h.type(
       'textarea[aria-label="Source text"]',
-      "Okay so here's what I've learned about stalled customers.",
+      "Okay so here's my six week basketball training program.",
     );
     await mouse(`[data-tour="generate"]`);
     await h.sleep(2400);
