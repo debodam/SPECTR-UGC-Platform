@@ -106,12 +106,12 @@ export const generateGrowthPlan = createServerFn({ method: "POST" })
       source: "fallback",
       reason,
     });
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey || apiKey === "your-api-key-here")
-      return fallback("ANTHROPIC_API_KEY is not configured");
     const refused = await aiGate(data);
     if (refused) return fallback(refused);
     if (!(await isSignedIn(data.token))) return fallback("Not signed in");
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === "your-api-key-here")
+      return fallback("ANTHROPIC_API_KEY is not configured");
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
       const client = new Anthropic({ apiKey });
@@ -155,10 +155,10 @@ export const phraseInsights = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<{ texts: string[]; source: "ai" | "computed" }> => {
     const computed = { texts: data.texts, source: "computed" as const };
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey || apiKey === "your-api-key-here" || !data.texts.length) return computed;
     if (await aiGate(data)) return computed;
     if (!(await isSignedIn(data.token))) return computed;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === "your-api-key-here" || !data.texts.length) return computed;
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
       const client = new Anthropic({ apiKey });

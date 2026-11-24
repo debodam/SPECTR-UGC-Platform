@@ -28,10 +28,30 @@ const SHOTS = [
 ] as const;
 const SRC = (key: string) => `/landing/${key}.webp`;
 const ADVANCE_MS = 4000;
+/** Social cards need absolute image URLs. */
+const SITE_URL = "https://tryspectr.online";
+const DESCRIPTION =
+  "Record it, transform it, publish it. SPECTR turns raw knowledge into articles, posts and video scripts. Try the 2 minute guided demo.";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
-    meta: [{ title: "SPECTR - Turn expertise into content" }],
+    meta: [
+      { title: "SPECTR - Turn expertise into content" },
+      { name: "description", content: DESCRIPTION },
+      { name: "robots", content: "index, follow" },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "SPECTR" },
+      { property: "og:title", content: "SPECTR - Turn expertise into content. Automatically." },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:image", content: `${SITE_URL}/landing/dashboard.webp` },
+      { property: "og:image:width", content: "1600" },
+      { property: "og:image:height", content: "1000" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "SPECTR - Turn expertise into content. Automatically." },
+      { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/landing/dashboard.webp` },
+    ],
     links: [{ rel: "preload", as: "image", href: SRC("dashboard"), type: "image/webp" }],
   }),
   component: Welcome,

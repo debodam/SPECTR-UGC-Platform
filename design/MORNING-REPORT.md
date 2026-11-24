@@ -288,3 +288,72 @@ Screenshots from the e2e scripts go to `design/e2e/`, which is git-ignored.
 - **Phone.** Under 1024px the page stacks. On 390x844 both buttons are visible without scrolling. The subline hides below 700px tall.
 - **Tests.** `npm run e2e:landing` passes at 1280x720, 1440x900 and 1920x1080, and on a 390x844 phone. It checks for no scroll, everything inside the viewport, the links, that the images load, and the slideshow and pills.
 - **Also in this step.** On Record, "Use sample recording" and "Paste or type instead" now sit in one centered row of matching pills.
+
+## 09 smooth and ship
+### Smooth animations (details in `design/perf-report.md`)
+- **One motion scale.** `--ease-out`, `--ease-in-out` and durations of 150, 250, 400 and 600 ms, used by every transition.
+- **Transform and opacity only.**
+  - Progress bars animate scale, not width.
+  - The tour ring and card move by transform.
+  - Hovers no longer animate shadows.
+- **Blur budget.**
+  - Every blurred layer is 14px at most.
+  - Glass inside glass uses a plain fill.
+  - Blurred elements never animate themselves: Dashboard cards fade in an overlay on hover, and the tour card moves inside an unblurred wrapper.
+- **Tour.** The spotlight glides from one target to the next and the dim never flashes. Each card fades and slides 8px in, and same-page steps appear sooner.
+- **Orb.** No style queries per frame. The level and playback rate are only written when they change. Every looping animation pauses while the tab is hidden.
+- **Reduced motion.** Everything falls back to short fades.
+- **Main-thread work moved off clicks.**
+  - The sample recording's audio is set up in idle time.
+  - The demo sandbox saves to storage in idle time.
+
+**Numbers** (1440x900, headless Chrome):
+
+| Scenario | Frames under 20 ms | Long tasks, before | Long tasks, after |
+|---|---|---|---|
+| Landing | 100% | 0 | 0 |
+| Tour | 99.8% | 2 (worst 143 ms, dev) | 1 (119 ms, production) |
+| Record | 100% | 0 | 0 |
+
+The one left is Chrome creating an AudioContext on a headless machine. It takes 13 ms in a real browser and runs in idle time after the page settles.
+
+### Vercel readiness (details and exact steps in `design/DEPLOY.md`)
+- **A production sign-in bug, fixed.**
+  - The AI endpoints and Delete account checked sessions with supabase-js on the server. On Vercel's Node 20 runtime that throws, because Node 20 has no WebSocket.
+  - The effect would have been that every real generation in production failed with "session expired".
+  - Sessions and account deletion now go through Supabase's REST API with plain `fetch`.
+- **The demo can't spend tokens, checked again.**
+  - The server's demo check and sign-in check now run before anything else in every AI endpoint.
+  - Tested: a demo flag in the body and the `x-spectr-demo` header are both refused, and an invalid session is refused.
+- **Builds and runs.**
+  - `node scripts/build-vercel.mjs` builds the Vercel output.
+  - Served locally the way Vercel serves it, these all returned 200: `/welcome`, `/demo`, `/access`, the landing images and the sample audio.
+  - The function folder now carries its own `package.json` marking it CommonJS, so the wrapper loads even under the repo's ES module setting.
+- **No secrets in the browser bundle.** It contains only the public anon key.
+- **Added:**
+  - `/api/health`
+  - `public/robots.txt`
+  - landing page social meta (description, Open Graph and Twitter card, using the Dashboard screenshot)
+  - `.env.example`
+  - `.github/workflows/ci.yml`: typecheck, lint, build, then the full loop, landing and demo e2e on every pull request
+- **Fixed in tooling:**
+  - ESLint now ignores `.vercel`; it was trying to lint the 2 MB server bundle.
+  - The e2e harness now refuses to start if a leftover Chrome holds its debugging port. That is what made one run fail 0 of 3 tonight.
+
+### Ready for main
+- **Main is already included.** `main` (and `origin/main` after a fetch) is fully contained in `ui/rework`, so no merge was needed. The pull request will be a clean fast-forward of 47 commits.
+- **Checks.** Typecheck passes, lint has 0 errors, both builds pass, and these pass:
+  - `npm run e2e` (16 of 16)
+  - `npm run e2e:migrated` (16 of 16)
+  - `npm run e2e:landing` (all 4 sizes)
+  - `npm run e2e:demo` (all 4 sizes)
+- **Leftover grep is clean.** No Rampwise, Cobalt, `console.log`, TODO, FIXME or `debugger` in `src`. The demo's `[demo]` event lines (`console.info`) are intentional.
+
+### Needs your attention
+1. **The root URL shows sign-in, not the landing page.** A signed-out visitor to `https://tryspectr.online/` is sent to `/login`, because the app's sign-in guard owns `/`. The landing page is at `/welcome`. I did not change it, since this step said not to change app behavior. The likely fix is for signed-out visitors at `/` to go to `/welcome`. Until then, share `https://tryspectr.online/welcome`.
+2. **Run the SQL.** Run `design/RUN-IN-SUPABASE.sql` if it has not run since the `queue_items` fix.
+3. **Check RLS.** Confirm RLS on `companies` and the logo bucket (see DEPLOY.md, section 2).
+4. **The access code is still client side.** It is a soft gate, not security. This decision is still open.
+
+### First thing to click after the deploy
+`https://tryspectr.online/welcome`, then **Try the demo**, and walk the tour to the closing card.

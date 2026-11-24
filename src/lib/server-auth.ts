@@ -1,22 +1,50 @@
-import { createClient } from "@supabase/supabase-js";
-
 /**
- * Server only. Confirms a request comes from a signed-in user before it spends paid API calls.
- * The token is the caller's Supabase access token; it is checked against Supabase Auth.
+ * Server only. Supabase is called over plain REST here, never through supabase-js: creating a supabase-js client
+ * on the server opens its realtime WebSocket, which throws on Node 20 (Vercel's runtime has no native WebSocket).
  */
-export async function isSignedIn(token: unknown): Promise<boolean> {
-  if (typeof token !== "string" || token.length < 20 || token.length > 8000) return false;
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const anon = process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !anon) return false;
+const supabaseUrl = () => process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const anonKey = () => process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+/** The signed-in user's id for a Supabase access token, or null when the token is missing or invalid. */
+export async function userIdFor(token: unknown): Promise<string | null> {
+  if (typeof token !== "string" || token.length < 20 || token.length > 8000) return null;
+  const url = supabaseUrl();
+  const anon = anonKey();
+  if (!url || !anon) return null;
   try {
-    const client = createClient(url, anon, {
-      auth: { autoRefreshToken: false, persistSession: false },
+    const res = await fetch(`${url}/auth/v1/user`, {
+      headers: { apikey: anon, Authorization: `Bearer ${token}` },
     });
-    const { data, error } = await client.auth.getUser(token);
-    return !error && !!data.user;
+    if (!res.ok) return null;
+    const user = (await res.json()) as { id?: string };
+    return user.id ?? null;
   } catch {
-    return false;
+    return null;
+  }
+}
+
+/** Confirms a request comes from a signed-in user before it spends paid API calls. */
+export async function isSignedIn(token: unknown): Promise<boolean> {
+  return (await userIdFor(token)) !== null;
+}
+
+/** Deletes an auth user with the service role key (their rows cascade). */
+export async function deleteAuthUser(
+  userId: string,
+  serviceRoleKey: string,
+): Promise<string | null> {
+  const url = supabaseUrl();
+  if (!url) return "SUPABASE_URL is not configured on the server.";
+  try {
+    const res = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+      headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+    });
+    if (res.ok) return null;
+    const body = (await res.json().catch(() => ({}))) as { msg?: string; message?: string };
+    return body.msg || body.message || `Delete failed (${res.status})`;
+  } catch (e) {
+    return e instanceof Error ? e.message : "Delete failed";
   }
 }
 

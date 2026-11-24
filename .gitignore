@@ -39,3 +39,4 @@ dist-ssr
 
 # End-to-end screenshots (regenerate with npm run e2e)
 design/e2e/
+!.env.example

@@ -1,0 +1,52 @@
+# Checks every pull request: typecheck, lint, build, then the end to end suites against the dev server.
+# The e2e harness answers every Supabase request itself, so no real keys or database are needed here.
+name: CI
+
+on:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # Public project URL (the e2e session key is tied to its ref); the key is a placeholder because the harness
+      # intercepts every Supabase call.
+      VITE_SUPABASE_URL: https://guaxvpritsajidqdsmpr.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit -p .
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Start the dev server
+        run: |
+          npm run dev -- --port 5173 > dev.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:5173/welcome > /dev/null && exit 0; sleep 2; done
+          cat dev.log; exit 1
+      - name: Full loop (real app, mocked database)
+        run: npm run e2e
+      - name: Landing page
+        run: npm run e2e:landing
+      - name: Guided demo (one size, to keep CI fast)
+        run: npm run e2e:demo -- 1280x720
+      - name: Keep screenshots when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: design/e2e
+          retention-days: 7

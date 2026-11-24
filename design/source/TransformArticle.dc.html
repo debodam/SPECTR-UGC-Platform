@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TransformArticle</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+html,body,x-dc,x-dc *,.sc-host,.sc-host *,button,input,textarea,select,option{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif !important}
+@keyframes tf-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.tf-sk{animation:tf-pulse 1.4s ease-in-out infinite}
+.db-btn:focus-visible{outline:2px solid #ffffff;outline-offset:4px}
+.db-nav:hover{background:rgba(255,255,255,0.18)}
+.tf-in{transition:box-shadow .15s ease,background .15s ease}
+.tf-in:focus{outline:none;background:rgba(255,255,255,0.28);box-shadow:0 0 0 3px rgba(255,255,255,.35),inset 0 0 0 1.5px #ffffff}
+.tf-in::placeholder{color:rgba(255,255,255,0.7)}
+.tf-b:hover{background:rgba(255,255,255,0.28) !important}
+.tf-p:hover{filter:brightness(1.06)}
+.tf-p:active{transform:translateY(1px)}
+.tf-drop:hover{background:rgba(255,255,255,0.24) !important;border-color:#ffffff !important}
+.tf-h:hover{background:rgba(255,255,255,0.2) !important}
+.tf-scroll::-webkit-scrollbar{width:8px}
+.tf-scroll::-webkit-scrollbar-thumb{background:#cfdbec;border-radius:4px}
+</style>
+</helmet>
+<div style="position:relative;width:1440px;height:960px;overflow:hidden;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#b9d6f8 0%,#4d92e0 48%,#0a4a94 100%);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif;color:#ffffff">
+
+<div style="position:relative;width:1360px;height:880px;box-sizing:border-box;border-radius:44px;overflow:hidden;background:radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%);box-shadow:0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)">
+
+<aside style="position:absolute;left:0;top:0;bottom:0;width:88px;box-sizing:border-box;border-right:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.1);display:flex;flex-direction:column;align-items:center;padding:26px 0">
+<div style="width:40px;height:40px;border-radius:12px;background:#ffffff;display:flex;align-items:center;justify-content:center">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><polygon points="12,3 21,21 12,21" fill="#0a66c2"/><polygon points="12,3 12,21 3,21" fill="#0a66c2" fill-opacity="0.55"/></svg>
+</div>
+<nav style="margin-top:auto;margin-bottom:auto;padding:8px;border-radius:32px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="6">
+<button class="db-btn db-nav" type="button" aria-label="{{ n.label }}" title="{{ n.label }}" style="{{ n.style }}">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.d1 }}"/><path d="{{ n.d2 }}"/></svg>
+</button>
+</sc-for>
+</nav>
+<button class="db-btn db-nav" type="button" aria-label="Log out" title="Log out" style="width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:transparent;color:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>
+</button>
+</aside>
+
+<header style="position:absolute;left:88px;right:0;top:0;height:88px;box-sizing:border-box;padding:0 40px;border-bottom:1px solid rgba(255,255,255,0.28);display:flex;align-items:center;justify-content:space-between">
+<div>
+<div style="font-size:26px;font-weight:300;letter-spacing:-0.01em;line-height:1.1">Transform</div>
+<div style="margin-top:4px;font-size:14px;color:rgba(255,255,255,0.9)">Drop in a transcript, notes, or a document and get publish-ready content.</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<button class="db-btn" type="button" onClick="{{ onHist }}" style="height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.14);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+History
+</button>
+<button class="db-btn" type="button" style="height:44px;padding:0 14px 0 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.14);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px;cursor:pointer">
+<span style="width:28px;height:28px;border-radius:50%;background:#ffffff;color:#0a66c2;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">A</span>
+<span>Aced</span>
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5"/><path d="M7 15l5 5 5-5"/></svg>
+</button>
+<div style="display:flex;align-items:center;gap:6px;height:44px;padding:0 5px 0 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.14)">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(145deg,#ffffff,#b9d6f8);color:#0a4a94;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-left:6px">AL</div>
+</div>
+</div>
+</header>
+
+<sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:128px;top:112px;width:1192px;height:736px;box-sizing:border-box;padding:32px;border-radius:28px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#ffffff;box-shadow:0 10px 30px rgba(6,42,92,0.14);display:flex;gap:32px">
+
+<div style="width:520px;flex:none;display:flex;flex-direction:column;gap:22px">
+<div>
+<div style="font-size:14px;font-weight:600;color:#ffffff">Output type</div>
+<div style="margin-top:10px;display:flex;padding:4px;border-radius:14px;background:rgba(255,255,255,0.18);height:52px;box-sizing:border-box;gap:4px">
+<sc-for list="{{ segs }}" as="g" hint-placeholder-count="3">
+<button type="button" onClick="{{ g.onPick }}" style="{{ g.style }}">{{ g.label }}</button>
+</sc-for>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:14px;font-weight:600;color:#ffffff">Add context</span><span style="font-size:13px;color:rgba(255,255,255,0.85)">optional</span></div>
+<textarea class="tf-in" placeholder="Who is this for, and what should it say?" value="{{ ctxVal }}" onInput="{{ onCtx }}" style="margin-top:10px;width:100%;height:112px;box-sizing:border-box;padding:14px 16px;border:0;border-radius:14px;background:rgba(255,255,255,0.18);font-family:inherit;font-size:15px;line-height:1.5;color:#ffffff;resize:none"></textarea>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:14px;font-weight:600;color:#ffffff">Content instructions</span><span style="font-size:13px;color:rgba(255,255,255,0.85)">optional</span></div>
+<div style="margin-top:4px;font-size:13px;line-height:1.45;color:rgba(255,255,255,0.85)">Control the shape and length of the output, for example 5 minutes long, 1500 words, 4 pillars, include a case study.</div>
+<textarea class="tf-in" placeholder="Add instructions" value="{{ insVal }}" onInput="{{ onIns }}" style="margin-top:10px;width:100%;height:112px;box-sizing:border-box;padding:14px 16px;border:0;border-radius:14px;background:rgba(255,255,255,0.18);font-family:inherit;font-size:15px;line-height:1.5;color:#ffffff;resize:none"></textarea>
+<div style="margin-top:12px;display:flex;gap:10px">
+<button class="tf-b" type="button" style="height:42px;padding:0 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h10l3 3v13H6z"/><path d="M9 4v5h6V4M9 20v-6h6v6"/></svg>Save</button>
+<button class="tf-b" type="button" style="height:42px;padding:0 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 18h14"/></svg>Load saved<span style="min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:10px;background:#0a66c2;color:#ffffff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">1</span></button>
+</div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="font-size:14px;font-weight:600;color:#ffffff">Upload a document</div>
+<div class="tf-drop" role="button" tabindex="0" style="margin-top:10px;height:148px;box-sizing:border-box;border-radius:18px;border:1.5px dashed rgba(255,255,255,0.55);background:rgba(255,255,255,0.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .15s ease,border-color .15s ease">
+<div style="width:44px;height:44px;border-radius:14px;background:#ffffff;box-shadow:0 4px 12px rgba(6,42,92,0.2);display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a66c2" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5"/><path d="M5 19h14"/></svg></div>
+<div style="font-size:15px;font-weight:600;color:#ffffff">Drop a file here, or <span style="text-decoration:underline">browse</span></div>
+<div style="font-size:13px;color:rgba(255,255,255,0.85)">PDF, DOCX, or TXT</div>
+</div>
+<div style="margin:16px 0;display:flex;align-items:center;gap:14px"><div style="flex:1;height:1px;background:#d7e2f0"></div><span style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85)">or</span><div style="flex:1;height:1px;background:#d7e2f0"></div></div>
+<div style="font-size:14px;font-weight:600;color:#ffffff">Paste your text</div>
+<textarea class="tf-in" placeholder="Paste your transcript, notes, or draft here..." value="{{ pasteVal }}" onInput="{{ onPaste }}" style="margin-top:10px;flex:1;min-height:0;width:100%;box-sizing:border-box;padding:14px 16px;border:0;border-radius:14px;background:rgba(255,255,255,0.18);font-family:inherit;font-size:15px;line-height:1.55;color:#ffffff;resize:none"></textarea>
+<button class="tf-p" type="button" onClick="{{ onGenerate }}" style="margin-top:20px;height:54px;border-radius:14px;border:0;background:#ffffff;color:#0a66c2;font-family:inherit;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 10px 24px rgba(6,42,92,0.25)">
+<svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z"/><path d="M18 16v4M16 18h4"/></svg>
+{{ genLabel }}
+</button>
+</div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:128px;top:112px;width:440px;height:736px;box-sizing:border-box;padding:22px;border-radius:28px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#ffffff;box-shadow:0 10px 30px rgba(6,42,92,0.14);display:flex;flex-direction:column;gap:14px">
+<div>
+<div style="font-size:13px;font-weight:600;color:#ffffff">Output type</div>
+<div style="margin-top:8px;display:flex;padding:4px;border-radius:14px;background:rgba(255,255,255,0.18);height:46px;box-sizing:border-box;gap:4px">
+<sc-for list="{{ segs }}" as="g" hint-placeholder-count="3">
+<button type="button" onClick="{{ g.onPick }}" style="{{ g.style }}">{{ g.label }}</button>
+</sc-for>
+</div>
+</div>
+<div>
+<div style="font-size:13px;font-weight:600;color:#ffffff">Add context</div>
+<textarea class="tf-in" value="{{ ctxVal }}" onInput="{{ onCtx }}" style="margin-top:8px;width:100%;height:64px;box-sizing:border-box;padding:11px 14px;border:0;border-radius:12px;background:rgba(255,255,255,0.18);font-family:inherit;font-size:14px;line-height:1.45;color:#ffffff;resize:none"></textarea>
+</div>
+<div>
+<div style="font-size:13px;font-weight:600;color:#ffffff">Content instructions</div>
+<textarea class="tf-in" value="{{ insVal }}" onInput="{{ onIns }}" style="margin-top:8px;width:100%;height:64px;box-sizing:border-box;padding:11px 14px;border:0;border-radius:12px;background:rgba(255,255,255,0.18);font-family:inherit;font-size:14px;line-height:1.45;color:#ffffff;resize:none"></textarea>
+</div>
+<div style="display:flex;gap:8px">
+<button class="tf-b" type="button" style="height:38px;padding:0 14px;border-radius:11px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Save</button>
+<button class="tf-b" type="button" style="height:38px;padding:0 14px;border-radius:11px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer">Load saved<span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#0a66c2;color:#ffffff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">1</span></button>
+</div>
+<div class="tf-drop" role="button" tabindex="0" style="height:52px;flex:none;box-sizing:border-box;padding:0 14px;border-radius:14px;border:1.5px dashed rgba(255,255,255,0.55);background:rgba(255,255,255,0.12);display:flex;align-items:center;gap:12px;cursor:pointer">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5"/><path d="M5 19h14"/></svg>
+<span style="font-size:14px;font-weight:600;color:#ffffff">Upload a document</span><span style="margin-left:auto;font-size:12px;color:rgba(255,255,255,0.85)">PDF, DOCX, TXT</span>
+</div>
+<textarea class="tf-in" value="{{ pasteVal }}" onInput="{{ onPaste }}" style="flex:1;min-height:0;width:100%;box-sizing:border-box;padding:12px 14px;border:0;border-radius:12px;background:rgba(255,255,255,0.18);font-family:inherit;font-size:14px;line-height:1.5;color:#ffffff;resize:none"></textarea>
+<button class="tf-p" type="button" onClick="{{ onGenerate }}" style="flex:none;height:50px;border-radius:14px;border:0;background:#ffffff;color:#0a66c2;font-family:inherit;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 10px 24px rgba(6,42,92,0.25)">{{ genLabel }}</button>
+</div>
+
+<div style="position:absolute;left:588px;top:112px;width:732px;height:736px;box-sizing:border-box;border-radius:28px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#ffffff;box-shadow:0 10px 30px rgba(6,42,92,0.14);display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:none;box-sizing:border-box;padding:14px 28px;background:rgba(255,255,255,0.14);border-bottom:1px solid rgba(255,255,255,0.3);display:flex;align-items:center;gap:10px;font-size:13.5px;color:#ffffff">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>
+<span><span style="font-weight:600">Targeting:</span> Developers, Engineers, Managers at All Sizes companies in Wellness</span>
+</div>
+<div style="flex:none;display:flex;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,0.3)">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{ t.onPick }}" style="{{ t.style }}">{{ t.label }}</button>
+</sc-for>
+</div>
+
+<div class="tf-scroll" style="{{ bodyStyle }}">
+
+<sc-if value="{{ skel }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:12px"><div class="tf-sk" style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.26)"></div><div class="tf-sk" style="width:90px;height:16px;border-radius:8px;background:rgba(255,255,255,0.26)"></div></div>
+<div class="tf-sk" style="margin-top:28px;width:84%;height:26px;border-radius:8px;background:rgba(255,255,255,0.26)"></div>
+<div class="tf-sk" style="margin-top:12px;width:52%;height:26px;border-radius:8px;background:rgba(255,255,255,0.26)"></div>
+<div style="margin-top:32px;display:flex;flex-direction:column;gap:12px">
+<div class="tf-sk" style="height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div><div class="tf-sk" style="height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div><div class="tf-sk" style="width:92%;height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div><div class="tf-sk" style="width:70%;height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div>
+</div>
+<div style="margin-top:28px;display:flex;flex-direction:column;gap:12px">
+<div class="tf-sk" style="height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div><div class="tf-sk" style="width:96%;height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div><div class="tf-sk" style="height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div><div class="tf-sk" style="width:58%;height:14px;border-radius:7px;background:rgba(255,255,255,0.18)"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showArticle }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M9 8h3"/></svg></div>
+<div style="font-size:16px;font-weight:600">Article</div>
+<div style="margin-left:auto;display:flex;gap:8px">
+<sc-for list="{{ actions }}" as="a" hint-placeholder-count="4">
+<button class="tf-b" type="button" style="height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ a.d1 }}"/><path d="{{ a.d2 }}"/></svg>{{ a.label }}</button>
+</sc-for>
+</div>
+</div>
+<h2 style="margin:26px 0 0;font-size:26px;font-weight:500;letter-spacing:-0.015em;line-height:1.25;color:#ffffff">Why developer wellness starts with fewer meetings, not more yoga</h2>
+<div style="margin-top:20px;display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ paras }}" as="p" hint-placeholder-count="5">
+<p style="margin:0;font-size:15.5px;line-height:1.72;color:rgba(255,255,255,0.95)">{{ p.text }}</p>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ showPosts }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14v10H10l-5 4z"/></svg></div>
+<div style="font-size:16px;font-weight:600">Posts</div>
+<span style="font-size:13px;color:rgba(255,255,255,0.85)">3 drafts</span>
+<button class="tf-b" type="button" style="margin-left:auto;height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/></svg>Regenerate</button>
+</div>
+<div style="margin-top:20px;display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ posts }}" as="p" hint-placeholder-count="3">
+<div style="box-sizing:border-box;padding:18px 20px;border-radius:18px;border:1px solid rgba(255,255,255,0.34);background:rgba(255,255,255,0.14)">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:13px;font-weight:600;color:#ffffff">{{ p.label }}</span><span style="font-size:12px;color:rgba(255,255,255,0.85)">{{ p.count }}</span>
+<button class="tf-b" type="button" style="margin-left:auto;height:30px;padding:0 10px;border-radius:9px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Copy</button></div>
+<div style="margin-top:10px;font-size:15px;line-height:1.65;color:rgba(255,255,255,0.95)">{{ p.text }}</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ showVideo }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3"/></svg></div>
+<div style="font-size:16px;font-weight:600">Video Script</div>
+<span style="font-size:13px;color:rgba(255,255,255,0.85)">About 5 minutes</span>
+<div style="margin-left:auto;display:flex;gap:8px">
+<button class="tf-b" type="button" style="height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Copy</button>
+<button class="tf-b" type="button" style="height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Regenerate</button>
+</div>
+</div>
+<div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ scenes }}" as="v" hint-placeholder-count="5">
+<div style="display:flex;gap:16px;box-sizing:border-box;padding:16px 18px;border-radius:18px;border:1px solid rgba(255,255,255,0.34);background:rgba(255,255,255,0.14)">
+<div style="flex:none;width:64px"><span style="height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,0.24);color:#ffffff;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center">{{ v.time }}</span></div>
+<div><div style="font-size:15px;font-weight:600;color:#ffffff">{{ v.title }}</div><div style="margin-top:5px;font-size:14.5px;line-height:1.6;color:rgba(255,255,255,0.95)">{{ v.text }}</div></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+</div>
+
+<div style="flex:none;box-sizing:border-box;padding:16px 28px;border-top:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);display:flex;gap:12px;align-items:center">
+<input class="tf-in" type="text" placeholder="Refine: make it shorter, add a stat, change the tone" style="flex:1;height:48px;box-sizing:border-box;padding:0 16px;border:0;border-radius:12px;background:rgba(255,255,255,0.18);font-family:inherit;font-size:15px;color:#ffffff"/>
+<button class="tf-p" type="button" style="height:48px;padding:0 24px;border-radius:12px;border:0;background:#ffffff;color:#0a66c2;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Refine</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showGen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(10,50,110,0.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center">
+<div role="dialog" aria-label="Generating content" style="width:380px;box-sizing:border-box;padding:36px 32px 28px;border-radius:28px;background:rgba(26,86,168,0.78);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#ffffff;text-align:center;box-shadow:0 30px 80px rgba(3,30,70,0.4)">
+<div style="position:relative;width:132px;height:132px;margin:0 auto">
+<svg aria-hidden="true" width="132" height="132" viewBox="0 0 132 132" style="transform:rotate(-90deg)"><circle cx="66" cy="66" r="56" fill="none" stroke="#e3ecf8" stroke-width="9"/><circle cx="66" cy="66" r="56" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-dasharray="351.86" style="{{ ringStyle }}"/></svg>
+<div style="position:absolute;left:0;top:0;width:132px;height:132px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:300;letter-spacing:-0.02em">{{ pctText }}</div>
+</div>
+<div style="margin-top:22px;font-size:20px;font-weight:600">Generating content...</div>
+<div style="margin-top:6px;font-size:14px;line-height:1.5;color:rgba(255,255,255,0.85)">This usually takes under a minute.</div>
+<button class="tf-b" type="button" onClick="{{ onCancel }}" style="margin-top:24px;height:46px;padding:0 28px;border-radius:12px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Cancel</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ hist }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ onHist }}" style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(10,50,110,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+<aside role="dialog" aria-label="Generation history" style="position:absolute;right:0;top:0;bottom:0;width:440px;box-sizing:border-box;background:rgba(26,86,168,0.82);border-left:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#ffffff;display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(3,30,70,0.3)">
+<div style="flex:none;box-sizing:border-box;padding:28px 28px 20px;display:flex;align-items:center">
+<div style="font-size:22px;font-weight:500;letter-spacing:-0.01em">Generation history</div>
+<button class="tf-b" type="button" aria-label="Close" onClick="{{ onHist }}" style="margin-left:auto;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+<div style="flex:1;min-height:0;box-sizing:border-box;padding:0 20px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+<div class="tf-h" role="button" tabindex="0" style="box-sizing:border-box;padding:16px 18px;border-radius:16px;border:1px solid rgba(255,255,255,0.34);background:rgba(255,255,255,0.12);cursor:pointer">
+<div style="display:flex;align-items:center;gap:10px"><span style="{{ h.pillStyle }}">{{ h.kind }}</span><span style="font-size:13px;color:rgba(255,255,255,0.85)">{{ h.date }}</span></div>
+<div style="margin-top:10px;font-size:14.5px;line-height:1.55;color:rgba(255,255,255,0.95);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ h.text }}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:none;box-sizing:border-box;padding:18px 28px;border-top:1px solid rgba(255,255,255,0.3);font-size:13px;color:rgba(255,255,255,0.85)">Last 10 generations for this company</div>
+</aside>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"view":{"editor":"enum","default":"result","options":["form","generating","result"]},"tab":{"editor":"enum","default":"article","options":["article","posts","video"]},"type":{"editor":"enum","default":"article","options":["article","posts","video"]},"hist":{"editor":"enum","default":"closed","options":["closed","open"]},"pct":{"editor":"string","default":"52"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  componentWillUnmount() { clearInterval(this._iv); }
+  renderVals() {
+    const s = this.state || {};
+    const P = this.props || {};
+    const view = s.view !== undefined ? s.view : (P.view || 'form');
+    const type = s.type !== undefined ? s.type : (P.type || 'article');
+    const tab = s.tab !== undefined ? s.tab : (P.tab || 'article');
+    const hist = s.hist !== undefined ? s.hist : (P.hist === 'open');
+    const pct = s.pct !== undefined ? s.pct : (parseInt(P.pct, 10) || 0);
+    const isForm = view === 'form';
+    const gen = view === 'generating';
+    const NAMES = { article: 'Article', posts: 'Posts', video: 'Video Script' };
+
+    const NAV = [
+      { label: 'Home', d1: 'M4 11l8-7 8 7', d2: 'M6 10v10h12V10' },
+      { label: 'Transform', d1: 'M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z', d2: 'M18 16v4M16 18h4', on: true },
+      { label: 'Record', d1: 'M9 4h6v8a3 3 0 0 1-6 0z', d2: 'M6 11a6 6 0 0 0 12 0M12 17v3' },
+      { label: 'Track', d1: 'M5 20V11M11 20V5M17 20v-7', d2: 'M3 20h18' },
+      { label: 'Distribute', d1: 'M5 6h14v14H5z', d2: 'M5 10h14M9 3v4M15 3v4' },
+      { label: 'Settings', d1: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z', d2: 'M19 12l2-1-1-3-2.3.5-1.4-1.4.5-2.3-3-1-1 2h-2l-1-2-3 1 .5 2.3-1.4 1.4L3 8l-1 3 2 1v2l-2 1 1 3 2.3-.5 1.4 1.4-.5 2.3 3 1 1-2h2l1 2 3-1-.5-2.3 1.4-1.4L21 16l1-3-2-1z' }
+    ].map((n) => ({
+      key: n.label, label: n.label, d1: n.d1, d2: n.d2,
+      style: 'width:44px;height:44px;border-radius:50%;border:0;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;' + (n.on ? 'background:#0a66c2;color:#ffffff;box-shadow:0 8px 20px rgba(6,42,92,0.35);' : 'background:transparent;color:rgba(255,255,255,0.9);')
+    }));
+
+    const compact = !isForm;
+    const segs = ['article', 'posts', 'video'].map((k) => ({
+      key: k, label: NAMES[k],
+      style: 'flex:1;border:0;border-radius:11px;cursor:pointer;font-family:inherit;font-size:' + (compact ? 13.5 : 15) + 'px;font-weight:600;transition:background .15s ease,color .15s ease;' + (type === k ? 'background:#0a66c2;color:#ffffff;box-shadow:0 4px 12px rgba(10,102,194,0.3)' : 'background:transparent;color:rgba(255,255,255,0.9)'),
+      onPick: () => this.setState({ type: k })
+    }));
+    const tabs = ['article', 'posts', 'video'].map((k) => ({
+      key: k, label: NAMES[k],
+      style: 'border:0;background:transparent;cursor:pointer;font-family:inherit;font-size:15px;font-weight:600;padding:16px 2px 14px;margin-bottom:-1px;border-bottom:3px solid ' + (tab === k ? '#ffffff' : 'transparent') + ';color:' + (tab === k ? '#ffffff' : 'rgba(255,255,255,0.78)'),
+      onPick: () => this.setState({ tab: k })
+    }));
+
+    const SAMPLE_CTX = 'Audience is engineering managers and developers at wellness startups.';
+    const SAMPLE_INS = '1500 words, 4 pillars, include a case study';
+    const SAMPLE_PASTE = 'Notes from the call: most developers say meetings are what drain them, not workload. One team cut standups to twice a week and saw sick days drop. Wellness perks only land when the calendar has room for them. Managers need permission to protect focus time.';
+    const pre = P.view !== undefined && P.view !== 'form';
+    const ctxVal = s.ctx !== undefined ? s.ctx : (pre ? SAMPLE_CTX : '');
+    const insVal = s.ins !== undefined ? s.ins : (pre ? SAMPLE_INS : '');
+    const pasteVal = s.paste !== undefined ? s.paste : (pre ? SAMPLE_PASTE : '');
+
+    const paras = [
+      'Ask a developer what drains them and the answer is rarely the work itself. It is the fragmented day: a standup, a sync, a planning call, and a review, with twenty minutes of focus in between. Wellness programs tend to miss this completely.',
+      'The first pillar is protected focus time. One engineering team we spoke with moved standups from daily to twice a week and blocked two mornings for deep work. Within a quarter, sick days dropped and shipped work went up.',
+      'The second pillar is permission. A meditation app means little if a manager still replies to messages at 10 pm. Leaders set the tone, and people copy what they see, not what the handbook says.',
+      'The third pillar is small, repeatable habits. A walking one-on-one, a hard stop at the end of the day, a shared no-meeting Friday. None of these cost money, and all of them are easy to measure.',
+      'The fourth pillar is honest measurement. Track burnout signals the same way you track uptime: a short monthly pulse, a few clear numbers, and a real response when they move.'
+    ].map((t, i) => ({ key: 'p' + i, text: t }));
+
+    const postTexts = [
+      'Your developers do not need another wellness app. They need fewer meetings. One team cut standups to twice a week and saw sick days drop within a quarter. What is one meeting you could drop this week?',
+      'Wellness perks only work when the calendar has room for them. Protect two focus mornings, then add the perks. In that order.',
+      'Four pillars for developer wellness: protected focus time, manager permission, small repeatable habits, and honest measurement. Which one is your team missing?'
+    ];
+    const posts = postTexts.map((t, i) => ({ key: 'po' + i, label: 'Post ' + (i + 1), count: t.length + ' characters', text: t }));
+
+    const scenes = [
+      { time: '0:00', title: 'Hook', text: 'Your developers are not burned out because of the work. They are burned out because of the calendar.' },
+      { time: '0:20', title: 'Setup', text: 'Most wellness programs add things: apps, workshops, perks. We will look at what happens when you take things away instead.' },
+      { time: '1:00', title: 'Story', text: 'One team cut standups to twice a week and blocked two focus mornings. Here is what changed in a quarter.' },
+      { time: '2:30', title: 'Lesson', text: 'Four pillars: protected focus time, manager permission, small habits, and honest measurement.' },
+      { time: '4:20', title: 'Call to action', text: 'Pick one meeting to drop this week and tell your team why. Then come back and tell us how it went.' }
+    ].map((v, i) => ({ key: 'v' + i, time: v.time, title: v.title, text: v.text }));
+
+    const HIST = [
+      { kind: 'Article', date: 'Jun 9, 9:02 PM', text: 'Why developer wellness starts with fewer meetings, not more yoga. Ask a developer what drains them and the answer is rarely the work itself.' },
+      { kind: 'Video Script', date: 'Jun 9, 8:41 PM', text: 'Your developers are not burned out because of the work. They are burned out because of the calendar. Most wellness programs add things.' },
+      { kind: 'Article', date: 'Jun 8, 4:15 PM', text: 'How to run a pilot week that people actually keep. Start small, pick one habit, and measure what changes before you scale it.' },
+      { kind: 'Posts', date: 'Jun 7, 11:30 AM', text: 'Wellness perks only work when the calendar has room for them. Protect two focus mornings, then add the perks. In that order.' }
+    ].map((h, i) => ({
+      key: 'h' + i, kind: h.kind, date: h.date, text: h.text,
+      pillStyle: 'height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;' + (h.kind === 'Article' ? 'background:rgba(255,255,255,0.24);color:#ffffff' : h.kind === 'Posts' ? 'background:#ecfdf3;color:#067647' : 'background:#fffaeb;color:#b54708')
+    }));
+
+    const scrollable = P.view === undefined || P.view === 'form' && false;
+    const interactive = this._interactive;
+    return {
+      nav: NAV, segs, tabs, paras, posts, scenes, history: HIST,
+      actions: [
+        { key: 'c', label: 'Copy', d1: 'M9 9h10v11H9z', d2: 'M5 15V4h10' },
+        { key: 'r', label: 'Regenerate', d1: 'M4 12a8 8 0 0 1 14-5.3L20 9', d2: 'M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15' },
+        { key: 'd', label: 'DOCX', d1: 'M12 4v10M8 10l4 4 4-4', d2: 'M5 18h14' },
+        { key: 'p', label: 'PDF', d1: 'M12 4v10M8 10l4 4 4-4', d2: 'M5 18h14' }
+      ],
+      isForm, isResult: !isForm, showGen: gen, hist,
+      skel: gen, showArticle: !gen && tab === 'article', showPosts: !gen && tab === 'posts', showVideo: !gen && tab === 'video',
+      bodyStyle: 'flex:1;min-height:0;box-sizing:border-box;padding:26px 28px 24px;overflow-y:auto;position:relative',
+      ctxVal, insVal, pasteVal,
+      genLabel: 'Generate ' + NAMES[type],
+      ringStyle: 'stroke-dashoffset:' + (351.86 * (1 - pct / 100)).toFixed(2) + ';transition:stroke-dashoffset .2s linear',
+      pctText: Math.round(pct) + '%',
+      onCtx: (e) => this.setState({ ctx: e.target.value }),
+      onIns: (e) => this.setState({ ins: e.target.value }),
+      onPaste: (e) => this.setState({ paste: e.target.value }),
+      onHist: () => this.setState({ hist: !hist }),
+      onCancel: () => { clearInterval(this._iv); this.setState({ view: 'form', pct: 0 }); },
+      onGenerate: () => {
+        clearInterval(this._iv);
+        this.setState({ view: 'generating', pct: 0, tab: type });
+        this._iv = setInterval(() => {
+          const p = ((this.state || {}).pct || 0) + 4;
+          if (p >= 100) { clearInterval(this._iv); this.setState({ pct: 100, view: 'result' }); }
+          else this.setState({ pct: p });
+        }, 140);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

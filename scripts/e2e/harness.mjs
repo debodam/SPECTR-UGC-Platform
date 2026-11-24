@@ -16,6 +16,15 @@ export async function launch({
   seed = {},
   storePatch = {},
 }) {
+  // A Chrome left over from an earlier run on the same port would be driven instead of ours. Refuse clearly.
+  const stale = await fetch(`http://127.0.0.1:${port}/json/version`).then(
+    () => true,
+    () => false,
+  );
+  if (stale)
+    throw new Error(
+      `Port ${port} is already used by another Chrome (probably left over from an earlier test run). Quit it and rerun.`,
+    );
   const profile = fs.mkdtempSync(path.join(out, "chrome-"));
   const chrome = spawn(
     process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -28,6 +37,8 @@ export async function launch({
       "--autoplay-policy=no-user-gesture-required",
       // Audio still plays (the demo test checks the audio clock) but never reaches the speakers.
       "--mute-audio",
+      // Linux CI runners cannot use Chrome's sandbox.
+      ...(process.env.CI ? ["--no-sandbox", "--disable-dev-shm-usage"] : []),
       "about:blank",
     ],
     { stdio: "ignore" },

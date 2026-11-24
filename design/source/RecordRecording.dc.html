@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Record: recording</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+html,body,x-dc,x-dc *,.sc-host,.sc-host *,button,input,textarea,select,option{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif !important}
+@keyframes db-breathe{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(var(--dx),var(--dy)) scale(var(--amp))}
+  66%{transform:translate(calc(var(--dx) * -0.8),calc(var(--dy) * -0.6)) scale(var(--amp2))}
+}
+@keyframes db-ripple{0%{transform:scale(0.62);opacity:0.55}100%{transform:scale(1.28);opacity:0}}
+@keyframes rc-dot{0%,100%{opacity:.35}50%{opacity:1}}
+.hl{transform-box:fill-box;transform-origin:center;animation-name:db-breathe;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
+.hr{transform-box:fill-box;transform-origin:center;animation:db-ripple 4.2s ease-out infinite}
+.rc-live{animation:rc-dot 1.2s ease-in-out infinite}
+.db-btn:focus-visible{outline:2px solid #ffffff;outline-offset:4px}
+.db-mic{transition:transform .5s ease}
+.db-mic:hover{transform:scale(1.025)}
+.db-nav:hover{background:rgba(255,255,255,0.18)}
+.rc-row{transition:background .2s ease}
+.rc-row:hover{background:rgba(255,255,255,0.22) !important}
+@media (prefers-reduced-motion:reduce){.hl,.hr{animation:none}}
+</style>
+</helmet>
+<div style="position:relative;width:1440px;height:960px;overflow:hidden;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#b9d6f8 0%,#4d92e0 48%,#0a4a94 100%);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif;color:#ffffff">
+
+<div style="position:relative;width:1360px;height:880px;box-sizing:border-box;border-radius:44px;overflow:hidden;background:radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%);box-shadow:0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)">
+
+<aside style="position:absolute;left:0;top:0;bottom:0;width:88px;box-sizing:border-box;border-right:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.1);display:flex;flex-direction:column;align-items:center;padding:26px 0">
+<div style="width:40px;height:40px;border-radius:12px;background:#ffffff;display:flex;align-items:center;justify-content:center">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><polygon points="12,3 21,21 12,21" fill="#0a66c2"/><polygon points="12,3 12,21 3,21" fill="#0a66c2" fill-opacity="0.55"/></svg>
+</div>
+<nav style="margin-top:auto;margin-bottom:auto;padding:8px;border-radius:32px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="6">
+<button class="db-btn db-nav" type="button" aria-label="{{ n.label }}" title="{{ n.label }}" style="{{ n.style }}">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.d1 }}"/><path d="{{ n.d2 }}"/></svg>
+</button>
+</sc-for>
+</nav>
+<button class="db-btn db-nav" type="button" aria-label="Log out" title="Log out" style="width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:transparent;color:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>
+</button>
+</aside>
+
+<header style="position:absolute;left:88px;right:0;top:0;height:88px;box-sizing:border-box;padding:0 40px;border-bottom:1px solid rgba(255,255,255,0.28);display:flex;align-items:center;justify-content:space-between">
+<div>
+<div style="font-size:26px;font-weight:300;letter-spacing:-0.01em;line-height:1.1">Record</div>
+<div style="margin-top:4px;font-size:14px;color:rgba(255,255,255,0.9)">Record audio and get a live transcript directly in your browser.</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<button class="db-btn" type="button" style="height:44px;padding:0 14px 0 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.14);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px;cursor:pointer">
+<span style="width:28px;height:28px;border-radius:50%;background:#ffffff;color:#0a66c2;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">A</span>
+<span>Aced</span>
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5"/><path d="M7 15l5 5 5-5"/></svg>
+</button>
+<div style="display:flex;align-items:center;gap:6px;height:44px;padding:0 5px 0 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.14)">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(145deg,#ffffff,#b9d6f8);color:#0a4a94;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-left:6px">AL</div>
+</div>
+</div>
+</header>
+
+<div style="position:absolute;left:168px;top:170px;width:400px;height:400px">
+<button class="db-btn db-mic" type="button" aria-label="{{ micLabel }}" onClick="{{ onMic }}" style="position:absolute;left:0;top:0;width:400px;height:400px;border:0;padding:0;background:transparent;cursor:pointer;border-radius:50%">
+<svg aria-hidden="true" width="400" height="400" viewBox="0 0 400 400" style="position:absolute;left:0;top:0;overflow:visible">
+<defs>
+<filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="0.7"/></filter>
+<filter id="coreGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>
+<radialGradient id="aura" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+</defs>
+<circle cx="200" cy="196" r="200" fill="url(#aura)" opacity="0.5"/>
+<sc-if value="{{ isRec }}" hint-placeholder-val="{{ false }}">
+<circle class="hr" cx="200" cy="196" r="168" fill="none" stroke="#ffffff" stroke-width="1.6"/>
+<circle class="hr" cx="200" cy="196" r="168" fill="none" stroke="#ffffff" stroke-width="1.6" style="animation-delay:-2.1s"/>
+</sc-if>
+<g filter="url(#soft)">
+<sc-for list="{{ layers }}" as="l" hint-placeholder-count="18">
+<rect class="hl" style="{{ l.style }}"/>
+</sc-for>
+</g>
+<rect style="{{ glowStyle }}" filter="url(#coreGlow)"/>
+<rect style="{{ coreStyle }}"/>
+<g style="{{ micGlyphStyle }}">
+<path d="M146 214 V232 C146 270 254 270 254 232 V214" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="200" cy="296" r="7" fill="#ffffff"/>
+</g>
+<rect style="{{ stopStyle }}"/>
+</svg>
+</button>
+</div>
+
+<div style="position:absolute;left:168px;width:400px;top:546px;text-align:center;pointer-events:none">
+<div style="font-size:22px;font-weight:600;letter-spacing:-0.01em">{{ capTitle }}</div>
+<div style="margin-top:6px;font-size:15px;color:rgba(255,255,255,0.9)">{{ capSub }}</div>
+</div>
+
+<div style="position:absolute;left:700px;top:112px;width:620px;height:728px;box-sizing:border-box;padding:24px;border-radius:28px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(6,42,92,0.14);display:flex;flex-direction:column;overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px;flex:none">
+<div style="font-size:20px;font-weight:600;letter-spacing:-0.01em">Transcription logs</div>
+<sc-if value="{{ hasLogs }}" hint-placeholder-val="{{ true }}"><span style="min-width:24px;height:24px;padding:0 8px;box-sizing:border-box;border-radius:12px;background:#ffffff;color:#0a66c2;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ logCount }}</span></sc-if>
+</div>
+
+<sc-if value="{{ isRec }}" hint-placeholder-val="{{ false }}">
+<div style="flex:none;margin-top:16px;box-sizing:border-box;padding:18px 20px;border-radius:20px;background:#ffffff;color:#0b1220;box-shadow:0 14px 34px rgba(6,42,92,0.22)">
+<div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#0a66c2"><span class="rc-live" style="width:9px;height:9px;border-radius:50%;background:#d92d20"></span><span style="color:#0b1220">Live transcript</span><span style="margin-left:auto;font-size:13px;color:#475569;font-weight:500">{{ timer }}</span></div>
+<div style="margin-top:10px;font-size:15px;line-height:1.6;color:#1c2a3f;min-height:96px">{{ liveText }}<span style="display:inline-block;width:2px;height:16px;margin-left:2px;vertical-align:-3px;background:#0a66c2"></span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasLogs }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:16px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ logs }}" as="g" hint-placeholder-count="3">
+<div class="rc-row" role="button" tabindex="0" onClick="{{ g.onToggle }}" style="{{ g.rowStyle }}">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="font-size:14px;font-weight:600">{{ g.date }}</div>
+<span style="height:22px;padding:0 9px;border-radius:999px;background:rgba(255,255,255,0.24);font-size:12px;font-weight:600;display:inline-flex;align-items:center">{{ g.dur }}</span>
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ g.chevStyle }}"><path d="M6 9l6 6 6-6"/></svg>
+</div>
+<div style="{{ g.textStyle }}">{{ g.text }}</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:16px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;border-radius:20px;border:1.5px dashed rgba(255,255,255,0.5)">
+<div style="width:60px;height:60px;border-radius:20px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v8a3 3 0 0 1-6 0z"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3"/></svg></div>
+<div style="font-size:17px;font-weight:600">No recordings yet</div>
+<div style="max-width:300px;font-size:14px;line-height:1.5;color:rgba(255,255,255,0.92)">Tap the mic and start talking. Your transcript will show up here.</div>
+</div>
+</sc-if>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","default":"logs","options":["logs","empty"]},"rec":{"editor":"enum","default":"recording","options":["idle","recording"]},"secs":{"editor":"string","default":"24"},"open":{"editor":"string","default":"-1"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  componentWillUnmount() { clearInterval(this._iv); }
+  renderVals() {
+    const s = this.state || {};
+    const P = this.props || {};
+    const rec = s.rec !== undefined ? s.rec : (P.rec || 'idle');
+    const secs = s.secs !== undefined ? s.secs : (parseInt(P.secs, 10) || 0);
+    const openIdx = s.open !== undefined ? s.open : (P.open === undefined || P.open === '' ? -1 : parseInt(P.open, 10));
+    const isRec = rec === 'recording';
+    const isEmpty = (P.mode || 'logs') === 'empty';
+
+    const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+    const STOPS = [[0, '#ffffff'], [0.05, '#e3f1ff'], [0.14, '#8cc4fa'], [0.3, '#3b86dc'], [0.45, '#0a5ab4'], [0.56, '#0a4a94'], [0.68, '#3b86dc'], [0.8, '#8fc0f7'], [0.92, '#cfe4fc'], [1, '#eaf3fe']];
+    const ramp = (t) => {
+      for (let i = 1; i < STOPS.length; i++) {
+        if (t <= STOPS[i][0]) {
+          const a = STOPS[i - 1], b = STOPS[i];
+          const k = (t - a[0]) / (b[0] - a[0]);
+          const ca = hex(a[1]), cb = hex(b[1]);
+          return 'rgb(' + ca.map((c, j) => Math.round(c + (cb[j] - c) * k)).join(',') + ')';
+        }
+      }
+      return '#eaf3fe';
+    };
+    const N = 18, CX = 200, CY = 196, OUT = 352;
+    const coreW = isRec ? 112 : 70, coreH = isRec ? 112 : 124, coreR = isRec ? 56 : 30;
+    const layers = [];
+    for (let i = N; i >= 1; i--) {
+      const t = i / N;
+      const e = Math.pow(t, 0.85);
+      const w = coreW + (OUT - coreW) * e;
+      const h = coreH + (OUT - coreH) * e;
+      const rx = Math.min(w, h) / 2;
+      const fade = t > 0.7 ? 1 - (t - 0.7) / 0.3 * 0.7 : 1;
+      const dur = isRec ? 5.2 : 11;
+      const amp = 1 + (isRec ? 0.012 : 0.006) + t * (isRec ? 0.05 : 0.026);
+      const amp2 = 1 - t * (isRec ? 0.03 : 0.014);
+      layers.push({
+        key: 'l' + i,
+        style: 'x:' + (CX - w / 2).toFixed(1) + 'px;y:' + (CY - h / 2).toFixed(1) + 'px;width:' + w.toFixed(1) + 'px;height:' + h.toFixed(1) + 'px;rx:' + rx.toFixed(1) + 'px;fill:' + ramp(t) + ';opacity:' + fade.toFixed(2) + ';stroke:rgba(255,255,255,0.3);stroke-width:1;--amp:' + amp.toFixed(4) + ';--amp2:' + amp2.toFixed(4) + ';--dx:' + (Math.sin(i * 1.7) * (0.8 + t * 2.4)).toFixed(2) + 'px;--dy:' + (Math.cos(i * 1.3) * (0.8 + t * 2.4)).toFixed(2) + 'px;animation-duration:' + dur + 's;animation-delay:-' + (i * 0.42).toFixed(2) + 's;transition:x .8s ease,y .8s ease,width .8s ease,height .8s ease,rx .8s ease'
+      });
+    }
+    const geo = 'x:' + (CX - coreW / 2) + 'px;y:' + (CY - coreH / 2) + 'px;width:' + coreW + 'px;height:' + coreH + 'px;rx:' + coreR + 'px;transition:x .8s ease,y .8s ease,width .8s ease,height .8s ease,rx .8s ease;';
+
+    const NAV = [
+      { label: 'Home', d1: 'M4 11l8-7 8 7', d2: 'M6 10v10h12V10' },
+      { label: 'Transform', d1: 'M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z', d2: 'M18 16v4M16 18h4' },
+      { label: 'Record', d1: 'M9 4h6v8a3 3 0 0 1-6 0z', d2: 'M6 11a6 6 0 0 0 12 0M12 17v3', on: true },
+      { label: 'Track', d1: 'M5 20V11M11 20V5M17 20v-7', d2: 'M3 20h18' },
+      { label: 'Distribute', d1: 'M5 6h14v14H5z', d2: 'M5 10h14M9 3v4M15 3v4' },
+      { label: 'Settings', d1: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z', d2: 'M19 12l2-1-1-3-2.3.5-1.4-1.4.5-2.3-3-1-1 2h-2l-1-2-3 1 .5 2.3-1.4 1.4L3 8l-1 3 2 1v2l-2 1 1 3 2.3-.5 1.4 1.4-.5 2.3 3 1 1-2h2l1 2 3-1-.5-2.3 1.4-1.4L21 16l1-3-2-1z' }
+    ].map((n) => ({
+      key: n.label, label: n.label, d1: n.d1, d2: n.d2,
+      style: 'width:44px;height:44px;border-radius:50%;border:0;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;' + (n.on ? 'background:#0a66c2;color:#ffffff;box-shadow:0 8px 20px rgba(6,42,92,0.35);' : 'background:transparent;color:rgba(255,255,255,0.9);')
+    }));
+
+    const FULL = 'I want to create a video where my friend talks about his Pokemon card selling journey and how he managed to build a long line of cards that he sold for a lot of profit, and how staying true to a passion that really made sense to him helped him become the best version of himself.';
+    const words = FULL.split(' ');
+    const shown = Math.min(words.length, Math.max(3, secs * 3));
+    const liveText = words.slice(0, shown).join(' ');
+
+    const LOGS = [
+      { date: 'Jun 9, 8:29 PM', dur: '24s', text: FULL },
+      { date: 'Jun 9, 7:51 PM', dur: '45s', text: 'Side of boxing fight, the training was intense, it was over two months and it was a lot of work, and the win made it all feel worth it. I want to tell you about what I learned about becoming the best version of yourself.' }
+    ];
+    const logs = LOGS.map((g, i) => {
+      const open = openIdx === i;
+      return {
+        key: 'g' + i, date: g.date, dur: g.dur, text: g.text,
+        rowStyle: 'box-sizing:border-box;padding:16px 18px;border-radius:18px;background:rgba(255,255,255,' + (open ? 0.22 : 0.14) + ');border:1px solid rgba(255,255,255,0.34);cursor:pointer;flex:none',
+        chevStyle: 'margin-left:auto;transition:transform .2s ease;transform:rotate(' + (open ? 180 : 0) + 'deg)',
+        textStyle: 'margin-top:8px;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.94);' + (open ? '' : 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis'),
+        onToggle: () => this.setState({ open: open ? -1 : i })
+      };
+    });
+
+    const mm = String(Math.floor(secs / 60)).padStart(2, '0'), ss = String(secs % 60).padStart(2, '0');
+    return {
+      nav: NAV, layers, isRec, isEmpty, hasLogs: !isEmpty, logCount: LOGS.length, logs,
+      glowStyle: geo + 'fill:#ffffff;opacity:0.7',
+      coreStyle: geo + 'fill:#ffffff',
+      micGlyphStyle: 'transition:opacity .5s ease;opacity:' + (isRec ? 0 : 1),
+      stopStyle: 'x:182px;y:178px;width:36px;height:36px;rx:9px;fill:#0a66c2;transition:opacity .5s ease;opacity:' + (isRec ? 1 : 0),
+      micLabel: isRec ? 'Stop recording' : 'Start recording',
+      capTitle: isRec ? 'Recording' : 'Click to start recording',
+      capSub: isRec ? 'Tap the mic to stop' : 'Your words become a live transcript',
+      timer: mm + ':' + ss, liveText,
+      onMic: () => {
+        clearInterval(this._iv);
+        if (isRec) { this.setState({ rec: 'idle' }); return; }
+        this.setState({ rec: 'recording', secs: 0 });
+        this._iv = setInterval(() => this.setState({ secs: ((this.state || {}).secs || 0) + 1 }), 1000);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

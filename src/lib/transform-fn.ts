@@ -208,17 +208,17 @@ export const transformContent = createServerFn({ method: "POST" })
     checkPayload<TransformInput & { token?: string }>(v, 15_000_000),
   )
   .handler(async ({ data }): Promise<TransformOutput> => {
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey || apiKey === "your-api-key-here") {
-      return { error: "ANTHROPIC_API_KEY is not configured." };
-    }
-    // The demo never reaches this point: it is refused here, and only signed-in users may spend tokens.
+    // First: the demo is refused and only signed-in users may spend tokens, whatever else is configured.
     const refused = await aiGate(data);
     if (refused) return { error: refused };
     if (!(await isSignedIn(data.token)))
       return { error: "Your session has expired. Sign in again." };
+
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === "your-api-key-here") {
+      return { error: "ANTHROPIC_API_KEY is not configured." };
+    }
 
     const client = new Anthropic({ apiKey });
 

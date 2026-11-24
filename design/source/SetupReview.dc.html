@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Setup: review</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+html,body,x-dc,x-dc *,.sc-host,.sc-host *,button,input,textarea,select,option{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif !important}
+@keyframes st-spin{to{transform:rotate(360deg)}}
+.st-spin{animation:st-spin .9s linear infinite}
+.st-btn:focus-visible{outline:2px solid #ffffff;outline-offset:3px}
+.st-box:focus-within{border-color:#ffffff !important;background:rgba(255,255,255,0.28) !important;box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+.st-box input,.st-box textarea{border:0;outline:none;background:transparent;font-family:inherit;color:#ffffff;font-size:15px;width:100%;box-sizing:border-box}
+.st-box input::placeholder,.st-box textarea::placeholder{color:rgba(255,255,255,0.7)}
+.st-opt:hover{background:rgba(255,255,255,0.2) !important}
+.st-card:hover{border-color:#ffffff !important}
+</style>
+</helmet>
+<div style="position:relative;width:1440px;height:960px;overflow:hidden;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#b9d6f8 0%,#4d92e0 48%,#0a4a94 100%);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif;color:#ffffff">
+
+<svg aria-hidden="true" width="1440" height="960" viewBox="0 0 1440 960" style="position:absolute;left:0;top:0">
+<defs><radialGradient id="bgGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient></defs>
+<circle cx="260" cy="120" r="520" fill="url(#bgGlow)"/>
+<circle cx="720" cy="480" r="620" fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="1.5"/>
+<circle cx="720" cy="480" r="780" fill="none" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1.5"/>
+<circle cx="720" cy="480" r="940" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1.5"/>
+</svg>
+
+<div style="position:relative;width:1280px;height:840px;box-sizing:border-box;border-radius:44px;overflow:hidden;display:flex;background:linear-gradient(160deg,rgba(40,100,190,0.34),rgba(20,70,150,0.3));border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)">
+
+<aside style="position:relative;width:340px;flex:none;box-sizing:border-box;padding:40px 36px;color:#ffffff;background:rgba(255,255,255,0.1);border-right:1px solid rgba(255,255,255,0.28)">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:36px;height:36px;border-radius:10px;background:#ffffff;display:flex;align-items:center;justify-content:center">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><polygon points="12,3 21,21 12,21" fill="#0a66c2"/><polygon points="12,3 12,21 3,21" fill="#0a66c2" fill-opacity="0.55"/></svg>
+</div>
+<div style="font-size:18px;font-weight:700;letter-spacing:0.02em">SPECTR</div>
+</div>
+
+<div style="margin-top:56px">
+<div style="font-size:24px;font-weight:300;letter-spacing:-0.01em">Workspace setup</div>
+<div style="margin-top:14px;height:6px;border-radius:3px;background:rgba(255,255,255,0.28);overflow:hidden"><div style="{{ railBarStyle }}"></div></div>
+<div style="margin-top:10px;font-size:13px;color:rgba(255,255,255,0.9)">{{ railLabel }}</div>
+</div>
+
+<div style="margin-top:40px">
+<sc-for list="{{ rail }}" as="r" hint-placeholder-count="4">
+<div style="position:relative;min-height:84px">
+<div style="{{ r.dotStyle }}">
+<sc-if value="{{ r.isDone }}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+</sc-if>
+<sc-if value="{{ r.showNum }}" hint-placeholder-val="{{ true }}"><span>{{ r.n }}</span></sc-if>
+</div>
+<div style="{{ r.lineStyle }}"></div>
+<div style="padding-left:50px;padding-top:4px">
+<div style="{{ r.titleStyle }}">{{ r.title }}</div>
+<div style="margin-top:2px;font-size:13px;color:rgba(255,255,255,0.78)">{{ r.sub }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<button class="st-btn" type="button" style="position:absolute;left:36px;bottom:36px;height:40px;padding:0 16px 0 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);color:#ffffff;font-size:14px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:8px;cursor:pointer">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+<span>Companies</span>
+</button>
+</aside>
+
+<section style="position:relative;flex:1;min-width:0;box-sizing:border-box;padding:44px 48px 0">
+
+<sc-if value="{{ anyOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ onCloseDd }}" style="position:absolute;left:0;top:0;right:0;bottom:0;z-index:30"></div>
+</sc-if>
+
+<div style="display:flex;align-items:center;gap:16px">
+<sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+<div style="width:48px;height:48px;border-radius:50%;background:#12b76a;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 10px 24px rgba(18,183,106,0.3)">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+</div>
+</sc-if>
+<div>
+<h1 style="margin:0;font-size:32px;line-height:1.15;font-weight:300;letter-spacing:-0.02em">{{ title }}</h1>
+<p style="margin:6px 0 0;font-size:16px;color:rgba(255,255,255,0.88)">{{ subtitle }}</p>
+</div>
+</div>
+
+<div style="margin-top:26px">
+
+<sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+<div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start">
+<div>
+<label style="display:block;margin-bottom:8px;font-size:13px;font-weight:600">Company name</label>
+<div class="st-box" style="{{ nameBoxStyle }}"><input type="text" placeholder="Company name" value="{{ name }}" onInput="{{ onName }}"></div>
+<sc-if value="{{ nameError }}" hint-placeholder-val="{{ false }}"><div style="margin-top:6px;font-size:13px;color:#ffd0cb">Enter your company name</div></sc-if>
+</div>
+<sc-for list="{{ combos1 }}" as="c" hint-placeholder-count="2">
+<div style="{{ c.wrapStyle }}">
+<label style="display:block;margin-bottom:8px;font-size:13px;font-weight:600">{{ c.label }}</label>
+<div class="st-box" style="{{ c.boxStyle }}">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" style="flex:none"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+<input type="text" placeholder="{{ c.placeholder }}" value="{{ c.inputVal }}" onFocus="{{ c.onOpen }}" onClick="{{ c.onOpen }}" onInput="{{ c.onType }}">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M6 9l6 6 6-6"/></svg>
+</div>
+<sc-if value="{{ c.hasError }}" hint-placeholder-val="{{ false }}"><div style="margin-top:6px;font-size:13px;color:#ffd0cb">{{ c.errorText }}</div></sc-if>
+<sc-if value="{{ c.isOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;right:0;top:82px;z-index:40;box-sizing:border-box;max-height:244px;overflow:auto;padding:6px;border-radius:14px;background:rgba(26,86,168,0.94);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#ffffff;box-shadow:0 24px 56px rgba(3,30,70,0.4)">
+<sc-for list="{{ c.options }}" as="o" hint-placeholder-count="4">
+<button class="st-opt" type="button" onClick="{{ o.onPick }}" style="{{ o.style }}">
+<span><span>{{ o.pre }}</span><span style="font-weight:700;color:#ffffff;text-decoration:underline">{{ o.mid }}</span><span>{{ o.post }}</span></span>
+<sc-if value="{{ o.selected }}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{ c.noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:12px;font-size:14px;color:rgba(255,255,255,0.8)">No matches. Try a different word.</div></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top:26px">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+<div>
+<div style="font-size:13px;font-weight:600">Company / Product brief</div>
+<div style="margin-top:3px;font-size:13px;color:rgba(255,255,255,0.88)">SPECTR reads this to understand what you do and generate on-brand content.</div>
+</div>
+<div style="display:flex;padding:3px;border-radius:12px;background:rgba(255,255,255,0.2);flex:none">
+<button class="st-btn" type="button" onClick="{{ onModeWrite }}" style="{{ writeTabStyle }}">Write description</button>
+<button class="st-btn" type="button" onClick="{{ onModePdf }}" style="{{ pdfTabStyle }}">Upload PDF</button>
+</div>
+</div>
+
+<div style="margin-top:12px;height:150px">
+<sc-if value="{{ isWrite }}" hint-placeholder-val="{{ true }}">
+<div class="st-box" style="height:150px;box-sizing:border-box;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.18);border:1px solid transparent"><textarea placeholder="Describe what your company does, who it serves and how it sounds." value="{{ brief }}" onInput="{{ onBrief }}" style="height:100%;resize:none;line-height:1.5"></textarea></div>
+</sc-if>
+<sc-if value="{{ pdfNone }}" hint-placeholder-val="{{ false }}">
+<button class="st-btn" type="button" onClick="{{ onPick }}" style="width:100%;height:150px;box-sizing:border-box;border-radius:14px;border:1.5px dashed rgba(255,255,255,0.55);background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;gap:16px;cursor:pointer;font-family:inherit;color:#ffffff">
+<div style="width:48px;height:48px;border-radius:14px;background:#ffffff;box-shadow:0 6px 16px rgba(10,102,194,0.15);display:flex;align-items:center;justify-content:center;color:#0a66c2">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>
+</div>
+<div style="text-align:left">
+<div style="font-size:15px;font-weight:600">Drop your PDF here or <span style="text-decoration:underline">browse</span></div>
+<div style="margin-top:3px;font-size:13px;color:rgba(255,255,255,0.88)">PDF only, up to 10 MB</div>
+</div>
+</button>
+</sc-if>
+<sc-if value="{{ pdfBusy }}" hint-placeholder-val="{{ false }}">
+<div style="height:150px;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,0.34);background:rgba(255,255,255,0.14);display:flex;align-items:center;gap:16px;padding:0 22px">
+<div style="width:48px;height:48px;border-radius:12px;background:#fef3f2;color:#d92d20;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none">PDF</div>
+<div style="flex:1">
+<div style="font-size:15px;font-weight:600">Aced-company-brief.pdf</div>
+<div style="margin-top:10px;height:6px;border-radius:3px;background:rgba(255,255,255,0.2);overflow:hidden"><div style="width:62%;height:100%;border-radius:3px;background:#0a66c2"></div></div>
+<div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,0.88)">Uploading, 62%</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ pdfDone }}" hint-placeholder-val="{{ false }}">
+<div style="height:150px;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,0.34);background:rgba(255,255,255,0.14);display:flex;align-items:center;gap:16px;padding:0 22px">
+<div style="width:48px;height:48px;border-radius:12px;background:#fef3f2;color:#d92d20;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none">PDF</div>
+<div style="flex:1">
+<div style="font-size:15px;font-weight:600">Aced-company-brief.pdf</div>
+<div style="margin-top:4px;font-size:13px;color:rgba(255,255,255,0.88)">2.4 MB</div>
+<div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:#ecfdf3;color:#067647;font-size:12px;font-weight:600">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Uploaded</div>
+</div>
+<button class="st-btn" type="button" aria-label="Remove file" onClick="{{ onRemovePdf }}" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
+</button>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div style="margin-top:26px">
+<div style="font-size:13px;font-weight:600;margin-bottom:10px">Primary platform</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+<sc-for list="{{ platforms }}" as="p" hint-placeholder-count="4">
+<div class="st-card" style="{{ p.style }}">
+<div style="{{ p.markStyle }}">{{ p.mark }}</div>
+<div style="flex:1;min-width:0">
+<div style="{{ p.nameStyle }}">{{ p.name }}</div>
+<sc-if value="{{ p.soon }}" hint-placeholder-val="{{ false }}"><div style="margin-top:2px;font-size:12px;color:rgba(255,255,255,0.7)">Coming soon</div></sc-if>
+</div>
+<sc-if value="{{ p.selected }}" hint-placeholder-val="{{ true }}">
+<div style="width:22px;height:22px;border-radius:50%;background:#0a66c2;display:flex;align-items:center;justify-content:center;flex:none"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top:22px;display:flex;align-items:center;justify-content:space-between;height:56px;box-sizing:border-box;padding:0 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.34);background:rgba(255,255,255,0.14)">
+<div style="font-size:15px;font-weight:600">Are you starting from scratch?</div>
+<button class="st-btn" type="button" role="switch" aria-label="Starting from scratch" onClick="{{ onScratch }}" style="{{ switchStyle }}"><span style="{{ knobStyle }}"></span></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+<div>
+<label style="display:block;margin-bottom:8px;font-size:13px;font-weight:600">Goal description <span style="color:#d92d20">*</span></label>
+<div class="st-box" style="{{ goalBoxStyle }}"><textarea placeholder="What do you want to achieve on LinkedIn in the next 12 weeks?" value="{{ goal }}" onInput="{{ onGoal }}" style="height:100%;resize:none;line-height:1.5"></textarea></div>
+<sc-if value="{{ goalError }}" hint-placeholder-val="{{ false }}"><div style="margin-top:6px;font-size:13px;color:#ffd0cb">Describe your goal to continue</div></sc-if>
+<div style="margin-top:12px;display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.18);color:#ffffff;font-size:14px;line-height:1.45">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.01"/></svg>
+<div>Your goal determines which targets are required. Be as specific as possible about what you want to achieve on LinkedIn.</div>
+</div>
+
+<div style="margin-top:26px;font-size:18px;font-weight:700;letter-spacing:-0.01em">12-week targets</div>
+<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 20px">
+<sc-for list="{{ targets }}" as="t" hint-placeholder-count="6">
+<div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><label style="font-size:13px;font-weight:600">{{ t.label }}</label><span style="height:20px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.88);font-size:11px;font-weight:600;display:inline-flex;align-items:center">Optional</span></div>
+<div class="st-box" style="height:48px;box-sizing:border-box;padding:0 16px;border-radius:12px;background:rgba(255,255,255,0.18);border:1px solid transparent;display:flex;align-items:center;gap:8px"><input type="text" inputmode="numeric" placeholder="0" value="{{ t.value }}" onInput="{{ t.onInput }}"><span style="font-size:13px;color:rgba(255,255,255,0.8);white-space:nowrap">{{ t.unit }}</span></div>
+<div style="margin-top:6px;font-size:12.5px;line-height:1.4;color:rgba(255,255,255,0.8)">{{ t.help }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+<div>
+<label style="display:block;margin-bottom:8px;font-size:13px;font-weight:600">Job titles</label>
+<div class="st-box" style="height:48px;box-sizing:border-box;padding:0 16px;border-radius:12px;background:rgba(255,255,255,0.18);border:1px solid transparent;display:flex;align-items:center"><input type="text" placeholder="For example: Head of Growth, Product Manager" value="{{ jobs }}" onInput="{{ onJobs }}"></div>
+<div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+<sc-for list="{{ combos3 }}" as="c" hint-placeholder-count="2">
+<div style="{{ c.wrapStyle }}">
+<label style="display:block;margin-bottom:8px;font-size:13px;font-weight:600">{{ c.label }}</label>
+<div class="st-box" style="{{ c.boxStyle }}">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" style="flex:none"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+<input type="text" placeholder="{{ c.placeholder }}" value="{{ c.inputVal }}" onFocus="{{ c.onOpen }}" onClick="{{ c.onOpen }}" onInput="{{ c.onType }}">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M6 9l6 6 6-6"/></svg>
+</div>
+<sc-if value="{{ c.isOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;right:0;top:82px;z-index:40;box-sizing:border-box;max-height:244px;overflow:auto;padding:6px;border-radius:14px;background:rgba(26,86,168,0.94);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#ffffff;box-shadow:0 24px 56px rgba(3,30,70,0.4)">
+<sc-for list="{{ c.options }}" as="o" hint-placeholder-count="4">
+<button class="st-opt" type="button" onClick="{{ o.onPick }}" style="{{ o.style }}">
+<span><span>{{ o.pre }}</span><span style="font-weight:700;color:#ffffff;text-decoration:underline">{{ o.mid }}</span><span>{{ o.post }}</span></span>
+<sc-if value="{{ o.selected }}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{ c.noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:12px;font-size:14px;color:rgba(255,255,255,0.8)">No matches. Try a different word.</div></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:28px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><label style="font-size:13px;font-weight:600">Audience description</label><span style="height:20px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.88);font-size:11px;font-weight:600;display:inline-flex;align-items:center">Optional</span></div>
+<div class="st-box" style="height:200px;box-sizing:border-box;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.18);border:1px solid transparent"><textarea placeholder="Anything else about the people you want to reach." value="{{ aud }}" onInput="{{ onAud }}" style="height:100%;resize:none;line-height:1.5"></textarea></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.34)">
+<div style="font-size:14px;font-weight:600;white-space:nowrap">{{ doneCount }} of {{ totalCount }} details added</div>
+<div style="flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,0.2);overflow:hidden"><div style="{{ doneBarStyle }}"></div></div>
+<div style="font-size:13px;color:rgba(255,255,255,0.88);white-space:nowrap">You can add the rest later</div>
+</div>
+<div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:stretch">
+<sc-for list="{{ sections }}" as="sec" hint-placeholder-count="3">
+<div style="box-sizing:border-box;padding:20px;border-radius:16px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.34)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font-size:16px;font-weight:700">{{ sec.title }}</div>
+<button class="st-btn" type="button" onClick="{{ sec.onEdit }}" style="height:28px;padding:0 10px;border-radius:8px;border:0;background:rgba(255,255,255,0.2);color:#ffffff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Edit</button>
+</div>
+<div style="margin-top:10px">
+<sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="4">
+<div style="padding:13px 0;border-top:1px solid rgba(255,255,255,0.2)">
+<div style="font-size:12px;color:rgba(255,255,255,0.8);font-weight:500">{{ row.label }}</div>
+<sc-if value="{{ row.filled }}" hint-placeholder-val="{{ true }}"><div style="margin-top:3px;font-size:14px;line-height:1.4;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ row.value }}</div></sc-if>
+<sc-if value="{{ row.empty }}" hint-placeholder-val="{{ false }}"><div style="margin-top:5px;display:inline-flex;height:22px;padding:0 9px;align-items:center;border-radius:999px;background:#fffaeb;color:#b54708;font-size:12px;font-weight:600">Not added</div></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;height:88px;box-sizing:border-box;padding:0 48px;border-top:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between">
+<div>
+<sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+<button class="st-btn" type="button" onClick="{{ onBack }}" style="height:48px;padding:0 18px 0 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.16);color:#ffffff;font-size:15px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>Back</span></button>
+</sc-if>
+</div>
+<div style="display:flex;align-items:center;gap:20px">
+<sc-if value="{{ showSkip }}" hint-placeholder-val="{{ false }}">
+<button class="st-btn" type="button" onClick="{{ onSkip }}" style="height:48px;padding:0 6px;border:0;background:transparent;color:#ffffff;text-decoration:underline;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer">Skip for now</button>
+</sc-if>
+<button class="st-btn" type="button" onClick="{{ onNext }}" style="{{ nextStyle }}">
+<sc-if value="{{ launching }}" hint-placeholder-val="{{ false }}"><svg class="st-spin" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a66c2" stroke-width="3" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg></sc-if>
+<span>{{ nextLabel }}</span>
+</button>
+</div>
+</div>
+
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"enum","default":"4","options":["1","2","3","4"]},"fill":{"editor":"enum","default":"full","options":["none","partial","full"]},"ddOpen":{"editor":"enum","default":"none","options":["none","sector","sub","sen","size"]},"query":{"editor":"string","default":""},"briefMode":{"editor":"enum","default":"write","options":["write","pdf"]},"pdf":{"editor":"enum","default":"none","options":["none","busy","done"]},"showErrors":{"editor":"enum","default":"no","options":["no","yes"]},"launching":{"editor":"enum","default":"no","options":["no","yes"]},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  componentWillUnmount() { clearTimeout(this._a); clearTimeout(this._b); }
+  renderVals() {
+    const s = this.state || {};
+    const P = this.props || {};
+    const pick = (k, d) => (s[k] !== undefined ? s[k] : (P[k] !== undefined && P[k] !== null ? P[k] : d));
+    const step = parseInt(pick('step', '1'), 10) || 1;
+    const fill = P.fill || 'partial';
+    const base = fill === 'full'
+      ? { name: 'Aced', sector: 'Education & EdTech', sub: 'Career & Test Prep', brief: 'Aced helps people prepare for product management interviews with practice questions, mock interviews and expert answers.', goal: 'Reach 5,000 LinkedIn followers in 12 weeks and book more demos.', jobs: 'Head of Growth, Product Manager', sen: 'Director', size: '51-200 employees', aud: '', scratch: false, t0: '5000', t1: '150', t2: '20000', t3: '4.5', t4: '2500', t5: '400' }
+      : fill === 'partial'
+        ? { name: 'Aced', sector: '', sub: '', brief: '', goal: '', jobs: '', sen: '', size: '', aud: '', scratch: false }
+        : { name: '', sector: '', sub: '', brief: '', goal: '', jobs: '', sen: '', size: '', aud: '', scratch: false };
+    const v = (k) => (s[k] !== undefined ? s[k] : (base[k] !== undefined ? base[k] : ''));
+    const open = s.open !== undefined ? s.open : (P.ddOpen && P.ddOpen !== 'none' ? P.ddOpen : null);
+    const query = s.query !== undefined ? s.query : (P.query || '');
+    const briefMode = pick('briefMode', 'write');
+    const pdf = pick('pdf', 'none');
+    const showErrors = s.showErrors !== undefined ? s.showErrors : (P.showErrors === 'yes');
+    const launching = s.launching !== undefined ? s.launching : (P.launching === 'yes');
+    const scratch = s.scratch !== undefined ? s.scratch : !!base.scratch;
+
+    const SECTORS = ['Software & SaaS', 'Healthcare & Life Sciences', 'Financial Services', 'E-commerce & Retail', 'Education & EdTech', 'Media & Entertainment', 'Energy & Climate', 'Manufacturing', 'Real Estate & PropTech', 'Consumer Products', 'Other'];
+    const SUBS = {
+      'Software & SaaS': ['Developer Tools', 'B2B SaaS', 'Consumer Apps', 'Data & AI', 'Cybersecurity'],
+      'Healthcare & Life Sciences': ['Biotechnology', 'Digital Health', 'Medical Devices', 'Pharma', 'Healthcare Services'],
+      'Financial Services': ['Fintech', 'Banking', 'Insurance', 'Investing'],
+      'E-commerce & Retail': ['DTC Brands', 'Marketplaces', 'Retail Tech'],
+      'Education & EdTech': ['Career & Test Prep', 'K-12', 'Higher Education', 'Corporate Training']
+    };
+    const SEN = ['Intern or entry level', 'Individual contributor', 'Manager', 'Director', 'VP', 'C-level or founder'];
+    const SIZE = ['1-10 employees', '11-50 employees', '51-200 employees', '201-1,000 employees', '1,000+ employees'];
+
+    const mkCombo = (id, label, ph, options, disabled, errText, errShow) => {
+      const isOpen = open === id && !disabled;
+      const sel = v(id);
+      const q = isOpen ? query : '';
+      const ql = q.toLowerCase();
+      const filtered = options.filter((o) => o.toLowerCase().includes(ql));
+      const opts = filtered.map((o, i) => {
+        const idx = ql ? o.toLowerCase().indexOf(ql) : -1;
+        const hot = i === 0 && !!ql;
+        return {
+          key: o,
+          pre: idx >= 0 ? o.slice(0, idx) : o,
+          mid: idx >= 0 ? o.slice(idx, idx + ql.length) : '',
+          post: idx >= 0 ? o.slice(idx + ql.length) : '',
+          selected: o === sel,
+          style: 'display:flex;align-items:center;justify-content:space-between;width:100%;height:40px;padding:0 12px;border:0;border-radius:10px;background:' + (hot ? 'rgba(255,255,255,0.2)' : 'transparent') + ';font-size:15px;font-family:inherit;color:#ffffff;cursor:pointer;text-align:left',
+          onPick: () => {
+            const patch = { open: null, query: '' };
+            patch[id] = o;
+            if (id === 'sector') patch.sub = '';
+            this.setState(patch);
+          }
+        };
+      });
+      const hasError = !!errShow && !sel && !disabled;
+      return {
+        key: id, label, isOpen, hasError, errorText: errText,
+        placeholder: disabled ? 'Choose a sector first' : (isOpen && sel ? sel : ph),
+        inputVal: isOpen ? query : sel,
+        options: opts, noResults: isOpen && filtered.length === 0,
+        wrapStyle: 'position:relative;z-index:' + (isOpen ? 40 : 1) + ';' + (disabled ? 'opacity:0.55;' : ''),
+        boxStyle: 'height:48px;box-sizing:border-box;padding:0 14px;border-radius:12px;background:rgba(255,255,255,0.18);display:flex;align-items:center;gap:10px;border:1px solid ' + (hasError ? '#d92d20' : 'transparent') + ';' + (isOpen ? 'border-color:#ffffff;background:rgba(255,255,255,0.28);box-shadow:0 0 0 3px rgba(255,255,255,.35);' : ''),
+        onOpen: () => { if (!disabled && open !== id) this.setState({ open: id, query: '' }); },
+        onType: (e) => this.setState({ open: id, query: e.target.value })
+      };
+    };
+
+    const name = v('name');
+    const sector = v('sector');
+    const sub = v('sub');
+    const subs = SUBS[sector] || (sector ? ['General'] : []);
+    const combos1 = [
+      mkCombo('sector', 'Industry / sector', 'Search sectors', SECTORS, false, 'Choose a sector', showErrors),
+      mkCombo('sub', 'Sub-sector', 'Search sub-sectors', subs, !sector, '', false)
+    ];
+    const combos3 = [
+      mkCombo('sen', 'Seniority level', 'Search levels', SEN, false, '', false),
+      mkCombo('size', 'Company size', 'Search sizes', SIZE, false, '', false)
+    ];
+
+    const goal = v('goal');
+    const T = [
+      { k: 't0', label: 'Followers target', unit: 'followers', help: 'Total followers on your company page' },
+      { k: 't1', label: 'Weekly follower growth target', unit: 'per week', help: 'Target average new followers per week' },
+      { k: 't2', label: 'Weekly impressions target', unit: 'per week', help: 'Average impressions across all posts per week' },
+      { k: 't3', label: 'Engagement rate target', unit: '%', help: 'Likes + comments + shares / impressions' },
+      { k: 't4', label: 'Monthly visitors target', unit: 'per month', help: 'Unique visitors to your company page' },
+      { k: 't5', label: 'Weekly page searches target', unit: 'per week', help: 'How many times your page surfaces in LinkedIn search per week' }
+    ];
+    const targets = T.map((t) => ({ key: t.k, label: t.label, unit: t.unit, help: t.help, value: v(t.k), onInput: (e) => { const p = {}; p[t.k] = e.target.value; this.setState(p); } }));
+    const tSet = T.filter((t) => String(v(t.k)).trim() !== '').length;
+
+    const jobs = v('jobs'), sen = v('sen'), size = v('size'), aud = v('aud'), brief = v('brief');
+    const hasBrief = briefMode === 'pdf' ? pdf === 'done' : brief.trim() !== '';
+    const briefText = briefMode === 'pdf' && pdf === 'done' ? 'Aced-company-brief.pdf' : brief;
+
+    const row = (label, value) => ({ key: label, label, value, filled: String(value || '').trim() !== '', empty: String(value || '').trim() === '' });
+    const sections = [
+      { key: 'c', title: 'Company', onEdit: () => this.setState({ step: 1 }), rows: [row('Company', name), row('Industry', sector ? (sub ? sector + ', ' + sub : sector) : ''), row('Brief', hasBrief ? briefText : ''), row('Primary platform', 'LinkedIn')] },
+      { key: 'g', title: 'Goals', onEdit: () => this.setState({ step: 2 }), rows: [row('Goal', goal), row('12-week targets', tSet ? tSet + ' of 6 set' : '')] },
+      { key: 'a', title: 'Audience', onEdit: () => this.setState({ step: 3 }), rows: [row('Job titles', jobs), row('Seniority', sen), row('Company size', size), row('Audience description', aud)] }
+    ];
+    const allRows = sections.reduce((a, x) => a.concat(x.rows), []);
+    const totalCount = allRows.length;
+    const doneCount = allRows.filter((r) => r.filled).length;
+
+    const required1 = name.trim() !== '' && sector !== '';
+    const required2 = goal.trim() !== '';
+    const canNext = step === 1 ? required1 : step === 2 ? required2 : true;
+
+    const TITLES = { 1: "Let's set up your workspace", 2: 'What does success look like?', 3: 'Who are you trying to reach?', 4: "You're all set" };
+    const SUBS_T = { 1: 'SPECTR will use this to calibrate every piece of content it generates.', 2: 'Set your 12-week targets. SPECTR will track your progress against these.', 3: 'SPECTR uses this to calibrate every content output to your exact audience.', 4: 'Review your workspace and launch SPECTR.' };
+    const railDef = [
+      { n: 1, title: 'Company', sub: 'About your business' },
+      { n: 2, title: 'Goals', sub: '12-week targets' },
+      { n: 3, title: 'Audience', sub: 'Who you reach' },
+      { n: 4, title: 'Review', sub: 'Check and launch' }
+    ];
+    const rail = railDef.map((r) => {
+      const done = r.n < step, cur = r.n === step;
+      return {
+        key: r.n, n: r.n, title: r.title, sub: r.sub, isDone: done, showNum: !done,
+        dotStyle: 'position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;' + (done ? 'background:#12b76a;' : cur ? 'background:#0a66c2;color:#ffffff;box-shadow:0 0 0 5px rgba(255,255,255,0.4);' : 'border:1.5px solid rgba(255,255,255,0.6);color:rgba(255,255,255,0.78);'),
+        lineStyle: r.n === 4 ? 'display:none' : 'position:absolute;left:16px;top:44px;width:2px;height:34px;border-radius:1px;background:' + (done ? '#12b76a' : 'rgba(255,255,255,0.35)'),
+        titleStyle: 'font-size:16px;font-weight:' + (cur ? 700 : 600) + ';color:' + (cur ? '#ffffff' : done ? '#e6f0ff' : 'rgba(255,255,255,0.78)')
+      };
+    });
+
+    const platDef = [
+      { name: 'LinkedIn', mark: 'in', sel: true },
+      { name: 'Instagram', mark: 'ig', sel: false },
+      { name: 'TikTok', mark: 'tt', sel: false },
+      { name: 'YouTube', mark: 'yt', sel: false }
+    ];
+    const platforms = platDef.map((p) => ({
+      key: p.name, name: p.name, mark: p.mark, selected: p.sel, soon: !p.sel,
+      style: 'display:flex;align-items:center;gap:12px;height:68px;box-sizing:border-box;padding:0 14px;border-radius:14px;background:' + (p.sel ? '#0a66c2' : 'rgba(255,255,255,0.12)') + ';border:' + (p.sel ? '2px solid #ffffff' : '1px solid rgba(255,255,255,0.34)') + ';' + (p.sel ? '' : 'opacity:0.7;'),
+      markStyle: 'width:36px;height:36px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;' + (p.sel ? 'background:#0a66c2;color:#ffffff;' : 'background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.85);'),
+      nameStyle: 'font-size:15px;font-weight:600;color:' + '#ffffff'
+    }));
+
+    const seg = (on) => 'height:34px;padding:0 16px;border:0;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;' + (on ? 'background:#0a66c2;color:#ffffff;box-shadow:0 4px 12px rgba(10,102,194,0.3);' : 'background:transparent;color:rgba(255,255,255,0.88);');
+
+    const nextLabels = { 1: 'Continue', 2: 'Continue', 3: 'Review', 4: launching ? 'Launching' : 'Launch SPECTR' };
+    const errName = showErrors && step === 1 && name.trim() === '';
+    const errGoal = showErrors && step === 2 && goal.trim() === '';
+    const boxErr = (e) => 'height:48px;box-sizing:border-box;padding:0 16px;border-radius:12px;background:rgba(255,255,255,0.18);display:flex;align-items:center;border:1px solid ' + (e ? '#d92d20' : 'transparent');
+
+    return {
+      step, isStep1: step === 1, isStep2: step === 2, isStep3: step === 3, isReview: step === 4,
+      title: TITLES[step], subtitle: SUBS_T[step],
+      rail, railBarStyle: 'width:' + (step / 4 * 100) + '%;height:100%;border-radius:3px;background:#ffffff',
+      railLabel: 'Step ' + step + ' of 4',
+      anyOpen: open !== null && (step === 1 || step === 3),
+      onCloseDd: () => this.setState({ open: null, query: '' }),
+      name, nameError: errName, nameBoxStyle: boxErr(errName),
+      onName: (e) => this.setState({ name: e.target.value }),
+      combos1, combos3,
+      isWrite: briefMode === 'write', pdfNone: briefMode === 'pdf' && pdf === 'none', pdfBusy: briefMode === 'pdf' && pdf === 'busy', pdfDone: briefMode === 'pdf' && pdf === 'done',
+      writeTabStyle: seg(briefMode === 'write'), pdfTabStyle: seg(briefMode === 'pdf'),
+      onModeWrite: () => this.setState({ briefMode: 'write' }),
+      onModePdf: () => this.setState({ briefMode: 'pdf' }),
+      brief, onBrief: (e) => this.setState({ brief: e.target.value }),
+      onPick: () => { clearTimeout(this._a); this.setState({ pdf: 'busy' }); this._a = setTimeout(() => this.setState({ pdf: 'done' }), 1300); },
+      onRemovePdf: () => this.setState({ pdf: 'none' }),
+      platforms,
+      onScratch: () => this.setState({ scratch: !scratch }),
+      switchStyle: 'position:relative;width:46px;height:26px;border-radius:13px;border:0;padding:0;cursor:pointer;background:' + (scratch ? '#0a66c2' : '#c3d4ec') + ';transition:background .15s',
+      knobStyle: 'position:absolute;top:3px;left:' + (scratch ? 23 : 3) + 'px;width:20px;height:20px;border-radius:50%;background:#ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.25);transition:left .15s',
+      goal, goalBoxStyle: 'height:112px;box-sizing:border-box;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.18);border:1px solid ' + (errGoal ? '#d92d20' : 'transparent'),
+      goalError: errGoal, onGoal: (e) => this.setState({ goal: e.target.value }),
+      targets,
+      jobs, onJobs: (e) => this.setState({ jobs: e.target.value }),
+      aud, onAud: (e) => this.setState({ aud: e.target.value }),
+      sections, doneCount, totalCount, doneBarStyle: 'width:' + Math.round(doneCount / totalCount * 100) + '%;height:100%;border-radius:4px;background:#12b76a',
+      showBack: step > 1, showSkip: step === 2,
+      onBack: () => this.setState({ step: step - 1, showErrors: false, open: null }),
+      onSkip: () => this.setState({ step: 3, showErrors: false }),
+      launching,
+      nextLabel: nextLabels[step],
+      nextStyle: 'height:48px;padding:0 30px;border-radius:12px;border:0;font-size:15px;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;' + (canNext ? 'background:#ffffff;color:#0a66c2;box-shadow:0 10px 26px rgba(6,42,92,0.28);cursor:pointer;' : 'background:rgba(255,255,255,0.22);color:rgba(255,255,255,0.7);cursor:not-allowed;') + (launching ? 'opacity:0.85;cursor:progress;' : ''),
+      onNext: () => {
+        if (launching) return;
+        if (!canNext) { this.setState({ showErrors: true }); return; }
+        if (step < 4) { this.setState({ step: step + 1, showErrors: false, open: null, query: '' }); return; }
+        clearTimeout(this._b);
+        this.setState({ launching: true });
+        this._b = setTimeout(() => this.setState({ launching: false }), 1800);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

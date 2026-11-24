@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Access code: checking</title><script src="./support.js"></script></head>
+<body><x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+html,body,x-dc,x-dc *,.sc-host,.sc-host *,button,input,textarea,select,option{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif !important}
+.db-btn:focus-visible{outline:2px solid #ffffff;outline-offset:4px}
+.db-nav:hover{background:rgba(255,255,255,0.18)}
+.tf-in{transition:box-shadow .15s ease,background .15s ease}
+.tf-in:focus{outline:none;background:rgba(255,255,255,0.28);box-shadow:0 0 0 3px rgba(255,255,255,.35),inset 0 0 0 1.5px #ffffff}
+.tf-in::placeholder{color:rgba(255,255,255,0.7)}
+.tf-b:hover{background:rgba(255,255,255,0.28) !important}
+.tf-p:hover{filter:brightness(0.96)}
+.tf-p:active{transform:translateY(1px)}
+.tf-r:hover{background:rgba(255,255,255,0.14)}
+.tf-scroll::-webkit-scrollbar{width:8px}
+.tf-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.35);border-radius:4px}
+
+@keyframes ac-spin{to{transform:rotate(360deg)}}
+@keyframes ac-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes ac-blink{0%,100%{opacity:1}50%{opacity:0}}
+.ac-spin{animation:ac-spin .8s linear infinite}
+.ac-shake{animation:ac-shake .4s ease}
+.ac-caret{animation:ac-blink 1s step-end infinite}
+</style>
+</helmet>
+
+<div style="position:relative;width:1440px;height:960px;overflow:hidden;background:radial-gradient(900px 600px at 50% 38%,rgba(160,205,255,0.5),rgba(160,205,255,0) 70%),linear-gradient(160deg,#b9d6f8 0%,#4d92e0 48%,#0a4a94 100%);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif;color:#ffffff;display:flex;align-items:center;justify-content:center">
+<div style="width:640px;box-sizing:border-box;padding:48px 48px 44px;border-radius:36px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(6,42,92,0.14);text-align:center">
+<div style="display:flex;align-items:center;gap:12px;justify-content:center"><div style="width:48px;height:48px;border-radius:14px;background:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(6,42,92,0.25)"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24"><polygon points="12,3 21,21 12,21" fill="#0a66c2"/><polygon points="12,3 12,21 3,21" fill="#0a66c2" fill-opacity="0.55"/></svg></div><span style="font-size:34px;font-weight:600;letter-spacing:-0.02em">SPECTR</span></div><div style="margin-top:8px;font-size:15px;color:rgba(255,255,255,0.88);text-align:center">Content Transformation Engine</div>
+<h1 style="margin:40px 0 0;font-size:34px;font-weight:300;letter-spacing:-0.02em;line-height:1.2">To access the platform, you must have an access code.</h1>
+<div style="margin-top:12px;font-size:16px;color:rgba(255,255,255,0.9)">Have an access code? Enter it below.</div>
+<div style="position:relative;margin:34px auto 0;width:492px;height:80px">
+<div class="{{ shakeClass }}" style="display:flex;gap:12px">
+<sc-for list="{{ boxes }}" as="b" hint-placeholder-count="6"><div style="{{ b.style }}">{{ b.ch }}<sc-if value="{{ b.caret }}" hint-placeholder-val="{{ false }}"><span class="ac-caret" style="width:2px;height:32px;background:#ffffff;border-radius:1px"></span></sc-if></div></sc-for>
+</div>
+<input aria-label="Access code" type="text" maxlength="6" autocomplete="off" value="{{ code }}" onInput="{{ onCode }}" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:text;border:0;background:transparent"/>
+</div>
+<div style="margin-top:22px;height:24px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14.5px">
+<sc-if value="{{ verifying }}" hint-placeholder-val="{{ false }}"><svg class="ac-spin" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9" opacity="0.95"/></svg><span>Checking your code</span></sc-if>
+<sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 14px;border-radius:999px;background:#fef3f2;color:#b42318;font-weight:600"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16.5h.01"/></svg>That code is not valid. Check it and try again.</span></sc-if>
+</div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","default":"verifying","options":["idle","verifying","error"]},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  componentWillUnmount() { clearTimeout(this._t); }
+  renderVals() {
+    const s = this.state || {};
+    const P = this.props || {};
+
+    const mode = P.mode || 'idle';
+    const code = s.code !== undefined ? s.code : (mode === 'idle' ? '' : (mode === 'error' ? 'K7M2QX' : 'SPCTR1'));
+    const st = s.st !== undefined ? s.st : mode;
+    const boxes = [0,1,2,3,4,5].map((i) => { const ch = code[i] || ''; const act = st !== 'verifying' && st !== 'error' && i === Math.min(code.length, 5);
+      const err = st === 'error';
+      return { key: 'b' + i, ch, caret: act && !ch,
+        style: 'width:72px;height:80px;box-sizing:border-box;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:300;flex:none;transition:all .15s ease;background:rgba(255,255,255,' + (ch ? 0.26 : 0.16) + ');border:1.5px solid ' + (err ? '#ffb4ab' : act ? '#ffffff' : 'rgba(255,255,255,0.4)') + ';' + (act ? 'box-shadow:0 0 0 4px rgba(255,255,255,0.28);' : '') + (err ? 'box-shadow:0 0 0 4px rgba(217,45,32,0.28);' : '') };
+    });
+    return { boxes, code, shakeClass: st === 'error' ? 'ac-shake' : '', verifying: st === 'verifying', hasError: st === 'error',
+      onCode: (e) => { const v = (e.target.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+        clearTimeout(this._t);
+        if (v.length === 6) { this.setState({ code: v, st: 'verifying' }); this._t = setTimeout(() => this.setState({ st: v === 'SPECTR' ? 'ok' : 'error' }), 1000); }
+        else this.setState({ code: v, st: 'idle' }); } };
+
+  }
+}
+</script></body></html>

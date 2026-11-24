@@ -101,6 +101,9 @@ module.exports = async (req, res) => {
 `,
 );
 
+// The wrapper uses require(), so mark the function folder as CommonJS whatever the repo's package.json says.
+writeFileSync(`${funcDir}/package.json`, JSON.stringify({ type: "commonjs" }, null, 2));
+
 writeFileSync(
   `${funcDir}/.vc-config.json`,
   JSON.stringify(
