@@ -465,3 +465,20 @@ html, body, button, input, textarea, select, option {
   33%  { transform: translate(var(--dx,0), var(--dy,0)) scale(var(--amp,1)); }
   66%  { transform: translate(calc(var(--dx,0)*-0.8), calc(var(--dy,0)*-0.6)) scale(var(--amp2,1)); }
 }
+
+/* ── Dashboard orb ── */
+.db-hl {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: spectr-breathe;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.db-hr {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spectr-ripple 4.2s ease-out infinite;
+}
+.db-sk { animation: spectr-shimmer 1.6s ease-in-out infinite; background: rgba(255,255,255,0.28); border-radius: 8px; }
+.db-card { transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
+.db-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.24) !important; box-shadow: 0 22px 44px rgba(6,42,92,0.22) !important; }
