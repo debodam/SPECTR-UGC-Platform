@@ -16,7 +16,7 @@ interface TourState {
 }
 
 const PAD = 10;
-const BAR = 40;
+const BAR = 44;
 /** Tour card width: a little narrower on smaller laptops so it fits beside wide sections. */
 const cardWidth = () => (typeof window !== "undefined" && window.innerWidth < 1360 ? 320 : 360);
 

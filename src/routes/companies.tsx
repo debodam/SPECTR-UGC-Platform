@@ -605,7 +605,7 @@ function CompaniesPage() {
             style={{
               position: "fixed",
               left: 0,
-              top: 0,
+              top: "var(--demo-banner-h, 0px)",
               right: 0,
               bottom: 0,
               zIndex: 40,
@@ -746,7 +746,7 @@ function CompaniesPage() {
             style={{
               position: "fixed",
               left: 0,
-              top: 0,
+              top: "var(--demo-banner-h, 0px)",
               right: 0,
               bottom: 0,
               zIndex: 40,

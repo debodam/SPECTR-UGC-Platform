@@ -376,9 +376,9 @@ function SetupPage() {
 
   return (
     <div
+      className="su-shell"
       style={{
         position: "fixed",
-        inset: 0,
         display: "flex",
         overflow: "hidden",
         color: "#ffffff",
