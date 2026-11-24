@@ -4,6 +4,7 @@ import { FileText, Upload, X, Check, ChevronLeft, LoaderCircle, Info } from "luc
 import { useApp } from "@/lib/spectr-store";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
 import supabase from "@/lib/supabase";
+import { createGrowthPlan } from "@/lib/growth-service";
 
 export const Route = createFileRoute("/setup")({ component: SetupPage });
 
@@ -120,8 +121,12 @@ function SetupPage() {
       supabase.from("workspaces").update({ company_description: ws.companyDescription, company_pdf_url: ws.companyPdfUrl || null })
         .eq("company_id", companyId).eq("user_id", state.user.id).then(() => {});
     }
+    if (state.user?.id && companyId) {
+      // Plan generation never blocks launch: it falls back to a deterministic plan, and Growth home can retry.
+      try { await createGrowthPlan({ companyId, userId: state.user.id }, { ...ws, companyId }); } catch (e) { console.error("Growth plan:", e); }
+    }
     update({ setupComplete: true });
-    navigate({ to: "/transform" });
+    navigate({ to: "/" });
   };
 
   if (!state.isAuthenticated) return null;
@@ -139,7 +144,7 @@ function SetupPage() {
     ? !!(ws.companyName.trim() && ws.industry.trim() && (ws.companyDescription.trim() || ws.companyPdfUrl))
     : step === 3 ? !!ws.goalDescription.trim()
     : true;
-  const nextLabel = isLaunch ? (saving ? "Launching" : "Launch SPECTR") : step === 4 ? "Review" : "Continue";
+  const nextLabel = isLaunch ? (saving ? "Building your growth plan" : "Launch SPECTR") : step === 4 ? "Review" : "Continue";
 
   const handleNext = () => {
     if (isLaunch) { finish(); return; }
