@@ -1,9 +1,9 @@
 /**
- * Generation in the demo: prewritten outputs so Transform is instant and never fails.
- * "Try your own topic" may make a real call (at most 3 per session) and falls back to cached output on any problem.
+ * Generation in the demo: always prewritten outputs from src/demo/seed, so Transform is instant, never fails and
+ * never spends tokens. Text the visitor types or pastes picks the closest sample for the chosen format.
  */
-import { TOUR_PLAY, SEED_GENERATIONS } from "./seed/content";
-import { DEMO_KEYS, demoEvent } from "./mode";
+import { TOUR_PLAY, SEED_GENERATIONS, SEED_TRANSCRIPTS } from "./seed/content";
+import { demoEvent } from "./mode";
 import type { TransformInput } from "@/lib/transform-fn";
 
 type Out = { article?: string; posts?: string; videoScript?: string; error?: string };
@@ -14,8 +14,8 @@ const KEY: Record<TabFormat, keyof Out> = {
   "Video Script": "videoScript",
 };
 
-export const LIVE_LIMIT = 3;
-export const liveUsed = () => Number(sessionStorage.getItem(DEMO_KEYS.live) || 0);
+export const DEMO_SAMPLE_NOTE =
+  "Demo uses sample outputs. The full product writes from your own text.";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -30,6 +30,51 @@ export function cachedOutput(format: TabFormat, playKey?: string | null): string
   );
 }
 
+const STOP = new Set(
+  "the a an and or but of to in on for with is it that this we they you i our was are be as at by not so".split(
+    " ",
+  ),
+);
+const words = (s: string) =>
+  new Set(
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !STOP.has(w)),
+  );
+
+/** True when the text is one of the demo's own takes (the tour recording or a seeded transcript). */
+export function isSampleText(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  const tour = TOUR_PLAY.sampleRecording.chunks.join(" ");
+  return [tour, ...SEED_TRANSCRIPTS.map((s) => s.text)].some(
+    (s) => s.includes(t.slice(0, 120)) || t.includes(s.slice(0, 120)),
+  );
+}
+
+/** The prewritten output for this format whose words overlap most with what the visitor wrote. */
+export function closestOutput(format: TabFormat, text: string): string {
+  const mine = words(text);
+  const pool = [
+    TOUR_PLAY.outputs[format],
+    ...SEED_GENERATIONS.filter((g) => g.format === format).map((g) => g.content),
+  ];
+  let best = pool[0],
+    score = -1;
+  for (const c of pool) {
+    const theirs = words(c);
+    let s = 0;
+    for (const w of mine) if (theirs.has(w)) s++;
+    if (s > score) {
+      best = c;
+      score = s;
+    }
+  }
+  return best;
+}
+
 export async function demoTransform(input: TransformInput, playKey?: string | null): Promise<Out> {
   const format = (input.format as TabFormat) || "Post";
   await sleep(1100);
@@ -41,27 +86,10 @@ export async function demoTransform(input: TransformInput, playKey?: string | nu
         : (input.existingContent ?? cachedOutput(format, playKey));
     return { [KEY[format]]: text };
   }
-  demoEvent("generate", { format });
-  return { [KEY[format]]: cachedOutput(format, playKey) };
-}
-
-/** One live generation for a visitor's own topic. Returns null when it should fall back to cached output. */
-export async function demoLiveTransform(
-  run: (input: TransformInput & { demo: true }) => Promise<Out>,
-  input: TransformInput,
-): Promise<string | null> {
-  if (liveUsed() >= LIVE_LIMIT) return null;
-  sessionStorage.setItem(DEMO_KEYS.live, String(liveUsed() + 1));
-  const format = (input.format as TabFormat) || "Post";
-  try {
-    const out = await Promise.race([
-      run({ ...input, demo: true }),
-      sleep(25000).then(() => ({ error: "timeout" }) as Out),
-    ]);
-    const text = out[KEY[format]];
-    demoEvent("live generation", { ok: !!text });
-    return !out.error && typeof text === "string" && text.trim() ? text : null;
-  } catch {
-    return null;
-  }
+  const source = input.content ?? "";
+  const own = !!source.trim() && !isSampleText(source);
+  demoEvent("generate", { format, own });
+  return {
+    [KEY[format]]: own ? closestOutput(format, source) : cachedOutput(format, playKey),
+  };
 }

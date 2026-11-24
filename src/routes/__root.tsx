@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { isDemo } from "@/demo/mode";
+import { installDemoGuard, isDemo } from "@/demo/mode";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -109,6 +109,9 @@ function PageTransition() {
 }
 
 const DemoLayer = lazy(() => import("@/demo/DemoLayer"));
+
+// Before any page code runs in a demo tab, cut it off from the AI and the database.
+if (isDemo()) installDemoGuard();
 
 /** Loads the demo chrome and tour only in a demo tab. */
 function DemoMount() {

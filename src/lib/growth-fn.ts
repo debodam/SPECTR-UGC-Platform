@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { errMessage } from "./utils";
 import { AiPlanSchema, type AiPlan, type PlanInputs } from "./growth-types";
 import { applyPrefs, buildFallbackPlan } from "./growth-plan";
-import { checkPayload, isSignedIn } from "./server-auth";
+import { aiGate, checkPayload, isSignedIn } from "./server-auth";
 
 export interface PlanResult {
   plan: AiPlan;
@@ -109,6 +109,8 @@ export const generateGrowthPlan = createServerFn({ method: "POST" })
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey || apiKey === "your-api-key-here")
       return fallback("ANTHROPIC_API_KEY is not configured");
+    const refused = await aiGate(data);
+    if (refused) return fallback(refused);
     if (!(await isSignedIn(data.token))) return fallback("Not signed in");
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
@@ -155,6 +157,7 @@ export const phraseInsights = createServerFn({ method: "POST" })
     const computed = { texts: data.texts, source: "computed" as const };
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey || apiKey === "your-api-key-here" || !data.texts.length) return computed;
+    if (await aiGate(data)) return computed;
     if (!(await isSignedIn(data.token))) return computed;
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");

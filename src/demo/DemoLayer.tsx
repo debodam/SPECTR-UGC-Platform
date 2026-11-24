@@ -4,7 +4,7 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, ExternalLink, Play, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Flag, Play, RotateCcw, X } from "lucide-react";
 import { DEMO_KEYS, demoEvent, exitDemo, startDemo } from "./mode";
 import { TOUR, TOUR_TOTAL, type TourStep } from "./tour";
 import { DEMO_END } from "./seed/recruiter.config";
@@ -98,6 +98,7 @@ export default function DemoLayer() {
   const [holes, setHoles] = useState<Box[] | null>(null);
   const [missing, setMissing] = useState(false);
   const [cardH, setCardH] = useState(220);
+  const [confirmSkip, setConfirmSkip] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
   const settled = useRef(false);
@@ -131,10 +132,24 @@ export default function DemoLayer() {
 
   const next = useCallback(() => goTo(tour.i + 1), [goTo, tour.i]);
   const back = useCallback(() => goTo(tour.i - 1), [goTo, tour.i]);
+  /** Escape pauses quietly; Skip tour asks first, then leaves the visitor to explore on their own. */
   const skip = useCallback(() => {
-    demoEvent("tour skipped", { step: step?.id });
+    demoEvent("tour paused", { step: step?.id });
+    setConfirmSkip(false);
     setTour({ i: tour.i, status: "paused" });
   }, [setTour, tour.i, step?.id]);
+  const exploreFreely = useCallback(() => {
+    demoEvent("tour skipped", { step: step?.id });
+    setConfirmSkip(false);
+    setTour({ i: tour.i, status: "skipped" });
+  }, [setTour, tour.i, step?.id]);
+  const finish = useCallback(() => {
+    demoEvent("demo finished from banner");
+    setConfirmSkip(false);
+    setTour({ i: tour.i, status: "closing" });
+  }, [setTour, tour.i]);
+
+  useEffect(() => setConfirmSkip(false), [tour.i]);
 
   const replay = useCallback(() => {
     demoEvent("tour replayed");
@@ -294,6 +309,10 @@ export default function DemoLayer() {
             <RotateCcw size={14} aria-hidden="true" />
             Replay tour
           </button>
+          <button type="button" onClick={finish}>
+            <Flag size={14} aria-hidden="true" />
+            Finish demo
+          </button>
           <button type="button" onClick={() => exitDemo()}>
             <X size={14} aria-hidden="true" />
             Exit demo
@@ -346,7 +365,11 @@ export default function DemoLayer() {
                 <span className="demo-card-step">
                   Step {step.num} of {TOUR_TOTAL}
                 </span>
-                <button type="button" className="demo-card-skip" onClick={skip}>
+                <button
+                  type="button"
+                  className="demo-card-skip"
+                  onClick={() => setConfirmSkip(true)}
+                >
                   Skip tour
                 </button>
               </div>
@@ -366,41 +389,66 @@ export default function DemoLayer() {
                   This part of the page is not showing right now. Continue with Next.
                 </p>
               )}
-              <div className="demo-card-actions">
-                {tour.i > 0 ? (
-                  <button
-                    type="button"
-                    className="gh-btn gh-btn--ghost gh-btn--small"
-                    onClick={back}
-                  >
-                    <ArrowLeft size={14} aria-hidden="true" />
-                    Back
-                  </button>
-                ) : (
-                  <span />
-                )}
-                {step.advance === "button" || missing ? (
-                  <button
-                    ref={primaryRef}
-                    type="button"
-                    className="gh-btn gh-btn--primary gh-btn--small"
-                    onClick={next}
-                  >
-                    {step.nextLabel ?? "Next"}
-                    <ArrowRight size={14} aria-hidden="true" />
-                  </button>
-                ) : (
-                  <span className="demo-card-hint">
-                    {step.advance === "wait" ? "Waiting for you" : "Click the highlighted button"}
-                  </span>
-                )}
-              </div>
+              {confirmSkip ? (
+                <div className="demo-card-confirm" role="group" aria-label="Skip the tour">
+                  <p className="demo-card-body">
+                    Explore on your own? Generation uses sample outputs.
+                  </p>
+                  <div className="demo-card-actions">
+                    <button
+                      type="button"
+                      className="gh-btn gh-btn--ghost gh-btn--small"
+                      onClick={() => setConfirmSkip(false)}
+                    >
+                      Keep the tour
+                    </button>
+                    <button
+                      type="button"
+                      className="gh-btn gh-btn--primary gh-btn--small"
+                      autoFocus
+                      onClick={exploreFreely}
+                    >
+                      Explore
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="demo-card-actions">
+                  {tour.i > 0 ? (
+                    <button
+                      type="button"
+                      className="gh-btn gh-btn--ghost gh-btn--small"
+                      onClick={back}
+                    >
+                      <ArrowLeft size={14} aria-hidden="true" />
+                      Back
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+                  {step.advance === "button" || missing ? (
+                    <button
+                      ref={primaryRef}
+                      type="button"
+                      className="gh-btn gh-btn--primary gh-btn--small"
+                      onClick={next}
+                    >
+                      {step.nextLabel ?? "Next"}
+                      <ArrowRight size={14} aria-hidden="true" />
+                    </button>
+                  ) : (
+                    <span className="demo-card-hint">
+                      {step.advance === "wait" ? "Waiting for you" : "Click the highlighted button"}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {tour.status === "paused" && (
+      {(tour.status === "paused" || tour.status === "skipped" || tour.status === "done") && (
         <button
           type="button"
           className="demo-resume"

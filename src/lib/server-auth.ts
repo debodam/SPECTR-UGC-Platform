@@ -26,3 +26,31 @@ export function checkPayload<T>(v: unknown, maxChars = 400_000): T {
   if (JSON.stringify(v).length > maxChars) throw new Error("Request too large");
   return v as T;
 }
+
+const hits = new Map<string, number[]>();
+const WINDOW_MS = 60_000;
+
+/**
+ * Server only. The first check on every AI endpoint:
+ * - refuses any request that says it comes from the demo (a body flag or the x-spectr-demo header), so a modified
+ *   demo client still cannot spend tokens;
+ * - limits each IP to `perMinute` AI calls, in memory, as a second layer behind sign-in.
+ * Returns a reason to refuse, or null to continue.
+ */
+export async function aiGate(data: unknown, perMinute = 20): Promise<string | null> {
+  if (data && typeof data === "object" && "demo" in data) return "Not available in demo";
+  try {
+    const { getRequestHeader, getRequestIP } = await import("@tanstack/react-start/server");
+    if (getRequestHeader("x-spectr-demo")) return "Not available in demo";
+    const ip = getRequestIP({ xForwardedFor: true }) || "unknown";
+    const now = Date.now();
+    const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+    if (recent.length >= perMinute) return "Too many requests (429). Wait a minute and try again.";
+    recent.push(now);
+    if (hits.size > 5000) hits.clear();
+    hits.set(ip, recent);
+  } catch {
+    /* no request context (tests): sign-in is still required */
+  }
+  return null;
+}

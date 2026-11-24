@@ -3652,22 +3652,6 @@ select.gx-input {
   color: rgba(255, 255, 255, 0.92);
   text-align: center;
 }
-.tf-demo-live button {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  padding: 4px;
-}
-.tf-demo-live button:disabled {
-  opacity: 0.6;
-  cursor: default;
-  text-decoration: none;
-}
 .rc-sample {
   margin: 16px auto 0;
 }
@@ -3833,6 +3817,11 @@ select.gx-input {
   font-size: 14px;
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.94);
+}
+.demo-card-confirm {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
 }
 .demo-card-note {
   color: #fde68a;

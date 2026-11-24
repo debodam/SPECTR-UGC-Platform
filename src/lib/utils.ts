@@ -39,6 +39,7 @@ export function friendlyError(
 ): string {
   const m = (errMessage(e) || "").toLowerCase();
   if (!m) return fallback;
+  if (m.includes("not available in demo")) return "Not available in demo.";
   if (m.includes("api_key") || m.includes("api key") || m.includes("not configured"))
     return "The writing service is not set up on this server yet. Add the Anthropic key to the server environment.";
   if (m.includes("rate") || m.includes("429"))

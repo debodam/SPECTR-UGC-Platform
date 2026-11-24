@@ -8,7 +8,6 @@ export const DEMO_KEYS = {
   db: "spectr-demo-db",
   state: "spectr-demo-state",
   tour: "spectr-demo-tour",
-  live: "spectr-demo-live-count",
 } as const;
 
 export const DEMO_TIP = "Disabled in demo";
@@ -31,7 +30,76 @@ function clearDemoKeys() {
 export function startDemo() {
   clearDemoKeys();
   sessionStorage.setItem(FLAG, "1");
+  installDemoGuard();
   demoEvent("demo started");
+}
+
+export const DEMO_BLOCKED = "Not available in demo";
+
+/** Thrown when something in the demo tries to reach the AI or the database. */
+export class DemoBlockedError extends Error {
+  constructor() {
+    super(DEMO_BLOCKED);
+    this.name = "DemoBlockedError";
+  }
+}
+
+let lastNotice = 0;
+/** A calm note, at most once every few seconds, when the demo stops a call. */
+export function noteDemoBlocked() {
+  if (typeof window === "undefined" || Date.now() - lastNotice < 4000) return;
+  lastNotice = Date.now();
+  void import("sonner").then(({ toast }) =>
+    toast.message(DEMO_BLOCKED, {
+      description: "The demo runs on sample data, so nothing is sent anywhere.",
+    }),
+  );
+}
+
+/** Server functions (all AI calls go through them), Anthropic and Supabase. */
+const BLOCKED_URL = [/\/_serverFn\//i, /anthropic\.com/i, /\.supabase\.(co|in)\b/i];
+
+/**
+ * The single network guard for demo mode. Once installed, any request to the app's server functions,
+ * Anthropic or Supabase fails before it leaves the browser, so the demo cannot spend tokens or touch the backend
+ * even if some code path forgets to check isDemo(). Blocked URLs are recorded for the e2e checks.
+ */
+export function installDemoGuard() {
+  if (typeof window === "undefined") return;
+  const w = window as unknown as {
+    __spectrDemoGuard?: boolean;
+    __spectrDemoBlocked?: string[];
+    fetch: typeof fetch;
+  };
+  if (w.__spectrDemoGuard) return;
+  w.__spectrDemoGuard = true;
+  w.__spectrDemoBlocked = [];
+  const original = window.fetch.bind(window);
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    if (isDemo() && BLOCKED_URL.some((r) => r.test(url))) {
+      w.__spectrDemoBlocked!.push(url);
+      demoEvent("blocked request", { url });
+      noteDemoBlocked();
+      return Promise.reject(new DemoBlockedError());
+    }
+    return original(input, init);
+  };
+  const send = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (
+    this: XMLHttpRequest,
+    method: string,
+    url: string | URL,
+    ...rest: unknown[]
+  ) {
+    const u = String(url);
+    if (isDemo() && BLOCKED_URL.some((r) => r.test(u))) {
+      w.__spectrDemoBlocked!.push(u);
+      noteDemoBlocked();
+      throw new DemoBlockedError();
+    }
+    return (send as (...a: unknown[]) => void).call(this, method, url, ...rest);
+  } as typeof XMLHttpRequest.prototype.open;
 }
 
 /** Leaves the demo and returns to the landing page with a full reload, so no demo state survives. */

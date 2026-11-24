@@ -27,7 +27,8 @@ import { transformContent, type TransformInput, type TransformOutput } from "@/l
 import supabase, { accessToken } from "@/lib/supabase";
 import { useEscape } from "@/lib/use-escape";
 import { isDemo } from "@/demo/mode";
-import { demoLiveTransform, demoTransform, LIVE_LIMIT, liveUsed } from "@/demo/generate";
+import { DEMO_SAMPLE_NOTE, demoTransform } from "@/demo/generate";
+import { callAI } from "@/lib/ai-client";
 
 export const Route = createFileRoute("/transform")({
   component: () => (
@@ -817,7 +818,6 @@ function TransformPage() {
   const ctxMenuRef = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [demo] = useState(isDemo);
-  const [liveMode, setLiveMode] = useState(false);
   useEscape(showHistory, () => setShowHistory(false));
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
 
@@ -917,17 +917,11 @@ function TransformPage() {
   }, [ws]);
 
   async function callTransform(input: TransformInput): Promise<TransformOutput> {
-    if (isDemo()) {
-      if (liveMode && !input.refine && !input.regenerate) {
-        const live = await demoLiveTransform((i) => transformContent({ data: i }), input);
-        if (live) return { [JSON_KEY[input.format as TabKey]]: live };
-        toast.message("Showing a prewritten example", {
-          description: "Live generation is not available right now, so this is a cached output.",
-        });
-      }
-      return demoTransform(input, playId);
-    }
-    const data = await transformContent({ data: { ...input, token: await accessToken() } });
+    // The demo always answers from prewritten samples and never reaches the AI.
+    if (isDemo()) return demoTransform(input, playId);
+    const data = await callAI(async () =>
+      transformContent({ data: { ...input, token: await accessToken() } }),
+    );
     if (data.error) throw new Error(data.error);
     return data;
   }
@@ -944,7 +938,7 @@ function TransformPage() {
       setError("Please upload a document or paste your content.");
       return;
     }
-    if (!file && text.trim().length < (isDemo() && liveMode ? 8 : 40)) {
+    if (!file && text.trim().length < (isDemo() ? 1 : 40)) {
       setError("Add a little more to work with. A few sentences is enough.");
       return;
     }
@@ -1606,34 +1600,7 @@ function TransformPage() {
                   <Sparkles size={19} strokeWidth={1.9} aria-hidden="true" />
                   {loading ? "Generating..." : `Generate ${tab === "Post" ? "Posts" : tab}`}
                 </button>
-                {demo && (
-                  <div className="tf-demo-live">
-                    {liveMode ? (
-                      <span>
-                        Live mode: type a topic in a sentence or two, then Generate.{" "}
-                        {Math.max(0, LIVE_LIMIT - liveUsed())} of {LIVE_LIMIT} live generations
-                        left.{" "}
-                        <button type="button" onClick={() => setLiveMode(false)}>
-                          Use the example
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={liveUsed() >= LIVE_LIMIT}
-                        onClick={() => {
-                          setLiveMode(true);
-                          setText("");
-                          setError("");
-                        }}
-                      >
-                        {liveUsed() >= LIVE_LIMIT
-                          ? "Live topics used up for this visit"
-                          : "Try your own topic"}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {demo && <p className="tf-demo-live">{DEMO_SAMPLE_NOTE}</p>}
               </div>
             </div>
           )}

@@ -4,6 +4,7 @@ import type { PerfEntry, Workspace } from "./spectr-store";
 import type { Experiment, GrowthPlan, Insight, PlanInputs, Play } from "./growth-types";
 import { buildFallbackPlan } from "./growth-plan";
 import { generateGrowthPlan, phraseInsights } from "./growth-fn";
+import { callAI } from "./ai-client";
 import {
   computeInsights,
   experimentLearning,
@@ -75,7 +76,9 @@ export async function createGrowthPlan(
   try {
     result = isDemo()
       ? { plan: buildFallbackPlan(inputs), source: "fallback" }
-      : await generateGrowthPlan({ data: { ...inputs, token: await accessToken() } });
+      : await callAI(async () =>
+          generateGrowthPlan({ data: { ...inputs, token: await accessToken() } }),
+        );
   } catch {
     result = { plan: buildFallbackPlan(inputs), source: "fallback" };
   }
@@ -123,14 +126,16 @@ export async function refreshInsights(
   let texts = candidates.map((c) => c.text);
   if (!isDemo())
     try {
-      const r = await phraseInsights({
-        data: {
-          company: ws.companyName,
-          audience: ws.audience.jobTitles,
-          texts,
-          token: await accessToken(),
-        },
-      });
+      const r = await callAI(async () =>
+        phraseInsights({
+          data: {
+            company: ws.companyName,
+            audience: ws.audience.jobTitles,
+            texts,
+            token: await accessToken(),
+          },
+        }),
+      );
       texts = r.texts;
     } catch {
       /* keep computed wording */
