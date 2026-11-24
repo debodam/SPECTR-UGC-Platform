@@ -1,3 +1,4 @@
+import { isDemo } from "@/demo/mode";
 import { accessToken } from "./supabase";
 import type { PerfEntry, Workspace } from "./spectr-store";
 import type { Experiment, GrowthPlan, Insight, PlanInputs, Play } from "./growth-types";
@@ -72,7 +73,9 @@ export async function createGrowthPlan(
   const inputs = planInputsFromWorkspace(ws, learnings);
   let result: { plan: ReturnType<typeof buildFallbackPlan>; source: "ai" | "fallback" };
   try {
-    result = await generateGrowthPlan({ data: { ...inputs, token: await accessToken() } });
+    result = isDemo()
+      ? { plan: buildFallbackPlan(inputs), source: "fallback" }
+      : await generateGrowthPlan({ data: { ...inputs, token: await accessToken() } });
   } catch {
     result = { plan: buildFallbackPlan(inputs), source: "fallback" };
   }
@@ -118,19 +121,20 @@ export async function refreshInsights(
   const candidates = computeInsights(data);
   if (!candidates.length) return 0;
   let texts = candidates.map((c) => c.text);
-  try {
-    const r = await phraseInsights({
-      data: {
-        company: ws.companyName,
-        audience: ws.audience.jobTitles,
-        texts,
-        token: await accessToken(),
-      },
-    });
-    texts = r.texts;
-  } catch {
-    /* keep computed wording */
-  }
+  if (!isDemo())
+    try {
+      const r = await phraseInsights({
+        data: {
+          company: ws.companyName,
+          audience: ws.audience.jobTitles,
+          texts,
+          token: await accessToken(),
+        },
+      });
+      texts = r.texts;
+    } catch {
+      /* keep computed wording */
+    }
   await saveInsights(
     ctx,
     candidates.map((c, i) => ({ ...c, text: texts[i] })),

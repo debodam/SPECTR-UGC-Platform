@@ -1,0 +1,481 @@
+// Results (perf entries) and Distribute queue. Dates are relative to "now" so the demo never looks stale.
+export type Format = "Article" | "Post" | "Video Script";
+export type Source = "Transcript" | "Notes" | "Draft";
+
+export interface SeedEntry {
+  daysAgo: number;
+  title: string;
+  format: Format;
+  source: Source;
+  impressions: number;
+  engagementRate: number;
+  followersGained: number;
+  notes: string;
+}
+
+// 32 entries over 9 weeks. Weekly impression totals climb from about 4.6k to about 12.8k.
+// Total followers gained across entries is 983, so current followers = 2140 + 983 = 3123.
+export const SEED_ENTRIES: SeedEntry[] = [
+  // Week 1
+  {
+    daysAgo: 62,
+    title: "Why your onboarding checklist is lying to you",
+    format: "Post",
+    source: "Notes",
+    impressions: 1450,
+    engagementRate: 2.6,
+    followersGained: 14,
+    notes: "First post of the program. Solid comments from two CS leads.",
+  },
+  {
+    daysAgo: 60,
+    title: "The first 30 days decide your churn",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2100,
+    engagementRate: 2.9,
+    followersGained: 31,
+    notes: "Long read time. Saved by a few VPs.",
+  },
+  {
+    daysAgo: 57,
+    title: "We asked 40 customers what slowed their kickoff",
+    format: "Post",
+    source: "Notes",
+    impressions: 1050,
+    engagementRate: 2.2,
+    followersGained: 17,
+    notes: "Survey style post. Okay but forgettable.",
+  },
+  // Week 2
+  {
+    daysAgo: 54,
+    title: "Kickoff calls are not onboarding",
+    format: "Post",
+    source: "Transcript",
+    impressions: 1900,
+    engagementRate: 3.1,
+    followersGained: 19,
+    notes: "Contrarian title helped. Good debate in comments.",
+  },
+  {
+    daysAgo: 52,
+    title: "A simple model for time to first value",
+    format: "Article",
+    source: "Draft",
+    impressions: 2350,
+    engagementRate: 3.0,
+    followersGained: 28,
+    notes: "Framework post. Several people asked for the template.",
+  },
+  {
+    daysAgo: 50,
+    title: "Hiring our first CS lead taught me this",
+    format: "Post",
+    source: "Notes",
+    impressions: 1550,
+    engagementRate: 2.4,
+    followersGained: 24,
+    notes: "Founder story. Decent follower pickup for the reach.",
+  },
+  // Week 3
+  {
+    daysAgo: 47,
+    title: "Stop calling it a handoff",
+    format: "Post",
+    source: "Transcript",
+    impressions: 1700,
+    engagementRate: 3.3,
+    followersGained: 22,
+    notes: "Sales and CS folks both engaged.",
+  },
+  {
+    daysAgo: 45,
+    title: "60 seconds: the kickoff mistake everyone makes",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 2900,
+    engagementRate: 3.8,
+    followersGained: 36,
+    notes: "First video script. Opened with a question hook.",
+  },
+  {
+    daysAgo: 43,
+    title: "What a stuck customer looks like on day 9",
+    format: "Post",
+    source: "Transcript",
+    impressions: 1600,
+    engagementRate: 2.8,
+    followersGained: 26,
+    notes: "Specific and visual. Shared twice.",
+  },
+  // Week 4
+  {
+    daysAgo: 41,
+    title: "Time to first value is a team sport",
+    format: "Article",
+    source: "Draft",
+    impressions: 2600,
+    engagementRate: 3.4,
+    followersGained: 29,
+    notes: "Strong with RevOps readers.",
+  },
+  {
+    daysAgo: 40,
+    title: "The 3 emails that rescue a stalled onboarding",
+    format: "Video Script",
+    source: "Notes",
+    impressions: 3300,
+    engagementRate: 4.2,
+    followersGained: 44,
+    notes: "Numbered promise in the hook. Best video so far.",
+  },
+  {
+    daysAgo: 38,
+    title: "Our pricing page is not the problem",
+    format: "Post",
+    source: "Notes",
+    impressions: 1200,
+    engagementRate: 2.5,
+    followersGained: 15,
+    notes: "Off topic for the audience. Do not repeat.",
+  },
+  {
+    daysAgo: 36,
+    title: "Everything I got wrong about customer health scores",
+    format: "Post",
+    source: "Transcript",
+    impressions: 900,
+    engagementRate: 2.3,
+    followersGained: 30,
+    notes: "Low reach but a well known CS leader reshared it.",
+  },
+  // Week 5
+  {
+    daysAgo: 34,
+    title: "How we run a 20 minute kickoff",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2200,
+    engagementRate: 3.0,
+    followersGained: 21,
+    notes: "Practical and saveable.",
+  },
+  {
+    daysAgo: 32,
+    title: "Onboarding is not a checklist problem",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2700,
+    engagementRate: 3.5,
+    followersGained: 33,
+    notes: "Contrarian title. Best article so far at that point.",
+  },
+  {
+    daysAgo: 30,
+    title: "What we learned from 12 churn calls",
+    format: "Post",
+    source: "Notes",
+    impressions: 1300,
+    engagementRate: 2.6,
+    followersGained: 16,
+    notes: "Too many bullets. Hard to skim.",
+  },
+  {
+    daysAgo: 29,
+    title: "So today I want to talk about onboarding",
+    format: "Video Script",
+    source: "Draft",
+    impressions: 1400,
+    engagementRate: 3.0,
+    followersGained: 26,
+    notes: "Weak opening line. Viewers dropped in the first 3 seconds.",
+  },
+  // Week 6
+  {
+    daysAgo: 27,
+    title: "The last two minutes of a kickoff call",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 4300,
+    engagementRate: 4.9,
+    followersGained: 51,
+    notes: "Opened with 50 percent to 68 percent. Number hook worked.",
+  },
+  {
+    daysAgo: 25,
+    title: "Silence from a customer is data",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2000,
+    engagementRate: 3.2,
+    followersGained: 22,
+    notes: "Short and sharp.",
+  },
+  {
+    daysAgo: 23,
+    title: "Designing onboarding for the unhappy path",
+    format: "Article",
+    source: "Draft",
+    impressions: 2300,
+    engagementRate: 3.6,
+    followersGained: 30,
+    notes: "Good depth. Slow burn over several days.",
+  },
+  {
+    daysAgo: 22,
+    title: "A customer told us our onboarding felt like homework",
+    format: "Post",
+    source: "Notes",
+    impressions: 1500,
+    engagementRate: 2.9,
+    followersGained: 36,
+    notes: "Honest story. Strong follower conversion.",
+  },
+  // Week 7
+  {
+    daysAgo: 20,
+    title: "Why I stopped asking if customers have questions",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 5200,
+    engagementRate: 5.4,
+    followersGained: 58,
+    notes: "Strong hook and a clear takeaway at 40 seconds.",
+  },
+  {
+    daysAgo: 18,
+    title: "The champion is not the buyer",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2100,
+    engagementRate: 3.4,
+    followersGained: 23,
+    notes: "Lots of agreement from CS and sales leaders.",
+  },
+  {
+    daysAgo: 16,
+    title: "How to read a contract for onboarding clues",
+    format: "Article",
+    source: "Draft",
+    impressions: 2400,
+    engagementRate: 3.7,
+    followersGained: 34,
+    notes: "Niche and useful. Strong saves.",
+  },
+  {
+    daysAgo: 15,
+    title: "The day I almost lost our first customer",
+    format: "Post",
+    source: "Notes",
+    impressions: 1600,
+    engagementRate: 3.0,
+    followersGained: 36,
+    notes: "Founder story. Personal posts convert well.",
+  },
+  // Week 8
+  {
+    daysAgo: 13,
+    title: "Five words that kill a kickoff call",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 5900,
+    engagementRate: 6.1,
+    followersGained: 64,
+    notes: "Best performer of the program. Shared by a Chief Customer Officer.",
+  },
+  {
+    daysAgo: 11,
+    title: "What time to first value actually measures",
+    format: "Post",
+    source: "Draft",
+    impressions: 2300,
+    engagementRate: 3.6,
+    followersGained: 27,
+    notes: "Clear definition post.",
+  },
+  {
+    daysAgo: 9,
+    title: "Onboarding is a promise, not a project plan",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2800,
+    engagementRate: 3.8,
+    followersGained: 41,
+    notes: "Best article of the program. Strong comments.",
+  },
+  {
+    daysAgo: 8,
+    title: "Our CS team's one rule for week one",
+    format: "Post",
+    source: "Notes",
+    impressions: 1800,
+    engagementRate: 3.1,
+    followersGained: 32,
+    notes: "Simple rule, easy to repeat.",
+  },
+  // Week 9 (in progress)
+  {
+    daysAgo: 6,
+    title: "The customer who went quiet on day 9",
+    format: "Video Script",
+    source: "Transcript",
+    impressions: 4700,
+    engagementRate: 5.8,
+    followersGained: 47,
+    notes: "Story hook. Still climbing.",
+  },
+  {
+    daysAgo: 4,
+    title: "Silence is a signal, not a mood",
+    format: "Post",
+    source: "Transcript",
+    impressions: 2200,
+    engagementRate: 3.5,
+    followersGained: 24,
+    notes: "Came from Monday's recording.",
+  },
+  {
+    daysAgo: 2,
+    title: "What to ask when an admin stops logging in",
+    format: "Article",
+    source: "Transcript",
+    impressions: 2700,
+    engagementRate: 3.9,
+    followersGained: 27,
+    notes: "Strong first two days.",
+  },
+];
+
+export type QueueStatus = "Draft" | "Ready" | "Posted"; // legacy mapping: Scheduled = Ready, Published = Posted
+
+export interface SeedQueueItem {
+  daysFromNow: number; // negative = past
+  time: string;
+  title: string;
+  format: Format;
+  status: QueueStatus;
+  awaitingResults?: boolean;
+  due?: boolean;
+}
+
+export const SEED_QUEUE: SeedQueueItem[] = [
+  // Recently posted, results already logged (match entries above)
+  {
+    daysFromNow: -2,
+    time: "08:30",
+    title: "What to ask when an admin stops logging in",
+    format: "Article",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -4,
+    time: "09:00",
+    title: "Silence is a signal, not a mood",
+    format: "Post",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -6,
+    time: "12:15",
+    title: "The customer who went quiet on day 9",
+    format: "Video Script",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -8,
+    time: "09:00",
+    title: "Our CS team's one rule for week one",
+    format: "Post",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -9,
+    time: "08:30",
+    title: "Onboarding is a promise, not a project plan",
+    format: "Article",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -11,
+    time: "09:00",
+    title: "What time to first value actually measures",
+    format: "Post",
+    status: "Posted",
+  },
+  {
+    daysFromNow: -13,
+    time: "12:15",
+    title: "Five words that kill a kickoff call",
+    format: "Video Script",
+    status: "Posted",
+  },
+  // Posted yesterday, waiting for numbers (shows the "log results" nudge)
+  {
+    daysFromNow: -1,
+    time: "09:00",
+    title: "Three questions to ask before every kickoff",
+    format: "Post",
+    status: "Posted",
+    awaitingResults: true,
+  },
+  // Due today (shows the "due now" badge)
+  {
+    daysFromNow: 0,
+    time: "11:30",
+    title: "How Cobalt Ledger cut time to first value from 41 days to 19",
+    format: "Video Script",
+    status: "Ready",
+    due: true,
+  },
+  // Upcoming
+  {
+    daysFromNow: 1,
+    time: "09:00",
+    title: "Why we deleted our onboarding checklist",
+    format: "Article",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 2,
+    time: "09:00",
+    title: "Our first CS hire: what I got wrong",
+    format: "Post",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 3,
+    time: "12:15",
+    title: "The 5 signals a customer is about to stall",
+    format: "Video Script",
+    status: "Draft",
+  },
+  {
+    daysFromNow: 4,
+    time: "09:00",
+    title: "A customer's one sentence that changed our roadmap",
+    format: "Post",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 5,
+    time: "08:30",
+    title: "The onboarding plan we wish we had in 2024",
+    format: "Article",
+    status: "Draft",
+  },
+  {
+    daysFromNow: 7,
+    time: "09:00",
+    title: "What our week 12 numbers say about video",
+    format: "Post",
+    status: "Ready",
+  },
+  {
+    daysFromNow: 8,
+    time: "12:15",
+    title: "Three signs your champion is leaving",
+    format: "Video Script",
+    status: "Draft",
+  },
+];

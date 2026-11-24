@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { LoaderCircle, CircleAlert } from "lucide-react";
+import { LoaderCircle, CircleAlert, Play } from "lucide-react";
 
 export const Route = createFileRoute("/access")({ component: AccessPage });
 
@@ -258,6 +258,15 @@ function AccessPage() {
               That code is not valid. Check it and try again.
             </span>
           )}
+        </div>
+
+        {/* No code needed for the guided demo */}
+        <div className="ac-demo">
+          <span>No code?</span>
+          <a href="/demo" className="ac-demo-btn">
+            <Play size={15} aria-hidden="true" />
+            Try the demo
+          </a>
         </div>
       </div>
     </div>

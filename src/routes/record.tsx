@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppGate, AppHeader, AppRail } from "@/components/spectr/AppChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, ChevronDown, Mic, X } from "lucide-react";
+import { Check, Download, ChevronDown, Mic, X, Play } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
@@ -11,6 +11,8 @@ import { playSearch, usePlay } from "@/lib/use-growth";
 import { advancePlay, insertWithLinks, type RepoCtx } from "@/lib/growth-repo";
 import { guidedPrompts } from "@/lib/growth-prompts";
 import { useEscape } from "@/lib/use-escape";
+import { demoEvent, isDemo } from "@/demo/mode";
+import { TOUR_PLAY } from "@/demo/seed/content";
 
 interface SpeechResultEvent {
   resultIndex: number;
@@ -354,6 +356,43 @@ function RecordPage() {
   const stoppedManuallyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const durationRef = useRef(0);
+  const sampleTimers = useRef<number[]>([]);
+  const [demo] = useState(isDemo);
+
+  const clearSample = () => {
+    sampleTimers.current.forEach((t) => clearTimeout(t));
+    sampleTimers.current = [];
+  };
+
+  /** Demo only: plays the scripted sample take into the live transcript, as if it were being spoken. */
+  const playSample = () => {
+    clearSample();
+    setError("");
+    setMicDenied(false);
+    setTranscript("");
+    setInterimText("");
+    setSaved(false);
+    finalRef.current = "";
+    stoppedManuallyRef.current = false;
+    recognitionRef.current = null;
+    setMicReady(true);
+    setRecording(true);
+    setSeconds(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+    demoEvent("sample recording");
+    let at = 0;
+    for (const c of TOUR_PLAY.sampleRecording.chunks) {
+      at += c.delayMs;
+      sampleTimers.current.push(
+        window.setTimeout(() => {
+          finalRef.current += c.text;
+          setTranscript(finalRef.current);
+        }, at),
+      );
+    }
+    durationRef.current = TOUR_PLAY.sampleRecording.durationSeconds;
+  };
 
   useEffect(() => {
     const companyId = ws.companyId;
@@ -374,6 +413,7 @@ function RecordPage() {
 
   useEffect(() => {
     return () => {
+      clearSample();
       if (timerRef.current) clearInterval(timerRef.current);
       stoppedManuallyRef.current = true;
       recognitionRef.current?.stop();
@@ -495,12 +535,14 @@ function RecordPage() {
   };
 
   const stopRecording = () => {
+    const wasSample = sampleTimers.current.length > 0;
+    clearSample();
     stoppedManuallyRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
     recognitionRef.current?.stop();
     setRecording(false);
     setInterimText("");
-    durationRef.current = seconds;
+    durationRef.current = wasSample ? TOUR_PLAY.sampleRecording.durationSeconds : seconds;
     setTranscript(finalRef.current.trim());
   };
 
@@ -558,12 +600,12 @@ function RecordPage() {
       <main className="sx-main sx-fit sx-fit-rc">
         <div className="sx-page">
           <div className="rc-layout">
-            <div className="rc-orbcol">
+            <div className="rc-orbcol" data-tour="orb-col">
               {/* Orb */}
               <MicHalo
                 state={orbState}
                 onClick={isRec ? stopRecording : startRecording}
-                liveAudio
+                liveAudio={!demo}
               />
 
               {/* Caption */}
@@ -635,6 +677,17 @@ function RecordPage() {
                       <div className="mo-denied" role="alert" style={{ marginTop: 14 }}>
                         {error}
                       </div>
+                    )}
+                    {demo && !isRec && (
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn--primary rc-sample"
+                        onClick={playSample}
+                        data-tour="sample-recording"
+                      >
+                        <Play size={15} aria-hidden="true" />
+                        Use sample recording
+                      </button>
                     )}
                     {!isRec && (
                       <button
@@ -713,6 +766,7 @@ function RecordPage() {
               {/* Live transcript while recording */}
               {isRec && (
                 <div
+                  data-tour="live-transcript"
                   style={{
                     flexShrink: 0,
                     marginTop: 16,
@@ -782,6 +836,7 @@ function RecordPage() {
               {/* Done - save new transcript */}
               {isDone && (
                 <div
+                  data-tour="new-transcript"
                   style={{
                     flexShrink: 0,
                     marginTop: 16,
@@ -843,6 +898,7 @@ function RecordPage() {
                       )}
                     </button>
                     <button
+                      data-tour="take-to-transform"
                       onClick={() => sendToTransform(transcript)}
                       style={{
                         height: 34,

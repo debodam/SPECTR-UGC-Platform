@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "e2e": "node scripts/e2e/full-loop.mjs",
-    "e2e:migrated": "node scripts/e2e/full-loop.mjs migrated"
+    "e2e:migrated": "node scripts/e2e/full-loop.mjs migrated",
+    "e2e:demo": "node scripts/e2e/demo-tour.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",

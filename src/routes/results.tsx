@@ -961,7 +961,7 @@ function TrackPage() {
                   </div>
                 )}
               </section>
-              <section className="sx-glass" aria-labelledby="tr-exp-h">
+              <section className="sx-glass" aria-labelledby="tr-exp-h" data-tour="experiments">
                 <h2 id="tr-exp-h" style={{ margin: "0 0 14px", fontSize: 17, fontWeight: 600 }}>
                   Experiments
                 </h2>
@@ -1026,7 +1026,7 @@ function TrackPage() {
 
           <div className="tr-bottom">
             {/* Format intelligence */}
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0 }} data-tour="format-intel">
               <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em" }}>
                 Format intelligence
               </div>

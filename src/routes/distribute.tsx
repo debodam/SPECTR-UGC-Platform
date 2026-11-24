@@ -21,6 +21,7 @@ import {
   type PostStatus,
 } from "@/lib/posting";
 import { copyText, errMessage, friendlyError } from "@/lib/utils";
+import { DemoLock } from "@/demo/DemoLock";
 
 export const Route = createFileRoute("/distribute")({
   component: () => (
@@ -365,15 +366,17 @@ function DistributePage() {
         subtitle="Plan each post, then copy it or open LinkedIn when it is time."
         actions={
           notifyPerm === "default" ? (
-            <button
-              type="button"
-              className="gh-btn gh-btn--ghost"
-              onClick={askNotify}
-              aria-label="Remind me when a post is due"
-            >
-              <Bell size={15} aria-hidden="true" />
-              <span className="sx-hide-sm">Remind me when due</span>
-            </button>
+            <DemoLock>
+              <button
+                type="button"
+                className="gh-btn gh-btn--ghost"
+                onClick={askNotify}
+                aria-label="Remind me when a post is due"
+              >
+                <Bell size={15} aria-hidden="true" />
+                <span className="sx-hide-sm">Remind me when due</span>
+              </button>
+            </DemoLock>
           ) : undefined
         }
       />
@@ -595,6 +598,7 @@ function DistributePage() {
                         key={q.id}
                         className={`ds-item${due ? " is-due" : ""}`}
                         data-tour="queue-item"
+                        data-queue-id={q.id}
                       >
                         <div className="ds-item-top">
                           <span className="ds-item-title">{q.title}</span>
@@ -626,6 +630,7 @@ function DistributePage() {
                             className="gh-btn gh-btn--small"
                             onClick={() => copy(q)}
                             aria-live="polite"
+                            data-tour="copy-post"
                           >
                             {copied === q.id ? (
                               <>
@@ -639,15 +644,17 @@ function DistributePage() {
                               </>
                             )}
                           </button>
-                          <a
-                            className="gh-btn gh-btn--small"
-                            href={linkedInComposeUrl(postText(q))}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink size={14} aria-hidden="true" />
-                            Open LinkedIn
-                          </a>
+                          <DemoLock>
+                            <a
+                              className="gh-btn gh-btn--small"
+                              href={linkedInComposeUrl(postText(q))}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink size={14} aria-hidden="true" />
+                              Open LinkedIn
+                            </a>
+                          </DemoLock>
                           {q.status === "draft" ? (
                             <button
                               type="button"

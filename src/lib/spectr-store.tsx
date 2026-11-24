@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import supabase from "./supabase";
 import type { Session } from "@supabase/supabase-js";
+import { DEMO_KEYS, isDemo } from "@/demo/mode";
+import { demoWorkspace } from "@/demo/data";
 
 const KEY = "spectr-state-v1";
 
@@ -167,8 +169,14 @@ function load(): StoredState {
     queue: [],
   };
   if (typeof window === "undefined") return fallback;
+  // The demo keeps its own state in this tab only, so it never touches the real app's saved state.
+  if (isDemo()) {
+    fallback.workspace = demoWorkspace();
+    fallback.setupComplete = true;
+    fallback.setupStep = 6;
+  }
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = isDemo() ? sessionStorage.getItem(DEMO_KEYS.state) : localStorage.getItem(KEY);
     if (!raw) return fallback;
     const p = JSON.parse(raw);
     const w = p.workspace || {};
@@ -205,6 +213,9 @@ function sessionToUser(session: Session | null): User | null {
 export function SpectrProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(initialState);
   const [hydrated, setHydrated] = useState(false);
+  // Which store this tab loaded from. If demo mode flips on or off after load (only /demo does that, right before
+  // a full reload), nothing is written, so real and demo state can never mix.
+  const [loadedAsDemo] = useState(isDemo);
 
   useEffect(() => {
     const stored = load();
@@ -245,12 +256,11 @@ export function SpectrProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || isDemo() !== loadedAsDemo || window.location.pathname === "/demo") return;
     const { workspace, setupComplete, setupStep, entries, queue } = state;
-    localStorage.setItem(
-      KEY,
-      JSON.stringify({ workspace, setupComplete, setupStep, entries, queue }),
-    );
+    const json = JSON.stringify({ workspace, setupComplete, setupStep, entries, queue });
+    if (isDemo()) sessionStorage.setItem(DEMO_KEYS.state, json);
+    else localStorage.setItem(KEY, json);
   }, [state, hydrated]);
 
   const update = (patch: Partial<AppState>) => setState((s) => ({ ...s, ...patch }));

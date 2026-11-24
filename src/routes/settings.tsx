@@ -18,6 +18,7 @@ import supabase from "@/lib/supabase";
 import { createGrowthPlan } from "@/lib/growth-service";
 import { errMessage, friendlyError } from "@/lib/utils";
 import { deleteAccount as deleteAccountFn } from "@/lib/delete-account-fn";
+import { DemoLock } from "@/demo/DemoLock";
 
 export const Route = createFileRoute("/settings")({
   component: () => (
@@ -700,25 +701,27 @@ function Settings() {
                         Permanently delete your account and all associated data. This cannot be
                         undone.
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(true)}
-                        style={{
-                          marginTop: 16,
-                          height: 44,
-                          padding: "0 20px",
-                          borderRadius: 12,
-                          border: 0,
-                          background: "#d92d20",
-                          color: "#ffffff",
-                          fontSize: 15,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                        }}
-                      >
-                        Delete account
-                      </button>
+                      <DemoLock>
+                        <button
+                          type="button"
+                          onClick={() => setShowDeleteConfirm(true)}
+                          style={{
+                            marginTop: 16,
+                            height: 44,
+                            padding: "0 20px",
+                            borderRadius: 12,
+                            border: 0,
+                            background: "#d92d20",
+                            color: "#ffffff",
+                            fontSize: 15,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          Delete account
+                        </button>
+                      </DemoLock>
                     </div>
                   </div>
                 )}
@@ -762,29 +765,31 @@ function Settings() {
                   >
                     Discard changes
                   </button>
-                  <button
-                    type="button"
-                    onClick={save}
-                    disabled={saving}
-                    style={{
-                      height: 44,
-                      padding: "0 18px",
-                      borderRadius: 12,
-                      border: 0,
-                      background: "#ffffff",
-                      color: "#0a66c2",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      cursor: "pointer",
-                      boxShadow: "0 10px 24px rgba(6,42,92,0.22)",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    {saving ? "Saving..." : "Save settings"}
-                  </button>
+                  <DemoLock>
+                    <button
+                      type="button"
+                      onClick={save}
+                      disabled={saving}
+                      style={{
+                        height: 44,
+                        padding: "0 18px",
+                        borderRadius: 12,
+                        border: 0,
+                        background: "#ffffff",
+                        color: "#0a66c2",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        cursor: "pointer",
+                        boxShadow: "0 10px 24px rgba(6,42,92,0.22)",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      {saving ? "Saving..." : "Save settings"}
+                    </button>
+                  </DemoLock>
                 </div>
               )}
             </div>

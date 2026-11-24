@@ -1,3 +1,5 @@
+import { lazy, Suspense, useEffect, useState } from "react";
+import { isDemo } from "@/demo/mode";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -106,6 +108,19 @@ function PageTransition() {
   );
 }
 
+const DemoLayer = lazy(() => import("@/demo/DemoLayer"));
+
+/** Loads the demo chrome and tour only in a demo tab. */
+function DemoMount() {
+  const [on, setOn] = useState(false);
+  useEffect(() => setOn(isDemo()), []);
+  return on ? (
+    <Suspense fallback={null}>
+      <DemoLayer />
+    </Suspense>
+  ) : null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
@@ -113,6 +128,7 @@ function RootComponent() {
       <SpectrProvider>
         <PageTransition />
         <Toaster position="bottom-right" />
+        <DemoMount />
       </SpectrProvider>
     </QueryClientProvider>
   );

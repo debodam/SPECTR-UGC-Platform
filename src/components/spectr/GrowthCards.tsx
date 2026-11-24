@@ -64,7 +64,7 @@ export function PlayCard({
   const step = nextStep(play);
   const r = play.results;
   return (
-    <article className="sx-glass gh-play">
+    <article className="sx-glass gh-play" data-play-id={play.id}>
       <div className="gh-play-top">
         <span className="gh-eyebrow">{sentence(play.type)}</span>
         <StatusChip status={play.status} />
@@ -129,7 +129,7 @@ export function InsightRow({
   const canApply =
     insight.kind === "recommendation" && !!insight.evidence.action && !insight.applied && onApply;
   return (
-    <div className={`gh-insight gh-insight--${insight.kind}`}>
+    <div className={`gh-insight gh-insight--${insight.kind}`} data-insight-id={insight.id}>
       <span className="gh-insight-icon">
         <Icon size={16} aria-hidden="true" />
       </span>
@@ -205,7 +205,7 @@ export function PlayBanner({
   action?: ReactNode;
 }) {
   return (
-    <section className="gh-banner" aria-label={`Play: ${play.title}`}>
+    <section className="gh-banner" aria-label={`Play: ${play.title}`} data-tour="play-banner">
       <div className="gh-banner-head">
         <span className="gh-eyebrow">This week's play · {sentence(play.type)}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

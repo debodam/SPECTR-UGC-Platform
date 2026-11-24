@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
+import { exitDemo, isDemo } from "@/demo/mode";
 
 export type RailPath =
   "/" | "/growth" | "/transform" | "/record" | "/results" | "/distribute" | "/settings";
@@ -42,6 +43,7 @@ const initials = (name?: string | null) =>
 export function AppRail({ active }: { active: RailPath }) {
   const navigate = useNavigate();
   const logout = async () => {
+    if (isDemo()) return exitDemo();
     await supabase.auth.signOut();
     localStorage.removeItem("spectr-access-verified");
     navigate({ to: "/access" });

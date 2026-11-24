@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as CompaniesRouteImport } from './routes/companies'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DistributeRouteImport } from './routes/distribute'
 import { Route as GrowthRouteImport } from './routes/growth'
 import { Route as LoginRouteImport } from './routes/login'
@@ -37,6 +38,11 @@ const AccessRoute = AccessRouteImport.update({
 const CompaniesRoute = CompaniesRouteImport.update({
   id: '/companies',
   path: '/companies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DistributeRoute = DistributeRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
   '/growth': typeof GrowthRoute
   '/login': typeof LoginRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
   '/growth': typeof GrowthRoute
   '/login': typeof LoginRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
   '/growth': typeof GrowthRoute
   '/login': typeof LoginRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/companies'
+    | '/demo'
     | '/distribute'
     | '/growth'
     | '/login'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/companies'
+    | '/demo'
     | '/distribute'
     | '/growth'
     | '/login'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/companies'
+    | '/demo'
     | '/distribute'
     | '/growth'
     | '/login'
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessRoute: typeof AccessRoute
   CompaniesRoute: typeof CompaniesRoute
+  DemoRoute: typeof DemoRoute
   DistributeRoute: typeof DistributeRoute
   GrowthRoute: typeof GrowthRoute
   LoginRoute: typeof LoginRoute
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/companies'
       fullPath: '/companies'
       preLoaderRoute: typeof CompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/distribute': {
@@ -319,6 +339,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRoute: AccessRoute,
   CompaniesRoute: CompaniesRoute,
+  DemoRoute: DemoRoute,
   DistributeRoute: DistributeRoute,
   GrowthRoute: GrowthRoute,
   LoginRoute: LoginRoute,

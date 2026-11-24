@@ -23,9 +23,11 @@ import {
   Video,
 } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
-import { transformContent, type TransformInput } from "@/lib/transform-fn";
+import { transformContent, type TransformInput, type TransformOutput } from "@/lib/transform-fn";
 import supabase, { accessToken } from "@/lib/supabase";
 import { useEscape } from "@/lib/use-escape";
+import { isDemo } from "@/demo/mode";
+import { demoLiveTransform, demoTransform, LIVE_LIMIT, liveUsed } from "@/demo/generate";
 
 export const Route = createFileRoute("/transform")({
   component: () => (
@@ -814,6 +816,8 @@ function TransformPage() {
   const [showSaveInput, setShowSaveInput] = useState(false);
   const ctxMenuRef = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [demo] = useState(isDemo);
+  const [liveMode, setLiveMode] = useState(false);
   useEscape(showHistory, () => setShowHistory(false));
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
 
@@ -912,7 +916,17 @@ function TransformPage() {
     return `Targeting: ${titles} at ${size} companies in ${ind}`;
   }, [ws]);
 
-  async function callTransform(input: TransformInput) {
+  async function callTransform(input: TransformInput): Promise<TransformOutput> {
+    if (isDemo()) {
+      if (liveMode && !input.refine && !input.regenerate) {
+        const live = await demoLiveTransform((i) => transformContent({ data: i }), input);
+        if (live) return { [JSON_KEY[input.format as TabKey]]: live };
+        toast.message("Showing a prewritten example", {
+          description: "Live generation is not available right now, so this is a cached output.",
+        });
+      }
+      return demoTransform(input, playId);
+    }
     const data = await transformContent({ data: { ...input, token: await accessToken() } });
     if (data.error) throw new Error(data.error);
     return data;
@@ -930,7 +944,7 @@ function TransformPage() {
       setError("Please upload a document or paste your content.");
       return;
     }
-    if (!file && text.trim().length < 40) {
+    if (!file && text.trim().length < (isDemo() && liveMode ? 8 : 40)) {
       setError("Add a little more to work with. A few sentences is enough.");
       return;
     }
@@ -1566,6 +1580,7 @@ function TransformPage() {
 
                 <button
                   type="button"
+                  data-tour="generate"
                   onClick={transform}
                   disabled={loading}
                   style={{
@@ -1591,6 +1606,34 @@ function TransformPage() {
                   <Sparkles size={19} strokeWidth={1.9} aria-hidden="true" />
                   {loading ? "Generating..." : `Generate ${tab === "Post" ? "Posts" : tab}`}
                 </button>
+                {demo && (
+                  <div className="tf-demo-live">
+                    {liveMode ? (
+                      <span>
+                        Live mode: type a topic in a sentence or two, then Generate.{" "}
+                        {Math.max(0, LIVE_LIMIT - liveUsed())} of {LIVE_LIMIT} live generations
+                        left.{" "}
+                        <button type="button" onClick={() => setLiveMode(false)}>
+                          Use the example
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={liveUsed() >= LIVE_LIMIT}
+                        onClick={() => {
+                          setLiveMode(true);
+                          setText("");
+                          setError("");
+                        }}
+                      >
+                        {liveUsed() >= LIVE_LIMIT
+                          ? "Live topics used up for this visit"
+                          : "Try your own topic"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1808,6 +1851,7 @@ function TransformPage() {
               {/* Right output panel */}
               <div
                 className="sx-glass"
+                data-tour="output"
                 style={{
                   borderRadius: 28,
                   display: "flex",

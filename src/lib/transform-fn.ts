@@ -204,8 +204,8 @@ function stripEmDashes(obj: TransformOutput): TransformOutput {
 }
 
 export const transformContent = createServerFn({ method: "POST" })
-  .inputValidator((v: TransformInput & { token?: string }) =>
-    checkPayload<TransformInput & { token?: string }>(v, 15_000_000),
+  .inputValidator((v: TransformInput & { token?: string; demo?: boolean }) =>
+    checkPayload<TransformInput & { token?: string; demo?: boolean }>(v, 15_000_000),
   )
   .handler(async ({ data }): Promise<TransformOutput> => {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
@@ -214,7 +214,16 @@ export const transformContent = createServerFn({ method: "POST" })
     if (!apiKey || apiKey === "your-api-key-here") {
       return { error: "ANTHROPIC_API_KEY is not configured." };
     }
-    if (!(await isSignedIn(data.token)))
+    // The public demo may make a small live generation only when the owner turns it on with DEMO_LIVE_GENERATION=true.
+    const demoAllowed =
+      data.demo === true &&
+      process.env.DEMO_LIVE_GENERATION === "true" &&
+      !data.refine &&
+      !data.pdfBase64 &&
+      !!data.format &&
+      (data.content ?? "").length <= 600;
+    if (data.demo && !demoAllowed) return { error: "Live generation is off for the demo." };
+    if (!demoAllowed && !(await isSignedIn(data.token)))
       return { error: "Your session has expired. Sign in again." };
 
     const client = new Anthropic({ apiKey });

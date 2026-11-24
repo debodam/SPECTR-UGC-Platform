@@ -1,8 +1,15 @@
+import { isDemo } from "@/demo/mode";
+import { GUIDED_PROMPTS } from "@/demo/seed/content";
 import type { Workspace } from "./spectr-store";
 import type { Play, PlayType } from "./growth-types";
 
 /** Questions to speak to while recording a play, specific to the play type and workspace. */
 export function guidedPrompts(play: Play, ws: Workspace): string[] {
+  // The demo's plays come with their own written prompts.
+  if (isDemo()) {
+    const seeded = GUIDED_PROMPTS[play.id.replace(/^demo-/, "")];
+    if (seeded?.length) return seeded;
+  }
   const company = ws.companyName || "your company";
   const sector = ws.industry || "your market";
   const role = (ws.audience.jobTitles.split(/[,;/]/)[0] || "your buyers").trim();

@@ -44,11 +44,15 @@ const DAY = 86_400_000;
 const compact = (n: number) =>
   n >= 10_000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K` : Math.round(n).toLocaleString();
 
-/** Weekly impression totals for the last 7 weeks (oldest first), from logged Results entries. */
+/**
+ * Impression totals for the last 7 rolling 7-day windows (oldest first), from logged Results entries.
+ * Rolling windows avoid a misleading "0, down 100%" early in a calendar week.
+ */
 function weeklyImpressions(entries: { date: string; impressions: number }[], now = new Date()) {
-  const thisWeek = new Date(weekStartOf(now) + "T00:00:00").getTime();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const windowStart = today - 6 * DAY;
   return Array.from({ length: 7 }, (_, i) => {
-    const start = thisWeek - (6 - i) * 7 * DAY;
+    const start = windowStart - (6 - i) * 7 * DAY;
     return entries
       .filter((e) => {
         const t = new Date(e.date + "T00:00:00").getTime();
@@ -397,7 +401,7 @@ function Dashboard() {
                           </div>
                         )}
                       </div>
-                      <div className="db-note">This week vs last week</div>
+                      <div className="db-note">Last 7 days vs the 7 before</div>
                       <svg
                         aria-hidden="true"
                         className="db-spark"
@@ -671,7 +675,7 @@ function Dashboard() {
                             <div className="db-draft-title">
                               {d.content
                                 .split("\n")
-                                .find((l) => l.trim())
+                                .find((l) => l.trim() && !/^option \d+\s*$/i.test(l.trim()))
                                 ?.replace(/^#+\s*/, "")
                                 .slice(0, 60) || "Untitled draft"}
                             </div>

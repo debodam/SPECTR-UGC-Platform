@@ -64,10 +64,13 @@ function Welcome() {
             Record it, transform it, publish it. SPECTR takes your raw knowledge and turns it into
             publish-ready articles, posts, and video scripts.
           </p>
-          <div style={{ marginTop: 44 }}>
+          <div className="lp-ctas" style={{ marginTop: 44 }}>
             <button type="button" className="lp-cta" onClick={tryNow}>
               Try SPECTR now
             </button>
+            <a href="/demo" className="lp-cta lp-cta--ghost">
+              Try the demo
+            </a>
           </div>
         </section>
 

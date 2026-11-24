@@ -5,6 +5,8 @@ import { emptyGrowthPrefs, useApp } from "@/lib/spectr-store";
 import { Building2, Trash2, Plus, LogOut, LoaderCircle } from "lucide-react";
 import { friendlyError } from "@/lib/utils";
 import { useEscape } from "@/lib/use-escape";
+import { DEMO_TIP, exitDemo, isDemo } from "@/demo/mode";
+import { toast } from "sonner";
 
 interface Company {
   id: string;
@@ -163,6 +165,10 @@ function CompanyCircle({
             aria-label={`Delete ${company.name}`}
             onClick={(e) => {
               e.stopPropagation();
+              if (isDemo()) {
+                toast(DEMO_TIP);
+                return;
+              }
               onTrash();
             }}
             style={{
@@ -566,6 +572,7 @@ function CompaniesPage() {
         <button
           type="button"
           onClick={async () => {
+            if (isDemo()) return exitDemo();
             await supabase.auth.signOut();
             localStorage.removeItem("spectr-access-verified");
             navigate({ to: "/access" });
