@@ -25,7 +25,7 @@ await build({
   entryPoints: [resolve(root, "dist/server/server.js")],
   bundle: true,
   platform: "node",
-  target: "node20",
+  target: "node22",
   format: "cjs",
   outfile: `${funcDir}/server.cjs`,
   external: ["node:*"],
@@ -108,7 +108,7 @@ writeFileSync(
   `${funcDir}/.vc-config.json`,
   JSON.stringify(
     {
-      runtime: "nodejs20.x",
+      runtime: "nodejs22.x",
       handler: "index.js",
       launcherType: "Nodejs",
       supportsResponseStreaming: false,

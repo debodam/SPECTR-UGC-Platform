@@ -57,7 +57,7 @@ The repo already has `vercel.json` and `scripts/build-vercel.mjs`. The build cre
    - Build Command: `node scripts/build-vercel.mjs`
    - Output Directory: `.vercel/output`
    - Install Command: `npm install` (the default)
-3. **Node.js version:** go to Project Settings > General and choose **20.x or newer**. The server function itself runs on Node 20.
+3. **Node.js version:** go to Project Settings > General and choose **22.x**. The server function runs on Node 22 (Vercel has retired Node 20).
 4. **Environment variables:** go to Project Settings > Environment Variables. Add the five variables from section 1 for **Production** and **Preview**. Mark `ANTHROPIC_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` as Sensitive.
 5. **Production branch:** go to Project Settings > Git and set Production Branch to **`main`**.
 6. **Redeploy:** go to Deployments, open the latest one, then choose ... > Redeploy, so the new variables apply.
