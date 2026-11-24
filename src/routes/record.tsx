@@ -1,20 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AppHeader, AppRail } from "@/components/spectr/AppChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Check,
-  Download,
-  ChevronDown,
-  LogOut,
-  ChevronsUpDown,
-  Bell,
-  Mic,
-  House,
-  Sparkles,
-  ChartNoAxesColumn,
-  Calendar,
-  Settings as SettingsIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { Check, Download, ChevronDown, Mic } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
@@ -164,17 +151,6 @@ interface TranscriptLog {
   duration_seconds: number;
   created_at: string;
 }
-
-// --- Nav ---
-
-const NAV_ITEMS: { label: string; to: string; icon: LucideIcon; active?: boolean }[] = [
-  { label: "Growth", to: "/", icon: House },
-  { label: "Transform", to: "/transform", icon: Sparkles },
-  { label: "Record", to: "/record", icon: Mic, active: true },
-  { label: "Results", to: "/results", icon: ChartNoAxesColumn },
-  { label: "Distribute", to: "/distribute", icon: Calendar },
-  { label: "Settings", to: "/settings", icon: SettingsIcon },
-];
 
 // --- Log Entry ---
 
@@ -511,11 +487,6 @@ function RecordPage() {
     navigate({ to: "/transform", search: playId ? { play: playId } : {} });
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/login" });
-  };
-
   const isRec = recording;
   const isDone = !recording && !!transcript;
   const orbState: OrbState = micDenied
@@ -529,161 +500,15 @@ function RecordPage() {
   const hasLogs = logs.length > 0;
 
   const userName = state.user?.name ?? "";
-  const userInitials =
-    userName
-      .split(/\s+/)
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "U";
-  const companyInitial = (ws.companyName || "C")[0].toUpperCase();
 
   return (
     <div className="sx-shell">
-      {/* Left rail */}
-      <aside className="sx-rail">
-        <Link to="/welcome" className="sx-rail-logo" aria-label="SPECTR home" title="SPECTR home">
-          <svg width="22" height="22" viewBox="0 0 24 24">
-            <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
-            <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
-          </svg>
-        </Link>
-        <nav className="sx-rail-nav">
-          {NAV_ITEMS.map((n) => (
-            <button
-              key={n.label}
-              type="button"
-              aria-label={n.label}
-              title={n.label}
-              onClick={() => navigate({ to: n.to as string })}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                border: 0,
-                padding: 0,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "inherit",
-                background: n.active ? "#0a66c2" : "transparent",
-                color: n.active ? "#ffffff" : "rgba(255,255,255,0.9)",
-                boxShadow: n.active ? "0 8px 20px rgba(6,42,92,0.35)" : "none",
-              }}
-            >
-              <n.icon size={22} strokeWidth={1.8} aria-hidden="true" />
-            </button>
-          ))}
-        </nav>
-        <button
-          type="button"
-          className="sx-rail-out"
-          aria-label="Log out"
-          title="Log out"
-          onClick={handleLogout}
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            border: "1px solid rgba(255,255,255,0.4)",
-            background: "transparent",
-            color: "#ffffff",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 0,
-          }}
-        >
-          <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
-        </button>
-      </aside>
+      <AppRail active="/record" />
 
-      {/* Header */}
-      <header className="sx-header">
-        <div className="sx-header-title">
-          <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em", lineHeight: 1.1 }}>
-            Record
-          </div>
-          <div
-            className="sx-hide-sm"
-            style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}
-          >
-            Record audio and get a live transcript directly in your browser.
-          </div>
-        </div>
-        <div className="sx-header-actions">
-          <button
-            type="button"
-            style={{
-              height: 44,
-              padding: "0 14px 0 8px",
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.4)",
-              background: "rgba(255,255,255,0.14)",
-              color: "#ffffff",
-              fontFamily: "inherit",
-              fontSize: 15,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              cursor: "pointer",
-            }}
-          >
-            <span
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                background: "#ffffff",
-                color: "#0a66c2",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 13,
-                fontWeight: 700,
-              }}
-            >
-              {companyInitial}
-            </span>
-            <span className="sx-hide-sm">{ws.companyName || "Company"}</span>
-            <ChevronsUpDown size={16} strokeWidth={2} aria-hidden="true" />
-          </button>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              height: 44,
-              padding: "0 5px 0 14px",
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.4)",
-              background: "rgba(255,255,255,0.14)",
-            }}
-          >
-            <Bell size={20} strokeWidth={1.8} color="#ffffff" aria-hidden="true" />
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: "50%",
-                background: "linear-gradient(145deg,#ffffff,#b9d6f8)",
-                color: "#0a4a94",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 13,
-                fontWeight: 700,
-                marginLeft: 6,
-              }}
-            >
-              {userInitials}
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        title="Record"
+        subtitle="Record audio and get a live transcript directly in your browser."
+      />
 
       <main className="sx-main sx-fit sx-fit-rc">
         <div className="sx-page">

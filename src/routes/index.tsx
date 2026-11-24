@@ -1,34 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { errMessage } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, ArrowUp, ArrowUpRight, ChartNoAxesColumn, File, Plus } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
-import {
-  LogOut,
-  ChevronsUpDown,
-  Bell,
-  ChartNoAxesColumn,
-  House,
-  Sparkles,
-  Mic,
-  Calendar,
-  Settings as SettingsIcon,
-  RefreshCw,
-  Target,
-  FlaskConical,
-  Lightbulb,
-  CircleAlert,
-} from "lucide-react";
 import { MicHalo } from "@/components/spectr/MicHalo";
-import { PlayCard, InsightRow, ExperimentSummary, nextStep } from "@/components/spectr/GrowthCards";
+import { AppHeader, AppRail } from "@/components/spectr/AppChrome";
+import { FormatChip, StatusChip } from "@/components/spectr/GrowthCards";
 import { useGrowth } from "@/lib/use-growth";
-import { advancePlay, createExperiment, isLocalMode, type RepoCtx } from "@/lib/growth-repo";
-import { applyInsight, createGrowthPlan } from "@/lib/growth-service";
-import { ExperimentDialog } from "@/components/spectr/ExperimentDialog";
-import type { Insight } from "@/lib/growth-types";
-import { computeForecast, formatMetric } from "@/lib/growth-forecast";
-import type { Play } from "@/lib/growth-types";
+import { advancePlay, type RepoCtx } from "@/lib/growth-repo";
+import { createGrowthPlan } from "@/lib/growth-service";
+import { computeForecast } from "@/lib/growth-forecast";
+import { weekStartOf, type Play } from "@/lib/growth-types";
+import { errMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({ component: RootPage });
 
@@ -52,572 +35,699 @@ function RootPage() {
   if (state.authLoading) return <div style={{ minHeight: "100vh" }} />;
   if (!state.isAuthenticated || !state.setupComplete) return null;
 
-  return <GrowthHome />;
+  return <Dashboard />;
 }
 
-/* ─────────────────── Nav definitions ─────────────────── */
-const NAV_ITEMS = [
-  { to: "/", label: "Growth", icon: House },
-  { to: "/transform", label: "Transform", icon: Sparkles },
-  { to: "/record", label: "Record", icon: Mic },
-  { to: "/results", label: "Results", icon: ChartNoAxesColumn },
-  { to: "/distribute", label: "Distribute", icon: Calendar },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
-] as const;
+/* ─────────────────── Helpers ─────────────────── */
+const DAY = 86_400_000;
+const compact = (n: number) =>
+  n >= 10_000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K` : Math.round(n).toLocaleString();
 
-function initials(name?: string | null) {
-  if (!name) return "?";
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+/** Weekly impression totals for the last 7 weeks (oldest first), from logged Results entries. */
+function weeklyImpressions(entries: { date: string; impressions: number }[], now = new Date()) {
+  const thisWeek = new Date(weekStartOf(now) + "T00:00:00").getTime();
+  return Array.from({ length: 7 }, (_, i) => {
+    const start = thisWeek - (6 - i) * 7 * DAY;
+    return entries
+      .filter((e) => {
+        const t = new Date(e.date + "T00:00:00").getTime();
+        return t >= start && t < start + 7 * DAY;
+      })
+      .reduce((s, e) => s + e.impressions, 0);
+  });
 }
 
-const weekLabel = (iso?: string) =>
-  iso
-    ? new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : "";
+function sparklinePath(data: number[], W = 240, H = 72) {
+  const mn = Math.min(...data),
+    mx = Math.max(...data);
+  const span = mx - mn || 1;
+  const pts: [number, number][] = data.map((v, i) => [
+    i * (W / (data.length - 1)),
+    H - 8 - ((v - mn) / span) * (H - 16),
+  ]);
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i],
+      p1 = pts[i],
+      p2 = pts[i + 1],
+      p3 = pts[i + 2] ?? p2;
+    d += ` C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  return { line: d, area: d + ` L${W} ${H} L0 ${H} Z`, last: pts[pts.length - 1] };
+}
 
-/* ─────────────────── Growth home ─────────────────── */
-function GrowthHome() {
+interface QueueRow {
+  date: string;
+  status: string;
+}
+interface DraftRow {
+  id: string;
+  format: string;
+  content: string;
+}
+
+/* ─────────────────── Dashboard ─────────────────── */
+function Dashboard() {
   const { state } = useApp();
   const navigate = useNavigate();
   const ws = state.workspace;
   const firstName = state.user?.name?.split(" ")[0] || "there";
-  const compName = ws.companyName || "";
   const ctx: RepoCtx | null = useMemo(
     () =>
       ws.companyId && state.user?.id ? { companyId: ws.companyId, userId: state.user.id } : null,
     [ws.companyId, state.user?.id],
   );
   const g = useGrowth(ctx);
-  const [building, setBuilding] = useState(false);
-  const [expPlay, setExpPlay] = useState<Play | null>(null);
-  const [applying, setApplying] = useState<string | null>(null);
 
-  const startExperiment = async (
-    e: Parameters<React.ComponentProps<typeof ExperimentDialog>["onCreate"]>[0],
-  ) => {
-    if (!ctx || !expPlay) return;
-    await createExperiment(ctx, { playId: expPlay.id, ...e });
-    setExpPlay(null);
-    toast.success("Experiment started", {
-      description: "Publish both hooks, then log each one's numbers in Results.",
-    });
-    await g.reload();
-  };
-
-  const apply = async (i: Insight) => {
-    if (!ctx || !g.plan) return;
-    setApplying(i.id);
-    try {
-      toast.success("Plan updated", { description: await applyInsight(ctx, g.plan, i) });
-      await g.reload();
-    } catch (e) {
-      toast.error("Could not apply", { description: errMessage(e) });
-    } finally {
-      setApplying(null);
+  // Quick record on the hero orb; the full recorder lives on Record.
+  const [isRec, setIsRec] = useState(false);
+  const [secs, setSecs] = useState(0);
+  const ivRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(
+    () => () => {
+      if (ivRef.current) clearInterval(ivRef.current);
+    },
+    [],
+  );
+  const handleMic = () => {
+    if (isRec) {
+      if (ivRef.current) clearInterval(ivRef.current);
+      setIsRec(false);
+      navigate({ to: "/record" });
+    } else {
+      setIsRec(true);
+      setSecs(0);
+      ivRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
     }
   };
+  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("spectr-access-verified");
-    navigate({ to: "/access" });
-  };
-
-  const buildPlan = async (regenerate: boolean) => {
+  // A workspace that finished setup before plans existed gets its plan built here, once, with no button.
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState("");
+  const autoRan = useRef(false);
+  const generate = async () => {
     if (!ctx) return;
-    setBuilding(true);
+    setGenerating(true);
+    setGenError("");
     try {
-      const r = await createGrowthPlan(ctx, ws, { regenerate });
-      toast.success(regenerate ? "Plan regenerated" : "Your growth plan is ready", {
-        description:
-          r.source === "fallback"
-            ? "Built from your workspace inputs. AI was unavailable."
-            : undefined,
-      });
+      await createGrowthPlan(ctx, ws);
       await g.reload();
     } catch (e) {
-      toast.error("Could not build your plan", { description: errMessage(e) });
+      setGenError(errMessage(e) ?? "Could not build your growth plan");
     } finally {
-      setBuilding(false);
+      setGenerating(false);
     }
   };
+  useEffect(() => {
+    if (g.status === "ready" && !g.plan && ctx && !autoRan.current) {
+      autoRan.current = true;
+      generate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [g.status, g.plan, ctx]);
 
-  const goStep = async (p: Play) => {
-    const step = nextStep(p);
-    if (ctx && p.status === "suggested")
-      await advancePlay(ctx, p.id, "in progress").catch(() => {});
-    navigate({ to: step.to, search: { play: p.id } });
-  };
+  // Queue and drafts for the Distribute and Ready to publish cards.
+  const [queue, setQueue] = useState<QueueRow[]>([]);
+  const [drafts, setDrafts] = useState<DraftRow[]>([]);
+  useEffect(() => {
+    if (!ctx) return;
+    supabase
+      .from("queue_items")
+      .select("date, status")
+      .eq("company_id", ctx.companyId)
+      .then(({ data }) => setQueue((data ?? []) as QueueRow[]));
+    supabase
+      .from("generations")
+      .select("id, format, content")
+      .eq("company_id", ctx.companyId)
+      .eq("user_id", ctx.userId)
+      .order("created_at", { ascending: false })
+      .limit(2)
+      .then(({ data }) => setDrafts((data ?? []) as DraftRow[]));
+  }, [ctx]);
+
+  const entries = g.entries;
+  const weeks = useMemo(() => weeklyImpressions(entries), [entries]);
+  const thisWeekImp = weeks[6],
+    lastWeekImp = weeks[5];
+  const impChange = lastWeekImp
+    ? Math.round(((thisWeekImp - lastWeekImp) / lastWeekImp) * 100)
+    : null;
+  const spark = sparklinePath(weeks);
+  const currentFollowers =
+    Number(ws.baseline.followers || 0) + entries.reduce((s, e) => s + e.followersGained, 0);
+  const recent = entries.slice(0, 8);
+  const avgEng = recent.length
+    ? Math.round((recent.reduce((s, e) => s + e.engagementRate, 0) / recent.length) * 10) / 10
+    : 0;
 
   const forecast = useMemo(
     () =>
-      g.plan
-        ? computeForecast({
-            key: g.plan.northStarKey,
-            label: g.plan.northStarMetric,
-            ws,
-            entries: g.entries,
-            planCreatedAt: g.plan.createdAt,
-          })
-        : null,
-    [g.plan, ws, g.entries],
+      computeForecast({
+        key: g.plan?.northStarKey ?? "followers",
+        label: g.plan?.northStarMetric ?? "LinkedIn followers",
+        ws,
+        entries,
+        planCreatedAt: g.plan?.createdAt,
+      }),
+    [g.plan, ws, entries],
   );
+  const followerTarget = Number(ws.targets.followers || 0);
+  const goalPct = followerTarget ? Math.min(1, currentFollowers / followerTarget) : 0;
+  const goalDash = (() => {
+    const C = 2 * Math.PI * 56;
+    return `${(C * goalPct).toFixed(1)} ${C.toFixed(1)}`;
+  })();
+  const programWeek = g.plan
+    ? Math.min(
+        12,
+        Math.max(
+          1,
+          Math.floor((Date.now() - new Date(g.plan.createdAt).getTime()) / (7 * DAY)) + 1,
+        ),
+      )
+    : 1;
+  const onTrack = forecast.state === "ok" && forecast.projectedPct >= 100;
 
-  const expByPlay = useMemo(
-    () => new Map(g.experiments.map((e) => [e.playId, e])),
-    [g.experiments],
-  );
-  const latestExp = g.experiments[0];
-  const latestInsight = g.insights.find((i) => !i.applied) ?? g.insights[0];
-  const done = g.plays.filter((p) => p.status !== "suggested").length;
+  const monday = new Date(weekStartOf() + "T00:00:00");
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const week = ["M", "T", "W", "T", "F", "S", "S"].map((name, i) => {
+    const day = new Date(monday.getTime() + i * DAY).toISOString().slice(0, 10);
+    return { name, count: queue.filter((q) => q.date === day).length, isToday: day === todayIso };
+  });
+  const plannedThisWeek = week.reduce((s, d) => s + d.count, 0);
+
+  const startPlay = async (p: Play) => {
+    if (ctx && p.status === "suggested")
+      await advancePlay(ctx, p.id, "in progress").catch(() => {});
+    navigate({ to: "/record", search: { play: p.id } });
+  };
+
+  const planLoading = g.status === "loading" || generating;
+  const topPlays = g.plays.slice(0, 3);
+  const go = (to: "/results" | "/growth" | "/distribute" | "/transform") => () => navigate({ to });
+  const goKey =
+    (to: "/results" | "/growth" | "/distribute" | "/transform") => (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") navigate({ to });
+    };
 
   return (
     <div className="sx-shell">
-      {/* ── Left rail ── */}
-      <aside className="sx-rail">
-        <Link to="/welcome" className="sx-rail-logo" aria-label="SPECTR home" title="SPECTR home">
-          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24">
-            <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
-            <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
-          </svg>
-        </Link>
-        <nav className="sx-rail-nav">
-          {NAV_ITEMS.map((n) => {
-            const isActive = n.to === "/";
-            return (
-              <button
-                key={n.label}
-                type="button"
-                aria-label={n.label}
-                title={n.label}
-                onClick={() => navigate({ to: n.to })}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  border: 0,
-                  padding: 0,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: "inherit",
-                  ...(isActive
-                    ? {
-                        background: "#0a66c2",
-                        color: "#ffffff",
-                        boxShadow: "0 8px 20px rgba(6,42,92,0.35)",
-                      }
-                    : { background: "transparent", color: "rgba(255,255,255,0.9)" }),
-                }}
-              >
-                <n.icon size={22} strokeWidth={1.8} aria-hidden="true" />
-              </button>
-            );
-          })}
-        </nav>
-        <button
-          type="button"
-          className="sx-rail-out"
-          aria-label="Log out"
-          title="Log out"
-          onClick={logout}
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            border: "1px solid rgba(255,255,255,0.4)",
-            background: "transparent",
-            color: "#ffffff",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 0,
-            fontFamily: "inherit",
-          }}
-        >
-          <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
-        </button>
-      </aside>
+      <AppRail active="/" />
+      <AppHeader title={`Hi, ${firstName}`} />
 
-      {/* ── Header ── */}
-      <header className="sx-header">
-        <div className="sx-header-title">
-          <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em", lineHeight: 1.1 }}>
-            Growth
-          </div>
-          <div
-            className="sx-hide-sm"
-            style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}
-          >
-            Hi {firstName}. Here is your plan and this week's plays.
-          </div>
-        </div>
-        <div className="sx-header-actions">
-          <button
-            type="button"
-            onClick={() => navigate({ to: "/companies" })}
-            style={{
-              height: 44,
-              padding: "0 14px 0 8px",
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.4)",
-              background: "rgba(255,255,255,0.14)",
-              color: "#ffffff",
-              fontFamily: "inherit",
-              fontSize: 15,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              cursor: "pointer",
-            }}
-          >
-            <span
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                background: "#ffffff",
-                color: "#0a66c2",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
-              {initials(compName)}
-            </span>
-            <span
-              className="sx-hide-sm"
-              style={{
-                maxWidth: 160,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {compName || "Select company"}
-            </span>
-            <ChevronsUpDown size={16} strokeWidth={2} aria-hidden="true" />
-          </button>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              height: 44,
-              padding: "0 5px 0 14px",
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.4)",
-              background: "rgba(255,255,255,0.14)",
-            }}
-          >
-            <Bell size={20} strokeWidth={1.8} color="#ffffff" aria-hidden="true" />
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: "50%",
-                background: "linear-gradient(145deg,#ffffff,#b9d6f8)",
-                color: "#0a4a94",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 13,
-                fontWeight: 700,
-                marginLeft: 6,
-              }}
-            >
-              {initials(state.user?.name)}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="sx-main">
-        <div className="sx-page gh-page">
-          {g.status === "loading" && <GrowthSkeleton />}
-
-          {g.status === "error" && (
-            <div className="sx-glass gh-state" role="alert">
-              <CircleAlert size={28} aria-hidden="true" />
-              <div className="gh-state-title">We could not load your growth plan</div>
-              <div className="gh-state-sub">{g.error}</div>
-              <button type="button" className="gh-btn gh-btn--primary" onClick={() => g.reload()}>
-                Try again
-              </button>
-            </div>
-          )}
-
-          {g.status === "ready" && !g.plan && (
-            <div className="sx-glass gh-state">
-              <Target size={30} aria-hidden="true" />
-              <div className="gh-state-title">Let's build your growth plan</div>
-              <div className="gh-state-sub">
-                SPECTR turns your goal, audience and targets into a north star, content pillars and
-                this week's plays. It takes a few seconds.
+      <main className="sx-main sx-fit sx-fit-db">
+        <div className="sx-page">
+          <div className="db-layout">
+            <div className="db-left">
+              <div style={{ width: "100%" }}>
+                <MicHalo state={isRec ? "recording" : "idle"} onClick={handleMic} />
+                <div style={{ marginTop: 14, textAlign: "center" }}>
+                  <div
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 600,
+                      letterSpacing: "-0.01em",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 10,
+                    }}
+                    aria-live="polite"
+                  >
+                    {isRec && <span className="mo-status-dot" aria-hidden="true" />}
+                    {isRec ? "Recording" : "Tap to record"}
+                    {isRec && (
+                      <span
+                        style={{
+                          fontWeight: 500,
+                          fontVariantNumeric: "tabular-nums",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        {mm}:{ss}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.88)" }}>
+                    {isRec ? "Tap the mic to stop" : "Turn a conversation into LinkedIn content"}
+                  </div>
+                </div>
               </div>
-              <button
-                type="button"
-                className="gh-btn gh-btn--primary"
-                disabled={building}
-                onClick={() => buildPlan(false)}
-              >
-                {building ? "Building your plan" : "Build my growth plan"}
-              </button>
-            </div>
-          )}
 
-          {g.status === "ready" && g.plan && forecast && (
-            <>
-              <div className="gh-top">
-                {/* Goal and forecast */}
-                <section className="sx-glass gh-goal" aria-labelledby="gh-goal-h">
-                  <div className="gh-section-head">
-                    <div>
-                      <div className="gh-eyebrow">North star</div>
-                      <h2 id="gh-goal-h" className="gh-h2">
-                        {g.plan.northStarMetric}
-                      </h2>
+              {/* ── Growth plan card ── */}
+              <section className="sx-glass gp-card" aria-labelledby="gp-h" data-tour="growth-card">
+                <div className="gp-head">
+                  <h2 id="gp-h" className="gp-title">
+                    Growth plan
+                  </h2>
+                  {g.plan && <span className="gp-metric">{g.plan.northStarMetric}</span>}
+                </div>
+                {planLoading ? (
+                  <div
+                    aria-busy="true"
+                    aria-label={
+                      generating ? "Building your growth plan" : "Loading your growth plan"
+                    }
+                  >
+                    <div className="gp-sub">
+                      {generating
+                        ? "Building your plan from your goals and audience"
+                        : "Loading your plan"}
+                    </div>
+                    <div className="tf-sk gh-sk" style={{ height: 8, marginTop: 12 }} />
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="tf-sk gh-sk"
+                        style={{ height: 22, marginTop: 10, width: `${90 - i * 12}%` }}
+                      />
+                    ))}
+                  </div>
+                ) : genError || g.status === "error" ? (
+                  <div role="alert">
+                    <div className="gp-sub">
+                      We could not load your growth plan. {genError || g.error}
                     </div>
                     <button
                       type="button"
-                      className="gh-btn gh-btn--ghost"
-                      disabled={building}
-                      onClick={() => buildPlan(true)}
+                      className="gh-btn gh-btn--small"
+                      style={{ marginTop: 10 }}
+                      onClick={() => (genError ? generate() : g.reload())}
                     >
-                      <RefreshCw
-                        size={15}
-                        className={building ? "animate-spin" : ""}
-                        aria-hidden="true"
-                      />
-                      {building ? "Regenerating" : "Regenerate plan"}
+                      Try again
                     </button>
                   </div>
-                  <p className="gh-goal-summary">{g.plan.goalSummary}</p>
-                  {forecast.state === "no-target" ? (
-                    <div className="gh-forecast-note">
-                      {forecast.sentence}{" "}
-                      <Link to="/settings" className="gh-link">
-                        Open Settings
-                      </Link>
+                ) : g.plan ? (
+                  <>
+                    <div
+                      className="gh-progress"
+                      style={{ marginTop: 10 }}
+                      role="progressbar"
+                      aria-valuenow={Math.round(forecast.progressPct)}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label="Progress to target"
+                    >
+                      <div style={{ width: `${forecast.progressPct}%` }} />
                     </div>
+                    <div className="gp-forecast">{forecast.sentence}</div>
+                    <ul className="gp-plays" aria-label="This week's top plays">
+                      {topPlays.map((p) => (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            className="gp-play"
+                            onClick={() => startPlay(p)}
+                            aria-label={`Start play: ${p.title}`}
+                          >
+                            <span className="gp-play-title">{p.title}</span>
+                            <FormatChip format={p.format} />
+                            <StatusChip status={p.status} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      to="/growth"
+                      className="gh-btn gh-btn--primary gp-cta"
+                      data-tour="view-growth"
+                    >
+                      View full growth plan
+                      <ArrowRight size={16} aria-hidden="true" />
+                    </Link>
+                  </>
+                ) : null}
+              </section>
+            </div>
+
+            <div className="db-right">
+              <div className="db-cards">
+                {/* LinkedIn impressions */}
+                <div
+                  className="db-card sx-glass db-tile"
+                  role="link"
+                  tabIndex={0}
+                  onClick={go("/results")}
+                  onKeyDown={goKey("/results")}
+                >
+                  <div className="db-tile-head">
+                    <div className="db-tile-title">LinkedIn impressions</div>
+                    <div className="db-arrow">
+                      <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" />
+                    </div>
+                  </div>
+                  {entries.length ? (
+                    <>
+                      <div
+                        style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 10 }}
+                      >
+                        <div className="db-big">{compact(thisWeekImp)}</div>
+                        {impChange !== null && (
+                          <div className={`db-delta${impChange < 0 ? " is-down" : ""}`}>
+                            <ArrowUp size={12} strokeWidth={3} aria-hidden="true" />
+                            {Math.abs(impChange)}%
+                          </div>
+                        )}
+                      </div>
+                      <div className="db-note">This week vs last week</div>
+                      <svg
+                        aria-hidden="true"
+                        className="db-spark"
+                        width="100%"
+                        height="72"
+                        viewBox="0 0 240 72"
+                        preserveAspectRatio="none"
+                        style={{ display: "block", overflow: "visible" }}
+                      >
+                        <defs>
+                          <linearGradient id="spk" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stopColor="#ffffff" stopOpacity="0.38" />
+                            <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <path d={spark.area} fill="url(#spk)" />
+                        <path
+                          d={spark.line}
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx={spark.last[0]} cy={spark.last[1]} r="4.5" fill="#ffffff" />
+                      </svg>
+                      <div className="db-chips">
+                        <span>
+                          Followers <b>{currentFollowers.toLocaleString()}</b>
+                        </span>
+                        <span>
+                          Engagement <b>{avgEng}%</b>
+                        </span>
+                      </div>
+                    </>
                   ) : (
                     <>
-                      <div className="gh-goal-numbers">
-                        <span className="gh-big">
-                          {formatMetric(forecast.current, forecast.unit)}
-                        </span>
-                        <span className="gh-of">
-                          of {formatMetric(forecast.target, forecast.unit)} target
-                        </span>
-                      </div>
                       <div
-                        className="gh-progress"
-                        role="progressbar"
-                        aria-valuenow={Math.round(forecast.progressPct)}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label="Progress to target"
+                        className="db-big"
+                        style={{ marginTop: 18, color: "rgba(255,255,255,0.55)" }}
                       >
-                        <div style={{ width: `${forecast.progressPct}%` }} />
-                        {forecast.state === "ok" && (
-                          <i
-                            style={{ left: `${Math.min(100, forecast.projectedPct)}%` }}
-                            title="Projected"
-                          />
-                        )}
+                        0
                       </div>
-                      <div className="gh-forecast">
-                        <div className="gh-forecast-main">
-                          {forecast.sentence}
-                          {forecast.gapSentence ? ` ${forecast.gapSentence}` : ""}
-                        </div>
-                        {forecast.state === "ok" && (
-                          <div className="gh-forecast-note">{forecast.assumption}</div>
-                        )}
-                        {forecast.state === "starter" && (
-                          <Link to="/results" className="gh-link">
-                            Log a result
-                          </Link>
-                        )}
+                      <svg
+                        aria-hidden="true"
+                        className="db-spark"
+                        width="100%"
+                        height="72"
+                        viewBox="0 0 240 72"
+                        preserveAspectRatio="none"
+                        style={{ display: "block" }}
+                      >
+                        <path
+                          d="M0 56 H240"
+                          stroke="#ffffff"
+                          strokeOpacity="0.5"
+                          strokeWidth="2"
+                          strokeDasharray="3 7"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="db-empty">
+                        Stats show up after you log your first results.
                       </div>
                     </>
                   )}
-                  <div className="gh-pillars">
-                    {g.plan.pillars.map((p) => (
-                      <span key={p.name} className="gh-pillar-chip" title={p.description}>
-                        {p.name}
-                        <b>{p.share}%</b>
-                      </span>
-                    ))}
-                    <span className="gh-pillar-chip gh-pillar-chip--muted">
-                      {g.plan.cadencePerWeek} pieces a week
-                    </span>
-                  </div>
-                </section>
+                </div>
 
-                {/* Record entry */}
-                <section className="sx-glass gh-record" aria-label="Record">
-                  <div className="gh-record-orb">
-                    <MicHalo state="idle" onClick={() => navigate({ to: "/record" })} />
-                  </div>
-                  <div className="gh-record-title">Tap to record</div>
-                  <div className="gh-record-sub">
-                    Talk through an idea. SPECTR turns it into content.
-                  </div>
-                </section>
-              </div>
-
-              {/* This week's plays */}
-              <section aria-labelledby="gh-plays-h">
-                <div className="gh-section-head gh-section-head--bare">
-                  <div>
-                    <h2 id="gh-plays-h" className="gh-h2">
-                      This week's plays
-                    </h2>
-                    <div className="gh-sub">
-                      Week of {weekLabel(g.plays[0]?.weekStart)} · {done} of {g.plays.length}{" "}
-                      started · aim for {g.plan.cadencePerWeek} pieces this week
+                {/* 12-week goal */}
+                <div
+                  className="db-card sx-glass db-tile"
+                  role="link"
+                  tabIndex={0}
+                  onClick={go("/growth")}
+                  onKeyDown={goKey("/growth")}
+                >
+                  <div className="db-tile-head">
+                    <div className="db-tile-title">12-week goal</div>
+                    <div className="db-arrow">
+                      <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" />
                     </div>
+                  </div>
+                  {followerTarget ? (
+                    <>
+                      <div style={{ marginTop: 14, display: "flex", justifyContent: "center" }}>
+                        <div className="db-ring" style={{ position: "relative" }}>
+                          <svg
+                            aria-hidden="true"
+                            width="100%"
+                            height="100%"
+                            viewBox="0 0 132 132"
+                            style={{ transform: "rotate(-90deg)", display: "block" }}
+                          >
+                            <circle
+                              cx="66"
+                              cy="66"
+                              r="56"
+                              fill="none"
+                              stroke="#ffffff"
+                              strokeOpacity="0.22"
+                              strokeWidth="10"
+                            />
+                            <circle
+                              cx="66"
+                              cy="66"
+                              r="56"
+                              fill="none"
+                              stroke="#ffffff"
+                              strokeWidth="10"
+                              strokeLinecap="round"
+                              strokeDasharray={goalDash}
+                              style={{
+                                transition: "stroke-dasharray .8s ease",
+                                opacity: goalPct > 0 ? 1 : 0.3,
+                              }}
+                            />
+                          </svg>
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 34,
+                                fontWeight: 300,
+                                letterSpacing: "-0.02em",
+                                lineHeight: 1,
+                              }}
+                            >
+                              {Math.round(goalPct * 100)}%
+                            </div>
+                            <div
+                              style={{ marginTop: 4, fontSize: 12, color: "rgba(255,255,255,0.9)" }}
+                            >
+                              Week {programWeek} of 12
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 14,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 10,
+                        }}
+                      >
+                        <div style={{ fontSize: 14 }}>
+                          {currentFollowers.toLocaleString()} of {followerTarget.toLocaleString()}{" "}
+                          followers
+                        </div>
+                        <span
+                          className={`gh-chip ${onTrack ? "gh-chip--done" : forecast.state === "ok" ? "db-chip-behind" : "gh-chip--neutral"}`}
+                        >
+                          {onTrack
+                            ? "On track"
+                            : forecast.state === "ok"
+                              ? "Behind"
+                              : "Just started"}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ marginTop: 40, textAlign: "center" }}>
+                      <div className="db-empty-icon db-empty-icon--round">
+                        <ChartNoAxesColumn size={28} strokeWidth={1.6} aria-hidden="true" />
+                      </div>
+                      <div className="db-empty" style={{ marginTop: 16 }}>
+                        Set a follower target in Settings to track 12-week progress.
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Distribute */}
+                <div
+                  className="db-card sx-glass db-tile"
+                  role="link"
+                  tabIndex={0}
+                  onClick={go("/distribute")}
+                  onKeyDown={goKey("/distribute")}
+                >
+                  <div className="db-tile-head">
+                    <div className="db-tile-title">Distribute</div>
+                    <div className="db-arrow">
+                      <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" />
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 16 }}>
+                    <div className="db-plus">
+                      <Plus size={30} strokeWidth={2.2} aria-hidden="true" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em" }}>
+                        Create a post
+                      </div>
+                      <div style={{ marginTop: 3, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>
+                        {plannedThisWeek
+                          ? `${plannedThisWeek} planned this week`
+                          : "Nothing planned yet"}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 22, display: "flex", justifyContent: "space-between" }}>
+                    {week.map((d, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 7,
+                        }}
+                      >
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)" }}>
+                          {d.name}
+                        </div>
+                        <div
+                          className={`db-day${d.count ? " has-post" : ""}${d.isToday ? " is-today" : ""}`}
+                        >
+                          {d.count || ""}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                {g.plays.length ? (
-                  <div className="gh-plays">
-                    {g.plays.map((p) => (
-                      <PlayCard
-                        key={p.id}
-                        play={p}
-                        experiment={expByPlay.get(p.id)}
-                        onStep={goStep}
-                        onExperiment={setExpPlay}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="sx-glass gh-state gh-state--inline">
-                    <div className="gh-state-title">No plays for this week yet</div>
-                    <div className="gh-state-sub">
-                      Generate fresh plays from your plan and latest results.
-                    </div>
-                    <button
-                      type="button"
-                      className="gh-btn gh-btn--primary"
-                      disabled={building}
-                      onClick={() => buildPlan(true)}
-                    >
-                      {building ? "Generating" : "Generate this week's plays"}
-                    </button>
-                  </div>
-                )}
-              </section>
 
-              <div className="gh-bottom">
-                <section className="sx-glass gh-card" aria-labelledby="gh-exp-h">
-                  <div className="gh-card-head">
-                    <FlaskConical size={18} aria-hidden="true" />
-                    <h2 id="gh-exp-h" className="gh-h3">
-                      Latest experiment
-                    </h2>
-                  </div>
-                  {latestExp ? (
-                    <ExperimentSummary
-                      experiment={latestExp}
-                      play={g.allPlays.find((p) => p.id === latestExp.playId)}
-                    />
-                  ) : (
-                    <div className="gh-empty">
-                      Pick a play and choose Run as experiment to test two hooks against each other.
-                    </div>
-                  )}
-                </section>
-                <section className="sx-glass gh-card" aria-labelledby="gh-ins-h">
-                  <div className="gh-card-head">
-                    <Lightbulb size={18} aria-hidden="true" />
-                    <h2 id="gh-ins-h" className="gh-h3">
-                      Latest insight
-                    </h2>
-                  </div>
-                  {latestInsight ? (
-                    <InsightRow
-                      insight={latestInsight}
-                      onApply={apply}
-                      applying={applying === latestInsight.id}
-                    />
-                  ) : (
-                    <div className="gh-empty">
-                      Insights appear after you log results. They compare formats and pillars using
-                      your real numbers.
-                    </div>
-                  )}
-                  {g.insights.length > 1 && (
-                    <Link
-                      to="/results"
-                      className="gh-link"
-                      style={{ marginTop: 12, display: "inline-block" }}
+                {/* Ready to publish */}
+                <div
+                  className="db-card sx-glass db-tile"
+                  role="link"
+                  tabIndex={0}
+                  onClick={go("/transform")}
+                  onKeyDown={goKey("/transform")}
+                >
+                  <div className="db-tile-head">
+                    <div
+                      className="db-tile-title"
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
                     >
-                      See all insights
-                    </Link>
+                      Ready to publish
+                      {drafts.length > 0 && <span className="db-count">{drafts.length}</span>}
+                    </div>
+                    <div className="db-arrow">
+                      <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" />
+                    </div>
+                  </div>
+                  {drafts.length ? (
+                    <div
+                      style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}
+                    >
+                      {drafts.map((d) => (
+                        <div key={d.id} className="db-draft">
+                          <span className="db-draft-icon">
+                            <File size={18} strokeWidth={1.8} aria-hidden="true" />
+                          </span>
+                          <div style={{ minWidth: 0 }}>
+                            <div className="db-draft-title">
+                              {d.content
+                                .split("\n")
+                                .find((l) => l.trim())
+                                ?.replace(/^#+\s*/, "")
+                                .slice(0, 60) || "Untitled draft"}
+                            </div>
+                            <div
+                              style={{
+                                marginTop: 4,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                fontSize: 12.5,
+                              }}
+                            >
+                              <span className="gh-chip gh-chip--done">Draft</span>
+                              <span style={{ color: "rgba(255,255,255,0.88)" }}>
+                                {d.format === "Post" ? "Posts" : d.format}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ fontSize: 13.5, fontWeight: 600 }}>View all in History</div>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        marginTop: 22,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        textAlign: "center",
+                        gap: 12,
+                      }}
+                    >
+                      <div className="db-empty-icon">
+                        <File size={24} strokeWidth={1.8} aria-hidden="true" />
+                      </div>
+                      <div className="db-empty">
+                        No drafts yet. Record a take or paste a transcript to make your first one.
+                      </div>
+                    </div>
                   )}
-                </section>
-              </div>
-              {isLocalMode() && (
-                <div className="gh-local-note">
-                  Growth data is saved on this device until the growth database migration is
-                  applied.
                 </div>
-              )}
-            </>
-          )}
+              </div>
+
+              {/* ── Helper text + CTA ── */}
+              <div className="db-cta">
+                <div
+                  style={{
+                    fontSize: 14,
+                    lineHeight: 1.5,
+                    color: "rgba(255,255,255,0.9)",
+                    maxWidth: 380,
+                  }}
+                >
+                  {forecast.gapSentence ||
+                    (g.plan
+                      ? `Your plan calls for ${g.plan.cadencePerWeek} pieces a week. This week's plays are ready.`
+                      : "Ideas come from your goals and what your audience reacts to.")}
+                </div>
+                <button type="button" className="db-ideas" onClick={go("/growth")}>
+                  See ideas
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
-      {expPlay && (
-        <ExperimentDialog
-          play={expPlay}
-          onCancel={() => setExpPlay(null)}
-          onCreate={startExperiment}
-        />
-      )}
-    </div>
-  );
-}
-
-function GrowthSkeleton() {
-  return (
-    <div
-      aria-busy="true"
-      aria-label="Loading your growth plan"
-      style={{ display: "flex", flexDirection: "column", gap: 18 }}
-    >
-      <div className="gh-top">
-        <div className="sx-glass gh-goal">
-          <div className="tf-sk gh-sk" style={{ width: "40%", height: 26 }} />
-          <div className="tf-sk gh-sk" style={{ width: "80%", height: 14, marginTop: 18 }} />
-          <div className="tf-sk gh-sk" style={{ width: "100%", height: 10, marginTop: 26 }} />
-          <div className="tf-sk gh-sk" style={{ width: "70%", height: 14, marginTop: 18 }} />
-        </div>
-        <div className="sx-glass gh-record">
-          <div className="tf-sk gh-sk" style={{ width: 160, height: 160, borderRadius: "50%" }} />
-        </div>
-      </div>
-      <div className="gh-plays">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="sx-glass gh-play">
-            <div className="tf-sk gh-sk" style={{ width: "50%", height: 12 }} />
-            <div className="tf-sk gh-sk" style={{ width: "85%", height: 20, marginTop: 14 }} />
-            <div className="tf-sk gh-sk" style={{ width: "100%", height: 54, marginTop: 14 }} />
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
