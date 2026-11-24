@@ -26,6 +26,8 @@ export interface TourStep {
   nextLabel?: string;
   /** Show Next on a "wait" step, disabled until done() is true. */
   nextWhenDone?: boolean;
+  /** Elements the card should not cover (important UI next to the spotlight). */
+  avoid?: string[];
   /** Skip this step when it no longer applies (for example the visitor already did it). */
   skip?: () => boolean;
 }
@@ -67,6 +69,7 @@ export const TOUR: TourStep[] = [
     num: 2,
     route: "/growth",
     targets: ['[data-tour="growth-pillars"]'],
+    avoid: ['[data-tour="growth-cadence"]'],
     title: "Content pillars",
     body: "Four themes, each with a share of the plan, so the mix stays deliberate instead of random.",
     advance: "button",
@@ -129,6 +132,7 @@ export const TOUR: TourStep[] = [
     route: "/record",
     go: `/record?play=${PLAY}`,
     targets: ['[data-tour="stop-recording"]'],
+    avoid: ['[data-tour="record-caption"] > div:first-child'],
     title: "That is the whole take",
     body: "Click Stop to save it. It is linked to this play, then Transform opens with it.",
     advance: "click",
@@ -140,6 +144,7 @@ export const TOUR: TourStep[] = [
     route: "/transform",
     go: `/transform?play=${PLAY}`,
     targets: ['[data-tour="generate"]'],
+    avoid: ['[aria-label="Content instructions"]', '[aria-label="Source text"]'],
     title: "Generate",
     body: "The transcript and the play's hook are already filled in, and the format matches the play. Click Generate.",
     advance: "click",

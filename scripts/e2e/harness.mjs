@@ -25,6 +25,9 @@ export async function launch({
       `--user-data-dir=${profile}`,
       "--use-fake-ui-for-media-stream",
       "--use-fake-device-for-media-stream",
+      "--autoplay-policy=no-user-gesture-required",
+      // Audio still plays (the demo test checks the audio clock) but never reaches the speakers.
+      "--mute-audio",
       "about:blank",
     ],
     { stdio: "ignore" },
@@ -336,10 +339,30 @@ export async function launch({
     } catch {}
   };
   const consoleErrors = [];
+  // Every request the page makes, for checks such as "the demo never calls the AI or Supabase".
+  const requests = [];
+  await send("Network.enable");
+  listeners.push((m) => {
+    if (m.method === "Network.requestWillBeSent") requests.push(m.params.request.url);
+  });
   await send("Runtime.enable");
   listeners.push((m) => {
     if (m.method === "Runtime.exceptionThrown")
       consoleErrors.push(m.params.exceptionDetails?.exception?.description?.slice(0, 200));
   });
-  return { send, ev, shot, go, click, type, sleep, close, db, log, consoleErrors, failWrites };
+  return {
+    send,
+    ev,
+    shot,
+    go,
+    click,
+    type,
+    sleep,
+    close,
+    db,
+    log,
+    consoleErrors,
+    failWrites,
+    requests,
+  };
 }

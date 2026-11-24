@@ -402,6 +402,8 @@ function RecordPage() {
       onMode: (mode) => demoEvent("sample mode", { mode }),
     });
     playerRef.current = player;
+    // The e2e test reads the audio clock from here to check the transcript stays in sync.
+    (window as unknown as { __spectrSample?: SamplePlayer }).__spectrSample = player;
     player.setMuted(muted);
     player.start();
   };
@@ -655,6 +657,7 @@ function RecordPage() {
 
               {/* Caption */}
               <div
+                data-tour="record-caption"
                 style={{
                   marginTop: 18,
                   position: "relative",

@@ -126,11 +126,14 @@ function DemoMount() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // In the demo, toasts sit at the top so they never cover a tour spotlight near the bottom right.
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(isDemo()), []);
   return (
     <QueryClientProvider client={queryClient}>
       <SpectrProvider>
         <PageTransition />
-        <Toaster position="bottom-right" />
+        <Toaster position={demo ? "top-center" : "bottom-right"} offset={demo ? 56 : undefined} />
         <DemoMount />
       </SpectrProvider>
     </QueryClientProvider>

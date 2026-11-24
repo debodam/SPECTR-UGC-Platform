@@ -46,11 +46,13 @@ const words = (s: string) =>
 
 /** True when the text is one of the demo's own takes (the tour recording or a seeded transcript). */
 export function isSampleText(text: string): boolean {
-  const t = text.trim();
+  const norm = (x: string) => x.replace(/\s+/g, " ").trim();
+  const t = norm(text);
   if (!t) return true;
-  const tour = TOUR_PLAY.sampleRecording.chunks.join(" ");
-  return [tour, ...SEED_TRANSCRIPTS.map((s) => s.text)].some(
-    (s) => s.includes(t.slice(0, 120)) || t.includes(s.slice(0, 120)),
+  const head = t.slice(0, 120);
+  const tour = norm(TOUR_PLAY.sampleRecording.chunks.map((c) => c.text).join(" "));
+  return [tour, ...SEED_TRANSCRIPTS.map((s) => norm(s.text))].some(
+    (s) => s.includes(head) || t.includes(s.slice(0, 120)),
   );
 }
 

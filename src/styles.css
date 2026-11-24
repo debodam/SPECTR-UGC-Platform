@@ -801,12 +801,12 @@ option {
   min-height: 250px;
 }
 .db-spark {
-  height: clamp(36px, 6dvh, 72px);
-  margin-top: clamp(10px, 2dvh, 22px);
+  height: clamp(36px, calc(var(--app-h) * 0.06), 72px);
+  margin-top: clamp(10px, calc(var(--app-h) * 0.02), 22px);
 }
 .db-ring {
-  width: clamp(92px, 14.5dvh, 132px);
-  height: clamp(92px, 14.5dvh, 132px);
+  width: clamp(92px, calc(var(--app-h) * 0.145), 132px);
+  height: clamp(92px, calc(var(--app-h) * 0.145), 132px);
 }
 .db-headline {
   align-self: stretch;
@@ -1206,7 +1206,7 @@ option {
    ══════════════════════════════════════════════════════════════ */
 .mo-slot {
   position: relative;
-  width: min(100%, clamp(240px, min(46dvh, 36vw), 460px));
+  width: min(100%, clamp(240px, min(calc(var(--app-h) * 0.46), 36vw), 460px));
   aspect-ratio: 1;
   margin: 0 auto;
   flex-shrink: 0;
@@ -1688,7 +1688,8 @@ body > div {
    The orb sizes to the available height and the side cards take what is left. ── */
 @media (min-width: 981px) and (min-height: 600px) {
   .sx-fit-rc {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
   .sx-fit-rc > .sx-page {
     flex: 1 1 0;
@@ -1709,7 +1710,8 @@ body > div {
 }
 @media (min-width: 1181px) and (min-height: 600px) {
   .sx-fit-db {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
   .sx-fit-db > .sx-page {
     flex: 1 1 0;
@@ -1756,11 +1758,11 @@ body > div {
 }
 .lp-hero {
   min-height: min(860px, calc(var(--app-h) - 90px));
-  padding: clamp(40px, 8dvh, 80px) 24px 48px;
+  padding: clamp(40px, calc(var(--app-h) * 0.08), 80px) 24px 48px;
   text-align: center;
 }
 .lp-title {
-  margin: clamp(40px, 8dvh, 84px) auto 0;
+  margin: clamp(40px, calc(var(--app-h) * 0.08), 84px) auto 0;
   max-width: 1000px;
   font-size: clamp(40px, 6vw, 84px);
   font-weight: 300;
@@ -2963,7 +2965,7 @@ select.gx-input {
   gap: 16px;
 }
 .db-left .mo-slot {
-  width: min(100%, clamp(180px, min(30dvh, 26vw), 380px));
+  width: min(100%, clamp(180px, min(calc(var(--app-h) * 0.3), 26vw), 380px));
 }
 
 /* ── Growth plan page (/growth) ── */

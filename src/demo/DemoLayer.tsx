@@ -16,9 +16,22 @@ interface TourState {
 }
 
 const PAD = 10;
-const BAR = 44;
-/** Tour card width: a little narrower on smaller laptops so it fits beside wide sections. */
-const cardWidth = () => (typeof window !== "undefined" && window.innerWidth < 1360 ? 320 : 360);
+/** Space kept between the card and the viewport edges, and between the card and the spotlight. */
+const MARGIN = 16;
+const GAP = 14;
+/** Room kept free below a scrolled target. */
+const BOTTOM_PAD = 24;
+
+/** Height of the demo banner, read from the same CSS variable the layout uses. */
+const bannerH = () =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--demo-banner-h")) || 44;
+
+/** Tour card width: narrower on smaller laptops, and never wider than the viewport allows. */
+const cardWidth = () => {
+  if (typeof window === "undefined") return 360;
+  const w = window.innerWidth;
+  return Math.min(w < 1360 ? 320 : 360, w - MARGIN * 2);
+};
 
 function loadTour(): TourState {
   try {
@@ -30,14 +43,16 @@ function loadTour(): TourState {
   return { i: 0, status: "running" };
 }
 
-type Box = { x: number; y: number; w: number; h: number };
+export type Box = { x: number; y: number; w: number; h: number };
 
-function rectOf(sel: string): Box | null {
-  const el = document.querySelector(sel);
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  if (!r.width && !r.height) return null;
-  return { x: r.left - PAD, y: r.top - PAD, w: r.width + PAD * 2, h: r.height + PAD * 2 };
+const toBox = (r: DOMRect): Box => ({ x: r.left, y: r.top, w: r.width, h: r.height });
+
+function intersect(a: Box, b: Box): Box | null {
+  const x = Math.max(a.x, b.x),
+    y = Math.max(a.y, b.y);
+  const r = Math.min(a.x + a.w, b.x + b.w),
+    bt = Math.min(a.y + a.h, b.y + b.h);
+  return r > x && bt > y ? { x, y, w: r - x, h: bt - y } : null;
 }
 
 function union(boxes: Box[]): Box {
@@ -48,47 +63,155 @@ function union(boxes: Box[]): Box {
   return { x, y, w: r - x, h: bt - y };
 }
 
-const area = (a: Box, b: Box) =>
-  Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) *
-  Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+const area = (a: Box, b: Box) => {
+  const i = intersect(a, b);
+  return i ? i.w * i.h : 0;
+};
 
-/** Places the card next to the spotlight, never on top of a highlighted area when any free spot exists. */
-function placeCard(holes: Box[] | null, cardH: number): { left: number; top: number } {
-  const CARD_W = cardWidth();
-  const vw = window.innerWidth,
-    vh = window.innerHeight;
-  const clampY = (y: number) => Math.max(BAR + 12, Math.min(vh - cardH - 12, y));
-  const clampX = (x: number) => Math.max(12, Math.min(vw - CARD_W - 12, x));
-  if (!holes?.length) return { left: (vw - CARD_W) / 2, top: Math.max(BAR + 12, (vh - cardH) / 2) };
-  const gap = 16;
-  const all = holes.length > 1 ? [union(holes), ...holes] : holes;
-  const spots: { left: number; top: number }[] = [];
-  for (const h of all)
-    spots.push(
-      { left: clampX(h.x + h.w + gap), top: clampY(h.y) },
-      { left: clampX(h.x - gap - CARD_W), top: clampY(h.y) },
-      { left: clampX(h.x), top: clampY(h.y + h.h + gap) },
-      { left: clampX(h.x), top: clampY(h.y - gap - cardH) },
-      { left: clampX(h.x + h.w + gap), top: clampY(h.y + h.h - cardH) },
-      { left: clampX(h.x - gap - CARD_W), top: clampY(h.y + h.h - cardH) },
-    );
-  spots.push(
-    { left: vw - CARD_W - 24, top: clampY(vh - cardH - 24) },
-    { left: 24, top: clampY(vh - cardH - 24) },
-    { left: vw - CARD_W - 24, top: BAR + 24 },
-  );
-  let best = spots[0],
-    bestCost = Infinity;
-  for (const p of spots) {
-    const c = { x: p.left - 6, y: p.top - 6, w: CARD_W + 12, h: cardH + 12 };
-    const cost = holes.reduce((s, h) => s + area(c, h), 0);
-    if (cost < bestCost) {
-      best = p;
-      bestCost = cost;
-      if (cost === 0) break;
+const isScroller = (el: Element) => {
+  const o = getComputedStyle(el).overflowY;
+  return (o === "auto" || o === "scroll") && el.scrollHeight > el.clientHeight + 1;
+};
+
+/** The part of the screen where a target can be seen: below the banner, inside every scrolling ancestor. */
+function visibleArea(el: Element): Box {
+  let box: Box = { x: 0, y: bannerH(), w: window.innerWidth, h: window.innerHeight - bannerH() };
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const o = getComputedStyle(p);
+    if (/(auto|scroll|hidden|clip)/.test(o.overflowY + o.overflowX)) {
+      const i = intersect(box, toBox(p.getBoundingClientRect()));
+      if (i) box = i;
     }
   }
-  return best;
+  return box;
+}
+
+/** The spotlight for one target: padded, then clipped to what can actually be seen. */
+function holeOf(sel: string): Box | null {
+  const el = document.querySelector(sel);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (!r.width && !r.height) return null;
+  const padded = { x: r.left - PAD, y: r.top - PAD, w: r.width + PAD * 2, h: r.height + PAD * 2 };
+  const vis = visibleArea(el);
+  // Allow the padding to sit just outside a clipping container, but never off screen or under the banner.
+  const screen = {
+    x: 4,
+    y: bannerH() + 4,
+    w: window.innerWidth - 8,
+    h: window.innerHeight - bannerH() - 8,
+  };
+  const grown = { x: vis.x - PAD, y: vis.y - PAD, w: vis.w + PAD * 2, h: vis.h + PAD * 2 };
+  const clip = intersect(grown, screen) ?? screen;
+  return intersect(padded, clip);
+}
+
+/**
+ * Scrolls the first target to the middle of the space between the banner and a bottom margin, in every
+ * scrolling ancestor. A target taller than that space is aligned to its top instead. Returns true if it moved.
+ */
+function bringIntoView(el: Element): boolean {
+  let moved = false;
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    if (!isScroller(p)) continue;
+    const r = el.getBoundingClientRect();
+    const pr = p.getBoundingClientRect();
+    const top = Math.max(pr.top, bannerH()) + MARGIN;
+    const bottom = Math.min(pr.bottom, window.innerHeight) - BOTTOM_PAD;
+    if (r.top >= top && r.bottom <= bottom) continue;
+    const room = bottom - top;
+    // Fits with the margins: center it there. Fits the area only without them: center in the whole area.
+    // Taller than the area: align its top, and the spotlight shows the visible part.
+    const areaTop = Math.max(pr.top, bannerH());
+    const areaBottom = Math.min(pr.bottom, window.innerHeight);
+    const delta =
+      r.height <= room
+        ? r.top + r.height / 2 - (top + bottom) / 2
+        : r.height <= areaBottom - areaTop
+          ? r.top + r.height / 2 - (areaTop + areaBottom) / 2
+          : r.top - top;
+    const before = p.scrollTop;
+    p.scrollTop = before + delta;
+    if (p.scrollTop !== before) moved = true;
+  }
+  return moved;
+}
+
+type Placement = "right" | "left" | "bottom" | "top" | "dock";
+
+/**
+ * Chooses where the card goes. Every candidate is clamped inside the viewport (16px margin, below the banner),
+ * then scored: covering a spotlight costs the most, covering the step's "avoid" elements costs less, and among
+ * free spots the one beside the spotlight with the most room wins. If nothing is free, the card docks at the
+ * bottom center (or the top center if that is freer).
+ */
+export function placeCard(
+  holes: Box[] | null,
+  avoid: Box[],
+  cardW: number,
+  cardH: number,
+): { left: number; top: number; placement: Placement } {
+  const vw = window.innerWidth,
+    vh = window.innerHeight;
+  const minX = MARGIN,
+    maxX = vw - MARGIN - cardW;
+  const minY = bannerH() + MARGIN,
+    maxY = Math.max(minY, vh - MARGIN - cardH);
+  const cx = (x: number) => Math.max(minX, Math.min(maxX, x));
+  const cy = (y: number) => Math.max(minY, Math.min(maxY, y));
+  if (!holes?.length)
+    return { left: cx((vw - cardW) / 2), top: cy((vh - cardH) / 2), placement: "dock" };
+
+  const anchors = holes.length > 1 ? [union(holes), ...holes] : holes;
+  const cands: { left: number; top: number; placement: Placement; room: number }[] = [];
+  for (const a of anchors) {
+    const midY = a.y + a.h / 2 - cardH / 2;
+    const midX = a.x + a.w / 2 - cardW / 2;
+    const roomR = vw - (a.x + a.w),
+      roomL = a.x,
+      roomB = vh - (a.y + a.h),
+      roomT = a.y - bannerH();
+    for (const top of [midY, a.y, a.y + a.h - cardH])
+      cands.push({ left: cx(a.x + a.w + GAP), top: cy(top), placement: "right", room: roomR });
+    for (const top of [midY, a.y, a.y + a.h - cardH])
+      cands.push({ left: cx(a.x - GAP - cardW), top: cy(top), placement: "left", room: roomL });
+    for (const left of [midX, a.x, a.x + a.w - cardW])
+      cands.push({ left: cx(left), top: cy(a.y + a.h + GAP), placement: "bottom", room: roomB });
+    for (const left of [midX, a.x, a.x + a.w - cardW])
+      cands.push({ left: cx(left), top: cy(a.y - GAP - cardH), placement: "top", room: roomT });
+  }
+  // Corners of the viewport, for when every spot beside the spotlight crowds something important.
+  for (const [left, top] of [
+    [maxX, maxY],
+    [minX, maxY],
+    [maxX, minY],
+    [minX, minY],
+  ])
+    cands.push({ left, top, placement: "dock", room: 0 });
+  const order: Record<Placement, number> = { right: 0, left: 1, bottom: 2, top: 3, dock: 4 };
+  const score = (c: { left: number; top: number; placement: Placement; room: number }) => {
+    const card = { x: c.left - GAP / 2, y: c.top - GAP / 2, w: cardW + GAP, h: cardH + GAP };
+    const covered = holes.reduce((s, h) => s + area(card, h), 0);
+    const crowded = avoid.reduce((s, h) => s + area(card, h), 0);
+    return covered * 1000 + crowded * 5 + order[c.placement] * 400 - Math.min(c.room, 600);
+  };
+  let best = cands[0],
+    bestScore = Infinity;
+  for (const c of cands) {
+    const sc = score(c);
+    if (sc < bestScore) {
+      best = c;
+      bestScore = sc;
+    }
+  }
+  const coversHole = (l: number, t: number) =>
+    holes.some((h) => area({ x: l, y: t, w: cardW, h: cardH }, h) > 0);
+  if (!coversHole(best.left, best.top)) return best;
+  const dockB = { left: cx((vw - cardW) / 2), top: maxY, placement: "dock" as const };
+  const dockT = { left: cx((vw - cardW) / 2), top: minY, placement: "dock" as const };
+  const cost = (d: { left: number; top: number }) =>
+    holes.reduce((s, h) => s + area({ x: d.left, y: d.top, w: cardW, h: cardH }, h), 0);
+  return cost(dockB) <= cost(dockT) ? dockB : dockT;
 }
 
 export default function DemoLayer() {
@@ -161,13 +284,54 @@ export default function DemoLayer() {
     window.location.assign("/");
   }, []);
 
+  const [avoidBoxes, setAvoidBoxes] = useState<Box[]>([]);
+  const [viewport, setViewport] = useState(() => ({
+    w: typeof window === "undefined" ? 1440 : window.innerWidth,
+    h: typeof window === "undefined" ? 900 : window.innerHeight,
+  }));
+
+  /** Measures the step's targets and the elements its card should keep clear of. */
+  const measure = useCallback(() => {
+    if (!settled.current || !step?.targets?.length) return;
+    const boxes = step.targets.map(holeOf).filter(Boolean) as Box[];
+    setHoles((prev) => {
+      const same =
+        prev &&
+        prev.length === boxes.length &&
+        prev.every(
+          (b, k) =>
+            Math.abs(b.x - boxes[k].x) < 0.5 &&
+            Math.abs(b.y - boxes[k].y) < 0.5 &&
+            Math.abs(b.w - boxes[k].w) < 0.5 &&
+            Math.abs(b.h - boxes[k].h) < 0.5,
+        );
+      return same ? prev : boxes.length ? boxes : null;
+    });
+    const av = (step.avoid ?? [])
+      .flatMap((sel) => [...document.querySelectorAll(sel)])
+      .map((el) => toBox(el.getBoundingClientRect()))
+      .filter((b) => b.w > 0 && b.h > 0);
+    setAvoidBoxes((prev) =>
+      prev.length === av.length && prev.every((b, k) => b.x === av[k].x && b.y === av[k].y)
+        ? prev
+        : av,
+    );
+    setViewport((v) =>
+      v.w === window.innerWidth && v.h === window.innerHeight
+        ? v
+        : { w: window.innerWidth, h: window.innerHeight },
+    );
+  }, [step]);
+
   // Activate the step: make sure we are on its route, then find its targets.
   useEffect(() => {
     if (!running || !step) return;
     settled.current = false;
     setHoles(null);
+    setAvoidBoxes([]);
     setMissing(false);
     let navTimer: number | undefined;
+    let settleTimer: number | undefined;
     if (window.location.pathname !== step.route) {
       // A click may already be navigating there; give it a moment before sending the visitor ourselves.
       navTimer = window.setTimeout(() => {
@@ -183,45 +347,72 @@ export default function DemoLayer() {
       if (window.location.pathname !== step.route) return;
       const first = document.querySelector(step.targets![0]);
       if (first) {
-        const r = first.getBoundingClientRect();
-        if (r.top < BAR || r.bottom > window.innerHeight)
-          first.scrollIntoView({ block: "center", behavior: "smooth" });
-        settled.current = true;
         window.clearInterval(poll);
-        window.setTimeout(() => {
-          const boxes = step.targets!.map(rectOf).filter(Boolean) as Box[];
-          setHoles(boxes.length ? boxes : null);
+        // Let the page transition finish, then scroll the target to the middle and measure once it has stopped.
+        settleTimer = window.setTimeout(() => {
+          bringIntoView(first);
+          settled.current = true;
+          let frames = 0;
+          const burst = () => {
+            measure();
+            if (++frames < 24) requestAnimationFrame(burst);
+          };
+          requestAnimationFrame(burst);
           const focusEl = step.click ? document.querySelector<HTMLElement>(step.click) : null;
           if (step.advance === "button") primaryRef.current?.focus({ preventScroll: true });
           else (focusEl ?? (first as HTMLElement)).focus?.({ preventScroll: true });
-        }, 350);
+        }, 320);
       } else if (Date.now() - started > 7000) {
         window.clearInterval(poll);
         settled.current = true;
         setMissing(true);
       }
-    }, 150);
+    }, 120);
     return () => {
       window.clearInterval(poll);
       window.clearTimeout(navTimer);
+      window.clearTimeout(settleTimer);
     };
-  }, [running, step, router]);
+  }, [running, step, router, measure]);
 
-  // Keep the spotlight on its target as the page moves (scrolling, streaming text, resizing).
+  // Keep the spotlight on its target as anything moves: resize, scroll, layout changes, fonts, animations.
   useEffect(() => {
-    if (!running || !step?.targets?.length) return;
+    if (!running) return;
+    let queued = 0;
     const update = () => {
-      if (!settled.current) return;
-      const boxes = step.targets!.map(rectOf).filter(Boolean) as Box[];
-      setHoles(boxes.length ? boxes : null);
+      if (queued) return;
+      queued = requestAnimationFrame(() => {
+        queued = 0;
+        measure();
+      });
     };
-    const iv = window.setInterval(update, 200);
-    window.addEventListener("resize", update);
+    const onResize = () => {
+      setViewport({ w: window.innerWidth, h: window.innerHeight });
+      update();
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(document.body);
+    for (const sel of step?.targets ?? []) {
+      const el = document.querySelector(sel);
+      if (el) ro.observe(el);
+    }
+    window.addEventListener("resize", onResize);
+    document.addEventListener("scroll", update, true);
+    document.addEventListener("transitionend", update, true);
+    document.addEventListener("animationend", update, true);
+    void document.fonts?.ready.then(update);
+    // A slow safety net for changes no event reports (text streaming into a panel).
+    const iv = window.setInterval(update, 400);
     return () => {
+      ro.disconnect();
+      cancelAnimationFrame(queued);
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("scroll", update, true);
+      document.removeEventListener("transitionend", update, true);
+      document.removeEventListener("animationend", update, true);
       window.clearInterval(iv);
-      window.removeEventListener("resize", update);
     };
-  }, [running, step]);
+  }, [running, step, measure, holes === null]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Advance when the visitor clicks the highlighted element.
   useEffect(() => {
@@ -283,15 +474,16 @@ export default function DemoLayer() {
 
   useLayoutEffect(() => {
     if (cardRef.current) setCardH(cardRef.current.offsetHeight);
-  }, [tour.i, tour.status, holes, missing]);
+  }, [tour.i, tour.status, holes, missing, confirmSkip, viewport]);
 
-  const vw = typeof window === "undefined" ? 1440 : window.innerWidth;
-  const vh = typeof window === "undefined" ? 900 : window.innerHeight;
+  const vw = viewport.w;
+  const vh = viewport.h;
+  const cardW = cardWidth();
   const waitingForTarget = running && !!step?.targets?.length && !holes && !missing;
-  const holeKey = (holes ?? [])
-    .map((b) => `${Math.round(b.x)},${Math.round(b.y)},${Math.round(b.w)},${Math.round(b.h)}`)
-    .join("|");
-  const pos = useMemo(() => placeCard(holes, cardH), [holeKey, cardH]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pos = useMemo(
+    () => placeCard(holes, avoidBoxes, cardW, cardH),
+    [holes, avoidBoxes, cardW, cardH, vw, vh], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const path = useMemo(() => {
     const outer = `M0 0H${vw}V${vh}H0Z`;
@@ -362,7 +554,9 @@ export default function DemoLayer() {
               role="dialog"
               aria-modal="false"
               aria-labelledby="demo-card-title"
-              style={{ left: pos.left, top: pos.top, width: cardWidth() }}
+              data-placement={pos.placement}
+              data-targets={(step.targets ?? []).join("||")}
+              style={{ left: pos.left, top: pos.top, width: cardW }}
             >
               <div className="demo-card-top">
                 <span className="demo-card-step">
