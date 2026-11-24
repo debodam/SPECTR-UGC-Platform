@@ -12,7 +12,7 @@ import { advancePlay, insertWithLinks, type RepoCtx } from "@/lib/growth-repo";
 import { guidedPrompts } from "@/lib/growth-prompts";
 import { useEscape } from "@/lib/use-escape";
 import { demoEvent, isDemo } from "@/demo/mode";
-import { SamplePlayer, SAMPLE_DURATION, SAMPLE_WORDS } from "@/demo/sample-player";
+import { prepareSample, SamplePlayer, SAMPLE_DURATION, SAMPLE_WORDS } from "@/demo/sample-player";
 
 interface SpeechResultEvent {
   resultIndex: number;
@@ -363,6 +363,20 @@ function RecordPage() {
   const [sampleState, setSampleState] = useState<"idle" | "playing" | "ended" | "stopped">("idle");
   const [muted, setMuted] = useState(false);
   const sampleOn = sampleState === "playing" || sampleState === "ended";
+
+  // Demo: build the sample's audio graph in idle time, so the button press only starts playback.
+  useEffect(() => {
+    if (!demo) return;
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+    };
+    // Wait until the page's entrance animation is over, then use idle time.
+    const t = window.setTimeout(() => {
+      if (w.requestIdleCallback) w.requestIdleCallback(prepareSample, { timeout: 1500 });
+      else prepareSample();
+    }, 900);
+    return () => window.clearTimeout(t);
+  }, [demo]);
 
   useEffect(() => {
     if (!demo) return;

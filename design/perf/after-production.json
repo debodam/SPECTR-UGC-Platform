@@ -1,0 +1,35 @@
+[
+  {
+    "scenario": "landing",
+    "frames": 630,
+    "under20ms": 100,
+    "dropped": 0,
+    "p95ms": 16.7,
+    "worstFrameMs": 16.8,
+    "longTasks": 0,
+    "worstLongTaskMs": 0,
+    "longAnimationFrames": 0
+  },
+  {
+    "scenario": "tour transitions",
+    "frames": 1921,
+    "under20ms": 99.8,
+    "dropped": 3,
+    "p95ms": 16.8,
+    "worstFrameMs": 100,
+    "longTasks": 1,
+    "worstLongTaskMs": 119,
+    "longAnimationFrames": 1
+  },
+  {
+    "scenario": "record orb and transcript",
+    "frames": 600,
+    "under20ms": 100,
+    "dropped": 0,
+    "p95ms": 16.8,
+    "worstFrameMs": 16.8,
+    "longTasks": 0,
+    "worstLongTaskMs": 0,
+    "longAnimationFrames": 0
+  }
+]

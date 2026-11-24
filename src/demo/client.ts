@@ -25,13 +25,34 @@ function db(): DemoTables {
   return tables;
 }
 
-function persist() {
+function writeNow() {
+  flushQueued = false;
   try {
     sessionStorage.setItem(DEMO_KEYS.db, JSON.stringify(tables));
   } catch {
     /* storage full or blocked: the demo keeps working in memory */
   }
 }
+
+let flushQueued = false;
+/**
+ * Saves the sandbox to this tab's sessionStorage. Writes are coalesced into idle time, so a click that changes
+ * several rows serializes the tables once, after the frame, instead of on every change. Leaving the page
+ * flushes immediately.
+ */
+function persist() {
+  if (flushQueued) return;
+  flushQueued = true;
+  const w = window as unknown as {
+    requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+  };
+  if (w.requestIdleCallback) w.requestIdleCallback(writeNow, { timeout: 400 });
+  else window.setTimeout(writeNow, 50);
+}
+if (typeof window !== "undefined")
+  window.addEventListener("pagehide", () => {
+    if (flushQueued) writeNow();
+  });
 
 const uuid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto

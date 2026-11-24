@@ -270,7 +270,11 @@ function GrowthPlanPage() {
                       aria-valuemax={100}
                       aria-label="Progress to target"
                     >
-                      <div style={{ width: `${forecast.progressPct}%` }} />
+                      <div
+                        style={{
+                          transform: `scaleX(${Math.min(100, Math.max(0, forecast.progressPct)) / 100})`,
+                        }}
+                      />
                       {forecast.state === "ok" && (
                         <i
                           style={{ left: `${Math.min(100, forecast.projectedPct)}%` }}

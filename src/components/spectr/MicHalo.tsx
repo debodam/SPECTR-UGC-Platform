@@ -72,7 +72,15 @@ function useOrbMotion(
       lvl = 0,
       vel = 0,
       rate = 1,
-      frame = 0;
+      frame = 0,
+      written = -1,
+      appliedRate = -1,
+      hovered = false;
+    // Hover is tracked with events, so the loop never queries styles.
+    const enter = () => (hovered = true);
+    const leave = () => (hovered = false);
+    el.addEventListener("pointerenter", enter);
+    el.addEventListener("pointerleave", leave);
     let anims: Animation[] = [];
     let rippleAnims: Animation[] = [];
 
@@ -97,12 +105,20 @@ function useOrbMotion(
       // Under-damped spring: a little overshoot so the core feels elastic rather than jittery.
       vel = (vel + (smooth - lvl) * 0.09) * 0.8;
       lvl = Math.max(0, Math.min(1.2, lvl + vel));
-      el.style.setProperty("--lvl", lvl.toFixed(3));
+      // Only touch the style when the value moves, so a quiet orb causes no style work at all.
+      if (Math.abs(lvl - written) > 0.002) {
+        written = lvl;
+        el.style.setProperty("--lvl", lvl.toFixed(3));
+      }
 
-      const wantRate = (el.matches(":hover") ? 1.3 : 1) * (1 + lvl * 1.6);
+      const wantRate = (hovered ? 1.3 : 1) * (1 + lvl * 1.6);
       rate += (wantRate - rate) * 0.08;
-      for (const a of anims) a.playbackRate = rate;
-      for (const a of rippleAnims) a.playbackRate = 1 + lvl * 1.4;
+      // Retiming an animation has a cost, so only do it when the speed has actually changed.
+      if (Math.abs(rate - appliedRate) > 0.01 || frame % 60 === 1) {
+        appliedRate = rate;
+        for (const a of anims) a.playbackRate = rate;
+        for (const a of rippleAnims) a.playbackRate = 1 + lvl * 1.4;
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -110,6 +126,8 @@ function useOrbMotion(
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
+      el.removeEventListener("pointerenter", enter);
+      el.removeEventListener("pointerleave", leave);
       stream?.getTracks().forEach((t) => t.stop());
       ctx?.close().catch(() => {});
       el.style.removeProperty("--lvl");

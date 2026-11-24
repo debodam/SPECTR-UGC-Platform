@@ -221,12 +221,16 @@ export default function DemoLayer() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [tour, setTourState] = useState<TourState>(loadTour);
   const [holes, setHoles] = useState<Box[] | null>(null);
+  /** The step the current holes were measured for. Old holes stay on screen until the new ones are ready,
+   * so the dim never flashes and the spotlight glides from one target to the next. */
+  const [holesFor, setHolesFor] = useState(-1);
   const [missing, setMissing] = useState(false);
   const [cardH, setCardH] = useState(220);
   const [confirmSkip, setConfirmSkip] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
   const settled = useRef(false);
+  const tourIndex = useRef(-1);
 
   const step: TourStep | undefined = TOUR[tour.i];
   const running = tour.status === "running" && !!step;
@@ -309,6 +313,7 @@ export default function DemoLayer() {
         );
       return same ? prev : boxes.length ? boxes : null;
     });
+    setHolesFor(tourIndex.current);
     const av = (step.avoid ?? [])
       .flatMap((sel) => [...document.querySelectorAll(sel)])
       .map((el) => toBox(el.getBoundingClientRect()))
@@ -329,7 +334,8 @@ export default function DemoLayer() {
   useEffect(() => {
     if (!running || !step) return;
     settled.current = false;
-    setHoles(null);
+    tourIndex.current = tour.i;
+    if (!step.targets?.length) setHoles(null);
     setAvoidBoxes([]);
     setMissing(false);
     let navTimer: number | undefined;
@@ -345,25 +351,30 @@ export default function DemoLayer() {
       return () => window.clearTimeout(navTimer);
     }
     const started = Date.now();
+    // Same page: measure almost at once. New page: let its entrance transition finish first.
+    const startPath = window.location.pathname;
     const poll = window.setInterval(() => {
       if (window.location.pathname !== step.route) return;
       const first = document.querySelector(step.targets![0]);
       if (first) {
         window.clearInterval(poll);
         // Let the page transition finish, then scroll the target to the middle and measure once it has stopped.
-        settleTimer = window.setTimeout(() => {
-          bringIntoView(first);
-          settled.current = true;
-          let frames = 0;
-          const burst = () => {
-            measure();
-            if (++frames < 24) requestAnimationFrame(burst);
-          };
-          requestAnimationFrame(burst);
-          const focusEl = step.click ? document.querySelector<HTMLElement>(step.click) : null;
-          if (step.advance === "button") primaryRef.current?.focus({ preventScroll: true });
-          else (focusEl ?? (first as HTMLElement)).focus?.({ preventScroll: true });
-        }, 320);
+        settleTimer = window.setTimeout(
+          () => {
+            bringIntoView(first);
+            settled.current = true;
+            let frames = 0;
+            const burst = () => {
+              measure();
+              if (++frames < 24) requestAnimationFrame(burst);
+            };
+            requestAnimationFrame(burst);
+            const focusEl = step.click ? document.querySelector<HTMLElement>(step.click) : null;
+            if (step.advance === "button") primaryRef.current?.focus({ preventScroll: true });
+            else (focusEl ?? (first as HTMLElement)).focus?.({ preventScroll: true });
+          },
+          window.location.pathname === startPath ? 60 : 320,
+        );
       } else if (Date.now() - started > 7000) {
         window.clearInterval(poll);
         settled.current = true;
@@ -414,7 +425,7 @@ export default function DemoLayer() {
       document.removeEventListener("animationend", update, true);
       window.clearInterval(iv);
     };
-  }, [running, step, measure, holes === null]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [running, step, measure, holesFor]);
 
   // Advance when the visitor clicks the highlighted element.
   useEffect(() => {
@@ -481,7 +492,8 @@ export default function DemoLayer() {
   const vw = viewport.w;
   const vh = viewport.h;
   const cardW = cardWidth();
-  const waitingForTarget = running && !!step?.targets?.length && !holes && !missing;
+  const waitingForTarget =
+    running && !!step?.targets?.length && (holesFor !== tour.i || !holes) && !missing;
   const pos = useMemo(
     () => placeCard(holes, avoidBoxes, cardW, cardH),
     [holes, avoidBoxes, cardW, cardH, vw, vh], // eslint-disable-line react-hooks/exhaustive-deps
@@ -547,121 +559,130 @@ export default function DemoLayer() {
                 key={k}
                 className="demo-hole-block"
                 style={{ left: b.x, top: b.y, width: b.w, height: b.h }}
+                hidden={holesFor !== tour.i}
               />
             ))}
           {holes?.map((b, k) => (
             <div
               key={`r${k}`}
               className="demo-ring"
-              style={{ left: b.x, top: b.y, width: b.w, height: b.h }}
+              style={{ transform: `translate3d(${b.x}px, ${b.y}px, 0)`, width: b.w, height: b.h }}
             />
           ))}
           {!waitingForTarget && (
+            // The wrapper glides to the new position; the blurred card inside never moves itself.
             <div
-              ref={cardRef}
-              className="demo-card"
-              data-step={step.id}
-              data-advance={missing ? "button" : step.advance}
-              data-click={step.click ?? step.targets?.[0] ?? ""}
-              role="dialog"
-              aria-modal="false"
-              aria-labelledby="demo-card-title"
-              data-placement={pos.placement}
-              data-targets={(step.targets ?? []).join("||")}
-              style={{ left: pos.left, top: pos.top, width: cardW }}
+              className="demo-card-pos"
+              style={{ transform: `translate3d(${pos.left}px, ${pos.top}px, 0)`, width: cardW }}
             >
-              <div className="demo-card-top">
-                <span className="demo-card-step">
-                  Step {step.num} of {TOUR_TOTAL}
-                </span>
-                <button
-                  type="button"
-                  className="demo-card-skip"
-                  onClick={() => setConfirmSkip(true)}
-                >
-                  Skip tour
-                </button>
-              </div>
-              <div className="demo-progress" aria-hidden="true">
-                <span style={{ width: `${(step.num / TOUR_TOTAL) * 100}%` }} />
-              </div>
-              <h2 id="demo-card-title" className="demo-card-title">
-                {step.title}
-              </h2>
-              {body.map((p, k) => (
-                <p key={k} className="demo-card-body">
-                  {p}
-                </p>
-              ))}
-              {missing && step.advance !== "button" && (
-                <p className="demo-card-body demo-card-note">
-                  This part of the page is not showing right now. Continue with Next.
-                </p>
-              )}
-              {confirmSkip ? (
-                <div className="demo-card-confirm" role="group" aria-label="Skip the tour">
-                  <p className="demo-card-body">
-                    Explore on your own? Generation uses sample outputs.
+              <div
+                ref={cardRef}
+                className="demo-card"
+                data-step={step.id}
+                data-advance={missing ? "button" : step.advance}
+                data-click={step.click ?? step.targets?.[0] ?? ""}
+                role="dialog"
+                aria-modal="false"
+                aria-labelledby="demo-card-title"
+                data-placement={pos.placement}
+                data-targets={(step.targets ?? []).join("||")}
+                style={{ width: cardW }}
+              >
+                <div className="demo-card-top">
+                  <span className="demo-card-step">
+                    Step {step.num} of {TOUR_TOTAL}
+                  </span>
+                  <button
+                    type="button"
+                    className="demo-card-skip"
+                    onClick={() => setConfirmSkip(true)}
+                  >
+                    Skip tour
+                  </button>
+                </div>
+                <div className="demo-progress" aria-hidden="true">
+                  <span style={{ transform: `scaleX(${step.num / TOUR_TOTAL})` }} />
+                </div>
+                <h2 id="demo-card-title" className="demo-card-title">
+                  {step.title}
+                </h2>
+                {body.map((p, k) => (
+                  <p key={k} className="demo-card-body">
+                    {p}
                   </p>
-                  <div className="demo-card-actions">
-                    <button
-                      type="button"
-                      className="gh-btn gh-btn--ghost gh-btn--small"
-                      onClick={() => setConfirmSkip(false)}
-                    >
-                      Keep the tour
-                    </button>
-                    <button
-                      type="button"
-                      className="gh-btn gh-btn--primary gh-btn--small"
-                      autoFocus
-                      onClick={exploreFreely}
-                    >
-                      Explore
-                    </button>
+                ))}
+                {missing && step.advance !== "button" && (
+                  <p className="demo-card-body demo-card-note">
+                    This part of the page is not showing right now. Continue with Next.
+                  </p>
+                )}
+                {confirmSkip ? (
+                  <div className="demo-card-confirm" role="group" aria-label="Skip the tour">
+                    <p className="demo-card-body">
+                      Explore on your own? Generation uses sample outputs.
+                    </p>
+                    <div className="demo-card-actions">
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn--ghost gh-btn--small"
+                        onClick={() => setConfirmSkip(false)}
+                      >
+                        Keep the tour
+                      </button>
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn--primary gh-btn--small"
+                        autoFocus
+                        onClick={exploreFreely}
+                      >
+                        Explore
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="demo-card-actions">
-                  {tour.i > 0 ? (
-                    <button
-                      type="button"
-                      className="gh-btn gh-btn--ghost gh-btn--small"
-                      onClick={back}
-                    >
-                      <ArrowLeft size={14} aria-hidden="true" />
-                      Back
-                    </button>
-                  ) : (
-                    <span />
-                  )}
-                  {step.advance === "button" || missing ? (
-                    <button
-                      ref={primaryRef}
-                      type="button"
-                      className="gh-btn gh-btn--primary gh-btn--small"
-                      onClick={next}
-                    >
-                      {step.nextLabel ?? "Next"}
-                      <ArrowRight size={14} aria-hidden="true" />
-                    </button>
-                  ) : step.nextWhenDone ? (
-                    <button
-                      type="button"
-                      className="gh-btn gh-btn--primary gh-btn--small"
-                      disabled
-                      title="Available when the take finishes"
-                    >
-                      {step.nextLabel ?? "Next"}
-                      <ArrowRight size={14} aria-hidden="true" />
-                    </button>
-                  ) : (
-                    <span className="demo-card-hint">
-                      {step.advance === "wait" ? "Waiting for you" : "Click the highlighted button"}
-                    </span>
-                  )}
-                </div>
-              )}
+                ) : (
+                  <div className="demo-card-actions">
+                    {tour.i > 0 ? (
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn--ghost gh-btn--small"
+                        onClick={back}
+                      >
+                        <ArrowLeft size={14} aria-hidden="true" />
+                        Back
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    {step.advance === "button" || missing ? (
+                      <button
+                        ref={primaryRef}
+                        type="button"
+                        className="gh-btn gh-btn--primary gh-btn--small"
+                        onClick={next}
+                      >
+                        {step.nextLabel ?? "Next"}
+                        <ArrowRight size={14} aria-hidden="true" />
+                      </button>
+                    ) : step.nextWhenDone ? (
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn--primary gh-btn--small"
+                        disabled
+                        title="Available when the take finishes"
+                      >
+                        {step.nextLabel ?? "Next"}
+                        <ArrowRight size={14} aria-hidden="true" />
+                      </button>
+                    ) : (
+                      <span className="demo-card-hint">
+                        {step.advance === "wait"
+                          ? "Waiting for you"
+                          : "Click the highlighted button"}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

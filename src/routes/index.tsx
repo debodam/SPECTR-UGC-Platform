@@ -345,7 +345,11 @@ function Dashboard() {
                       aria-valuemax={100}
                       aria-label="Progress to target"
                     >
-                      <div style={{ width: `${forecast.progressPct}%` }} />
+                      <div
+                        style={{
+                          transform: `scaleX(${Math.min(100, Math.max(0, forecast.progressPct)) / 100})`,
+                        }}
+                      />
                     </div>
                     <div className="gp-forecast">{forecast.sentence}</div>
                     <ul className="gp-plays" aria-label="This week's top plays">

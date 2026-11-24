@@ -129,6 +129,13 @@ function RootComponent() {
   // In the demo, toasts sit at the top so they never cover a tour spotlight near the bottom right.
   const [demo, setDemo] = useState(false);
   useEffect(() => setDemo(isDemo()), []);
+  // Pause every looping animation (the orb, shimmers) while the tab is hidden.
+  useEffect(() => {
+    const sync = () => document.documentElement.classList.toggle("is-hidden", document.hidden);
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <SpectrProvider>

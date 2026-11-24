@@ -40,6 +40,58 @@ export const wordsAt = (t: number) => {
   return lo;
 };
 
+type Graph = {
+  audio: HTMLAudioElement;
+  ctx: AudioContext | null;
+  analyser: AnalyserNode | null;
+  gain: GainNode | null;
+};
+
+/** The audio element and its Web Audio graph (source, analyser for the orb, gain for mute). */
+function buildGraph(): Graph {
+  const audio = new Audio();
+  audio.preload = "auto";
+  audio.src = SAMPLE_SRC;
+  try {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return { audio, ctx: null, analyser: null, gain: null };
+    const ctx = new Ctx();
+    const src = ctx.createMediaElementSource(audio);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    const gain = ctx.createGain();
+    src.connect(analyser);
+    analyser.connect(gain);
+    gain.connect(ctx.destination);
+    return { audio, ctx, analyser, gain };
+  } catch {
+    /* no Web Audio: the element plays directly and the orb uses the envelope */
+    return { audio, ctx: null, analyser: null, gain: null };
+  }
+}
+
+let prepared: Graph | null = null;
+const takePrepared = () => {
+  const g = prepared;
+  prepared = null;
+  return g;
+};
+
+/**
+ * Builds the audio element and graph ahead of time (in idle time on the Record page), so pressing
+ * "Use sample recording" only has to start playback. The context starts suspended and resumes on the click.
+ */
+export function prepareSample() {
+  if (prepared || typeof window === "undefined") return;
+  try {
+    prepared = buildGraph();
+  } catch {
+    prepared = null;
+  }
+}
+
 export class SamplePlayer {
   private h: SampleHandlers;
   private mode: SampleMode = "audio";
@@ -97,31 +149,16 @@ export class SamplePlayer {
   start() {
     this.setMode("audio");
     try {
-      const a = new Audio();
-      a.preload = "auto";
-      a.src = SAMPLE_SRC;
+      // Use the element and audio graph prepared in idle time if there is one, so the click does little work.
+      const g = takePrepared() ?? buildGraph();
+      const a = g.audio;
       this.audio = a;
-      try {
-        const Ctx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-        if (Ctx) {
-          const ctx = new Ctx();
-          const src = ctx.createMediaElementSource(a);
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 1024;
-          const gain = ctx.createGain();
-          src.connect(analyser);
-          analyser.connect(gain);
-          gain.connect(ctx.destination);
-          this.ctx = ctx;
-          this.analyser = analyser;
-          this.gain = gain;
-          this.buf = new Float32Array(analyser.fftSize);
-          void ctx.resume().catch(() => {});
-        }
-      } catch {
-        /* no Web Audio: the element plays directly and the orb uses the envelope */
+      if (g.ctx && g.analyser && g.gain) {
+        this.ctx = g.ctx;
+        this.analyser = g.analyser;
+        this.gain = g.gain;
+        this.buf = new Float32Array(g.analyser.fftSize);
+        void g.ctx.resume().catch(() => {});
       }
       a.addEventListener("ended", () => this.finish());
       a.addEventListener("error", () => this.fallbackToSpeech("audio error"));
