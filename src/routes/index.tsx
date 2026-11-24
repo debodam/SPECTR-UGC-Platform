@@ -164,40 +164,18 @@ function Dashboard() {
 
         <main className="sx-main"><div className="sx-page"><div className="db-layout">
         <div className="db-left">
-        <div className="db-orbit">
-        {/* ── Concentric circles ── */}
-        <svg aria-hidden="true" width="100%" height="100%" viewBox="0 0 560 560" style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none", overflow: "visible" }}>
-          <circle cx="280" cy="280" r="235" fill="none" stroke="#ffffff" strokeOpacity="0.5" strokeWidth="1.2" />
-          <circle cx="280" cy="280" r="262" fill="none" stroke="#ffffff" strokeOpacity="0.16" strokeWidth="1" />
-        </svg>
-
-        {/* ── Orbit labels ── */}
-        <button type="button" onClick={() => navigate({ to: "/transform" })}
-          style={{ position: "absolute", left: "50%", top: "3.93%", zIndex: 1, transform: "translate(-50%,-50%)", border: 0, background: "transparent", color: "rgba(255,255,255,0.92)", fontFamily: "inherit", fontSize: 14, fontWeight: 600, letterSpacing: "0.04em", cursor: "pointer", padding: "6px 10px" }}>
-          Transform
-        </button>
-        <button type="button" onClick={() => navigate({ to: "/track" })}
-          style={{ position: "absolute", left: "96.43%", top: "50%", zIndex: 1, transform: "translate(-50%,-50%) rotate(90deg)", border: 0, background: "transparent", color: "rgba(255,255,255,0.92)", fontFamily: "inherit", fontSize: 14, fontWeight: 600, letterSpacing: "0.04em", cursor: "pointer", padding: "6px 10px" }}>
-          Track
-        </button>
-        <button type="button" onClick={() => navigate({ to: "/distribute" })}
-          style={{ position: "absolute", left: "50%", top: "96.07%", zIndex: 1, transform: "translate(-50%,-50%) rotate(180deg)", border: 0, background: "transparent", color: "rgba(255,255,255,0.92)", fontFamily: "inherit", fontSize: 14, fontWeight: 600, letterSpacing: "0.04em", cursor: "pointer", padding: "6px 10px" }}>
-          Distribute
-        </button>
-
-        {/* ── Orb ── */}
-        <div style={{ position: "absolute", left: "14.29%", top: "3.93%", width: "71.43%", height: "71.43%" }}>
-          <MicHalo recording={isRec} onClick={handleMic} />
-        </div>
-
-        {/* ── Caption ── */}
-        <div style={{ position: "absolute", left: "14.29%", width: "71.43%", top: "81.07%", textAlign: "center", pointerEvents: "none" }}>
-          <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em" }}>{isRec ? "Recording" : "Tap to record"}</div>
-          <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.88)" }}>
-            {isRec ? `${mm}:${ss} · tap to stop` : "Turn a conversation into LinkedIn content"}
+        <div style={{ width: "100%" }}>
+          <MicHalo state={isRec ? "recording" : "idle"} onClick={handleMic} />
+          <div style={{ marginTop: 28, textAlign: "center" }}>
+            <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }} aria-live="polite">
+              {isRec && <span className="mo-status-dot" aria-hidden="true" />}
+              {isRec ? "Recording" : "Tap to record"}
+              {isRec && <span style={{ fontWeight: 500, fontVariantNumeric: "tabular-nums", color: "rgba(255,255,255,0.9)" }}>{mm}:{ss}</span>}
+            </div>
+            <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.88)" }}>
+              {isRec ? "Tap the mic to stop" : "Turn a conversation into LinkedIn content"}
+            </div>
           </div>
-        </div>
-
         </div>
 
         {/* ── AI headline ── */}

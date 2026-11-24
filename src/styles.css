@@ -454,31 +454,6 @@ html, body, button, input, textarea, select, option {
 }
 .spectr-heartbeat { animation: spectr-heartbeat 1.15s ease-in-out infinite; }
 
-@keyframes spectr-ripple {
-  0%   { transform: scale(0.62); opacity: 0.55; }
-  100% { transform: scale(1.28); opacity: 0; }
-}
-.spectr-ripple { animation: spectr-ripple 4.2s ease-out infinite; }
-
-@keyframes spectr-breathe {
-  0%, 100% { transform: translate(0,0) scale(1); }
-  33%  { transform: translate(var(--dx,0), var(--dy,0)) scale(var(--amp,1)); }
-  66%  { transform: translate(calc(var(--dx,0)*-0.8), calc(var(--dy,0)*-0.6)) scale(var(--amp2,1)); }
-}
-
-/* ── Dashboard orb ── */
-.db-hl {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation-name: spectr-breathe;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-.db-hr {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: spectr-ripple 4.2s ease-out infinite;
-}
 .db-sk { animation: spectr-shimmer 1.6s ease-in-out infinite; background: rgba(255,255,255,0.28); border-radius: 8px; }
 .db-card { transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
 .db-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.24) !important; box-shadow: 0 22px 44px rgba(6,42,92,0.22) !important; }
@@ -541,7 +516,6 @@ html, body, button, input, textarea, select, option {
 /* ── Home ── */
 .db-layout { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 40px; align-items: center; }
 .db-left { display: flex; flex-direction: column; align-items: center; gap: 20px; min-width: 0; }
-.db-orbit { position: relative; width: min(560px, 100%); aspect-ratio: 1; }
 .db-right { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .db-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .db-headline { align-self: stretch; }
@@ -550,7 +524,6 @@ html, body, button, input, textarea, select, option {
 /* ── Record ── */
 .rc-layout { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 620px); gap: 32px; min-height: 560px; }
 .rc-orbcol { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; }
-.rc-orb { position: relative; width: min(400px, 100%); aspect-ratio: 1; }
 .rc-panel { min-height: 0; }
 
 /* ── Transform ── */
@@ -593,7 +566,7 @@ html, body, button, input, textarea, select, option {
 @media (max-width: 1180px) {
   .sx-header, .sx-main { padding-left: 28px; padding-right: 28px; }
   .db-layout { grid-template-columns: minmax(0, 1fr); }
-  .db-orbit { width: min(480px, 100%); }
+  .db-left .mo-slot { width: min(400px, 100%); }
   .tf-form { flex-direction: column; min-height: 0; }
   .tf-form-left { flex: none; }
   .tf-result { grid-template-columns: minmax(0, 1fr); min-height: 0; }
@@ -608,7 +581,7 @@ html, body, button, input, textarea, select, option {
 /* ── Tablet portrait ── */
 @media (max-width: 980px) {
   .rc-layout { grid-template-columns: minmax(0, 1fr); min-height: 0; }
-  .rc-orb { width: min(320px, 100%); }
+  .rc-orbcol .mo-slot { width: min(340px, 100%); }
   .rc-panel { min-height: 420px; }
   .st-card { flex-direction: column; min-height: 0; }
   .st-tabs { width: auto; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.3); padding: 12px; }
@@ -668,10 +641,134 @@ html, body, button, input, textarea, select, option {
   .su-grid { grid-template-columns: minmax(0, 1fr) !important; }
 }
 
-/* ── Mic halo (design/source/Record.dc.html) ── */
-.db-mic { transition: transform .5s ease; }
-.db-mic:hover { transform: scale(1.025); }
-.db-mic:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }
+/* ══════════════════════════════════════════════════════════════
+   Mic orb: soft filled light only (gradients, blur, glow). No outlines.
+   Sizes are in cqw against the orb's own width (460px on desktop).
+   ══════════════════════════════════════════════════════════════ */
+.mo-slot { position: relative; width: min(460px, 100%); aspect-ratio: 1; margin: 0 auto; }
+.mo {
+  position: absolute; inset: 0; container-type: inline-size; isolation: isolate;
+  border: 0; padding: 0; margin: 0; background: transparent; border-radius: 50%; cursor: pointer;
+  font: inherit; color: inherit; min-width: 44px; min-height: 44px;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1);
+}
+.mo:hover { transform: scale(1.03); }
+.mo:active { transform: scale(0.97); }
+.mo:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }
+.mo > span, .mo-x > span { position: absolute; display: block; pointer-events: none; }
+.mo-x { inset: 0; }
+.mo-l { inset: 0; border-radius: 50%; animation: mo-breathe 7s ease-in-out infinite; }
+
+.mo-ambient { inset: -45% !important; background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 35%, rgba(255,255,255,0) 68%); filter: blur(60px); opacity: .85; transition: opacity .35s ease; }
+.mo-ripple {
+  inset: 2%; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.55) 0%, rgba(185,214,248,0.38) 42%, rgba(185,214,248,0) 70%);
+  filter: blur(10px); animation: mo-ripple 4.2s ease-out infinite;
+}
+.mo-ripple:nth-child(2) { animation-delay: -1.4s; }
+.mo-ripple:nth-child(3) { animation-delay: -2.8s; }
+.mo-aura {
+  background: radial-gradient(circle, #0a4a94 0%, #0a5ab4 26%, #0a66c2 42%, #3f88dc 58%, #7fb3ec 72%, rgba(185,214,248,0.8) 85%, rgba(185,214,248,0) 100%);
+  filter: blur(12px);
+}
+.mo-core {
+  inset: 17% !important;
+  background: radial-gradient(circle at 50% 46%, #0a4a94 0%, #0a52a6 45%, #0a66c2 78%, rgba(10,102,194,0) 100%);
+  filter: blur(5px);
+}
+.mo-sheen {
+  inset: 17% !important; border-radius: 50%; opacity: .3; mix-blend-mode: screen;
+  background: conic-gradient(from 0deg, rgba(255,255,255,0) 0deg, rgba(255,255,255,0.95) 45deg, rgba(185,214,248,0) 100deg,
+    rgba(255,255,255,0.7) 175deg, rgba(10,102,194,0) 235deg, rgba(227,241,255,0.9) 300deg, rgba(255,255,255,0) 360deg);
+  -webkit-mask-image: radial-gradient(circle, #000 35%, rgba(0,0,0,0) 72%); mask-image: radial-gradient(circle, #000 35%, rgba(0,0,0,0) 72%);
+  filter: blur(6px); animation: mo-spin 40s linear infinite;
+}
+.mo-rim { inset: 5%; border-radius: 50%; box-shadow: inset 0 0 10cqw 0.6cqw rgba(255,255,255,0.4); filter: blur(8px); }
+.mo-grain {
+  inset: 0 !important; border-radius: 50%; opacity: .04; mix-blend-mode: overlay; background-size: 96px 96px;
+  -webkit-mask-image: radial-gradient(circle, #000 60%, rgba(0,0,0,0) 72%); mask-image: radial-gradient(circle, #000 60%, rgba(0,0,0,0) 72%);
+}
+/* ── Living light core (Siri-style). --lvl is written per frame from JS, 0..1. ── */
+.mo { --lvl: 0; --spread: calc(1 + var(--lvl) * 0.35); }
+.mo-aurax { transform: scale(calc(1 + var(--lvl) * 0.12)); }
+.mo-orbcore { left: 31% !important; top: 31% !important; width: 38%; height: 38%; animation: mo-core-breathe 5s ease-in-out infinite; }
+.mo-orbcore > span { position: absolute; display: block; border-radius: 50%; }
+.mo-cbloom {
+  inset: -45%; opacity: calc(0.6 + var(--lvl) * 0.3); transition: opacity .35s ease;
+  background: radial-gradient(circle, rgba(227,241,255,0.55) 0%, rgba(185,214,248,0.45) 32%, rgba(185,214,248,0.16) 52%, rgba(185,214,248,0) 68%);
+  filter: blur(8.7cqw);
+}
+.mo-sphere {
+  inset: 0;
+  background: radial-gradient(circle, rgba(185,214,248,0.3) 0%, rgba(77,146,224,0.22) 40%, rgba(77,146,224,0) 72%);
+  filter: blur(2.6cqw);
+}
+.mo-blobs {
+  inset: -22%; mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(circle, #000 42%, rgba(0,0,0,0) 72%); mask-image: radial-gradient(circle, #000 42%, rgba(0,0,0,0) 72%);
+}
+.mo-blob {
+  position: absolute; inset: 0; border-radius: 50%; mix-blend-mode: screen; will-change: transform;
+  animation: mo-swirl 9s ease-in-out infinite;
+}
+.mo-blob.b1 { filter: blur(3.9cqw); animation-duration: 7.4s;
+  background: radial-gradient(circle at 40% 38%, rgba(255,255,255,1) 0%, rgba(255,255,255,0.75) 14%, rgba(255,255,255,0) 34%); }
+.mo-blob.b2 { filter: blur(4.8cqw); animation-duration: 9.6s; animation-delay: -3.1s; animation-direction: reverse;
+  background: radial-gradient(circle at 66% 36%, rgba(185,214,248,1) 0%, rgba(185,214,248,0.7) 16%, rgba(185,214,248,0) 38%); }
+.mo-blob.b3 { filter: blur(6cqw); animation-duration: 11.2s; animation-delay: -5.4s;
+  background: radial-gradient(circle at 36% 66%, rgba(77,146,224,1) 0%, rgba(77,146,224,0.75) 18%, rgba(77,146,224,0) 40%); }
+.mo-blob.b4 { filter: blur(4.4cqw); animation-duration: 12s; animation-delay: -1.7s; animation-direction: reverse;
+  background: radial-gradient(circle at 66% 64%, rgba(10,102,194,1) 0%, rgba(10,102,194,0.7) 16%, rgba(10,102,194,0) 38%); }
+.mo-hotx { inset: 38%; transform: scale(calc(1 + var(--lvl) * 0.55)); opacity: calc(0.85 + var(--lvl) * 0.15); }
+.mo-hot {
+  position: absolute; inset: 0; border-radius: 50%; mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.85) 28%, rgba(255,255,255,0) 70%);
+  filter: blur(1.4cqw); animation: mo-flare 3.4s ease-in-out infinite;
+}
+.mo:hover .mo-cbloom { opacity: calc(0.78 + var(--lvl) * 0.2); }
+.mo:hover .mo-sphere { filter: blur(2cqw) brightness(1.12); }
+
+@keyframes mo-core-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes mo-flare { 0%,100% { opacity: .78; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.08); } }
+@keyframes mo-swirl {
+  0%   { transform: rotate(0deg) translate(0%, 0%) scale(calc(0.92 * var(--spread))); }
+  33%  { transform: rotate(120deg) translate(4%, -3%) scale(calc(1.15 * var(--spread))); }
+  66%  { transform: rotate(240deg) translate(-3%, 4%) scale(calc(0.98 * var(--spread))); }
+  100% { transform: rotate(360deg) translate(0%, 0%) scale(calc(0.92 * var(--spread))); }
+}
+
+.mo:hover .mo-ambient { opacity: 1; }
+
+/* each layer breathes on its own clock */
+.mo-ambient { animation: mo-breathe 8.4s ease-in-out -1.2s infinite; }
+.mo-aura    { animation-duration: 6.2s; animation-delay: -2.1s; }
+.mo-core    { animation: mo-breathe 7.6s ease-in-out -4.3s infinite; }
+.mo-rim     { animation: mo-breathe 9s ease-in-out -0.7s infinite; }
+
+.mo--loading .mo-orbcore { animation-duration: 1.6s; opacity: .85; }
+.mo--denied .mo-orbcore { opacity: .55; }
+.mo--denied .mo-ripples, .mo--denied .mo-sheen { display: none !important; }
+.mo--denied .mo-x, .mo--denied .mo-core { opacity: .6; }
+
+@keyframes mo-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes mo-ripple { 0% { transform: scale(.7); opacity: .35; } 100% { transform: scale(1.35); opacity: 0; } }
+@keyframes mo-spin { to { transform: rotate(360deg); } }
+
+.mo-status-dot { width: 9px; height: 9px; border-radius: 50%; background: #d92d20; display: inline-block; animation: rc-dot 1.2s ease-in-out infinite; }
+.mo-denied {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center;
+  box-sizing: border-box; max-width: 440px; margin: 0 auto; padding: 12px 12px 12px 18px; border-radius: 22px;
+  background: #fef3f2; color: #b42318; font-size: 14px; line-height: 1.45; text-align: left;
+  box-shadow: 0 10px 30px rgba(6,42,92,0.16);
+}
+.mo-denied button {
+  flex-shrink: 0; min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; cursor: pointer;
+  background: #ffffff; color: #0a66c2; font: inherit; font-weight: 600; box-shadow: 0 4px 12px rgba(6,42,92,0.12);
+}
+.mo-denied button:focus-visible { outline: 2px solid #0a66c2; outline-offset: 2px; }
+
 @media (prefers-reduced-motion: reduce) {
-  .db-hl, .db-hr, .rc-live { animation: none !important; }
+  .mo, .mo *, .mo-status-dot, .rc-live { animation: none !important; transition: none !important; }
+  .mo-ripple { opacity: 0 !important; }
+  .mo:hover, .mo:active { transform: none; }
 }

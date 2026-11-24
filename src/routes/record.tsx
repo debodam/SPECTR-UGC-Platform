@@ -4,7 +4,7 @@ import { Check, Download, ChevronDown, LogOut, ChevronsUpDown, Bell, Mic, House,
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
-import { MicHalo } from "@/components/spectr/MicHalo";
+import { MicHalo, type OrbState } from "@/components/spectr/MicHalo";
 
 export const Route = createFileRoute("/record")({ component: RecordPage });
 
@@ -211,6 +211,8 @@ function RecordPage() {
   const [transcript, setTranscript] = useState("");
   const [interimText, setInterimText] = useState("");
   const [error, setError] = useState("");
+  const [micReady, setMicReady] = useState(false);
+  const [micDenied, setMicDenied] = useState(false);
   const [logs, setLogs] = useState<TranscriptLog[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -286,6 +288,8 @@ function RecordPage() {
       return;
     }
     setError("");
+    setMicReady(false);
+    setMicDenied(false);
     setTranscript("");
     setInterimText("");
     setSaved(false);
@@ -309,6 +313,7 @@ function RecordPage() {
     recognition.onerror = (event: any) => {
       if (event.error === "not-allowed") {
         setError("Microphone access denied. Please allow microphone access and try again.");
+        setMicDenied(true);
         setRecording(false);
         if (timerRef.current) clearInterval(timerRef.current);
       }
@@ -320,6 +325,8 @@ function RecordPage() {
         try { recognition.start(); } catch {}
       }
     };
+    recognition.onstart = () => setMicReady(true);
+    recognition.onaudiostart = () => setMicReady(true);
     recognition.start();
     setRecording(true);
     setSeconds(0);
@@ -353,6 +360,7 @@ function RecordPage() {
 
   const isRec = recording;
   const isDone = !recording && !!transcript;
+  const orbState: OrbState = micDenied ? "denied" : isRec ? (micReady ? "recording" : "loading") : "idle";
   const liveText = transcript + (interimText ? " " + interimText : "");
   const hasLogs = logs.length > 0;
 
@@ -428,22 +436,29 @@ function RecordPage() {
         <main className="sx-main"><div className="sx-page"><div className="rc-layout">
         <div className="rc-orbcol">
         {/* Orb */}
-        <div className="rc-orb">
-          <MicHalo recording={isRec} onClick={isRec ? stopRecording : startRecording} liveAudio />
-        </div>
+        <MicHalo state={orbState} onClick={isRec ? stopRecording : startRecording} liveAudio />
 
         {/* Caption */}
-        <div style={{ marginTop: -24, position: "relative", width: "100%", maxWidth: 400, textAlign: "center", pointerEvents: "none" }}>
-          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em" }}>
-            {isRec ? "Recording" : isDone ? "Tap to record again" : "Click to start recording"}
-          </div>
-          <div style={{ marginTop: 6, fontSize: 15, color: "rgba(255,255,255,0.9)" }}>
-            {isRec
-              ? "Tap the mic to stop"
-              : "Your words become a live transcript"}
-          </div>
-          {error && (
-            <div style={{ marginTop: 8, fontSize: 13, color: "#fca5a5" }}>{error}</div>
+        <div style={{ marginTop: 28, position: "relative", width: "100%", maxWidth: 460, textAlign: "center" }}>
+          {orbState === "denied" ? (
+            <div className="mo-denied" role="alert">
+              <span style={{ flex: "1 1 220px" }}>Microphone access is blocked. Allow it in your browser settings and try again.</span>
+              <button type="button" onClick={startRecording}>Try again</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }} aria-live="polite">
+                {orbState === "recording" && <span className="mo-status-dot" aria-hidden="true" />}
+                {orbState === "recording" ? "Recording" : orbState === "loading" ? "Requesting microphone" : "Click to start recording"}
+                {orbState === "recording" && <span style={{ fontWeight: 500, fontVariantNumeric: "tabular-nums", color: "rgba(255,255,255,0.9)" }}>{formatTime(seconds)}</span>}
+              </div>
+              <div style={{ marginTop: 6, fontSize: 15, color: "rgba(255,255,255,0.9)" }}>
+                {orbState === "recording" ? "Tap the mic to stop" : orbState === "loading" ? "Allow access in your browser to begin" : "Your words become a live transcript"}
+              </div>
+              {error && (
+                <div className="mo-denied" role="alert" style={{ marginTop: 14 }}>{error}</div>
+              )}
+            </>
           )}
         </div>
 
