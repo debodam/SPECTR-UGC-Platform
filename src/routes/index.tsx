@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { toPlainText } from "@/lib/markdown";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, ArrowUp, ArrowUpRight, ChartNoAxesColumn, File, Plus } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
@@ -673,11 +674,10 @@ function Dashboard() {
                           </span>
                           <div style={{ minWidth: 0 }}>
                             <div className="db-draft-title">
-                              {d.content
+                              {toPlainText(d.content)
                                 .split("\n")
                                 .find((l) => l.trim() && !/^option \d+\s*$/i.test(l.trim()))
-                                ?.replace(/^#+\s*/, "")
-                                .slice(0, 60) || "Untitled draft"}
+                                ?.slice(0, 60) || "Untitled draft"}
                             </div>
                             <div
                               style={{

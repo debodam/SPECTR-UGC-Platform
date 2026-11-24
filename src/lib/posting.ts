@@ -1,3 +1,4 @@
+import { toPlainText } from "./markdown";
 import supabase from "./supabase";
 import type { Format } from "./spectr-store";
 
@@ -51,8 +52,9 @@ export const plannedAt = (p: Pick<PostItem, "date" | "time">) =>
 export const isDue = (p: PostItem, now = new Date()) =>
   p.status === "ready" && plannedAt(p).getTime() <= now.getTime();
 
+/** The post as clean plain text (no Markdown symbols), ready to paste into LinkedIn. */
 export const postText = (p: Pick<PostItem, "title" | "content">) =>
-  p.content.trim() ? p.content.trim() : p.title;
+  p.content.trim() ? toPlainText(p.content) : p.title;
 
 /** LinkedIn's share composer prefilled with the post text (works for text posts). */
 export const linkedInComposeUrl = (text: string) =>

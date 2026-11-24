@@ -27,8 +27,10 @@ import { transformContent, type TransformInput, type TransformOutput } from "@/l
 import supabase, { accessToken } from "@/lib/supabase";
 import { useEscape } from "@/lib/use-escape";
 import { isDemo } from "@/demo/mode";
-import { DEMO_SAMPLE_NOTE, demoTransform } from "@/demo/generate";
+import { DEMO_SAMPLE_NOTE, demoTransform, isSampleText } from "@/demo/generate";
 import { callAI } from "@/lib/ai-client";
+import { previewText, toPlainText } from "@/lib/markdown";
+import { Markdown } from "@/components/spectr/Markdown";
 
 export const Route = createFileRoute("/transform")({
   component: () => (
@@ -100,44 +102,10 @@ function safeExtract(text: string, tab: TabKey): string {
 }
 
 function ArticleView({ text }: { text: string }) {
-  const nl = text.indexOf("\n");
-  const headline = nl >= 0 ? text.slice(0, nl).trim() : text.trim();
-  const body = nl >= 0 ? text.slice(nl + 1).trim() : "";
-  const paragraphs = body.split(/\n\n+/).filter(Boolean);
-  return (
-    <div>
-      {headline && (
-        <h2
-          style={{
-            margin: "26px 0 0",
-            fontSize: 26,
-            fontWeight: 500,
-            letterSpacing: "-0.015em",
-            lineHeight: 1.25,
-            color: "#ffffff",
-          }}
-        >
-          {headline}
-        </h2>
-      )}
-      <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-        {paragraphs.map((para, i) => (
-          <p
-            key={i}
-            style={{
-              margin: 0,
-              fontSize: 15.5,
-              lineHeight: 1.72,
-              color: "rgba(255,255,255,0.95)",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {para.trim()}
-          </p>
-        ))}
-      </div>
-    </div>
-  );
+  // The first line is the title even when the writer left off the "#".
+  const t = text.trim();
+  const md = /^#\s/.test(t) ? t : `# ${t}`;
+  return <Markdown text={md} className="md-article" />;
 }
 
 function PostsView({ text, onCopy }: { text: string; onCopy: (t: string) => void }) {
@@ -161,10 +129,10 @@ function PostsView({ text, onCopy }: { text: string; onCopy: (t: string) => void
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: "#ffffff" }}>Post {i + 1}</span>
             <span style={{ fontSize: 12, color: "rgba(255,255,255,0.85)" }}>
-              {post.length} characters
+              {toPlainText(post).length} characters
             </span>
             <button
-              onClick={() => onCopy(post)}
+              onClick={() => onCopy(toPlainText(post))}
               style={{
                 marginLeft: "auto",
                 height: 30,
@@ -182,17 +150,7 @@ function PostsView({ text, onCopy }: { text: string; onCopy: (t: string) => void
               Copy
             </button>
           </div>
-          <div
-            style={{
-              marginTop: 10,
-              fontSize: 15,
-              lineHeight: 1.65,
-              color: "rgba(255,255,255,0.95)",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {post}
-          </div>
+          <Markdown text={post} className="md-post" />
         </div>
       ))}
     </div>
@@ -218,16 +176,7 @@ function VideoScriptView({ text }: { text: string }) {
             background: "rgba(255,255,255,0.14)",
           }}
         >
-          <div
-            style={{
-              fontSize: 15,
-              lineHeight: 1.6,
-              color: "rgba(255,255,255,0.95)",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {text}
-          </div>
+          <Markdown text={text} />
         </div>
       </div>
     );
@@ -249,19 +198,7 @@ function VideoScriptView({ text }: { text: string }) {
   }
 
   if (scenes.length === 0) {
-    return (
-      <div
-        style={{
-          fontSize: 15,
-          lineHeight: 1.7,
-          color: "rgba(255,255,255,0.95)",
-          whiteSpace: "pre-wrap",
-          marginTop: 20,
-        }}
-      >
-        {text}
-      </div>
-    );
+    return <Markdown text={text} className="md-post" />;
   }
 
   return (
@@ -298,16 +235,7 @@ function VideoScriptView({ text }: { text: string }) {
           </div>
           <div>
             <div style={{ fontSize: 15, fontWeight: 600, color: "#ffffff" }}>{v.title}</div>
-            <div
-              style={{
-                marginTop: 5,
-                fontSize: 14.5,
-                lineHeight: 1.6,
-                color: "rgba(255,255,255,0.95)",
-              }}
-            >
-              {v.text}
-            </div>
+            <Markdown text={v.text} compact className="md-scene" />
           </div>
         </div>
       ))}
@@ -918,7 +846,11 @@ function TransformPage() {
 
   async function callTransform(input: TransformInput): Promise<TransformOutput> {
     // The demo always answers from prewritten samples and never reaches the AI.
-    if (isDemo()) return demoTransform(input, playId);
+    if (isDemo()) {
+      if (!input.refine && input.content && !isSampleText(input.content))
+        toast.message(DEMO_SAMPLE_NOTE);
+      return demoTransform(input, playId);
+    }
     const data = await callAI(async () =>
       transformContent({ data: { ...input, token: await accessToken() } }),
     );
@@ -1986,7 +1918,7 @@ function TransformPage() {
                               {tab !== "Post" && (
                                 <button
                                   type="button"
-                                  onClick={() => copy(clean)}
+                                  onClick={() => copy(toPlainText(clean))}
                                   style={{
                                     height: 34,
                                     padding: "0 12px",
@@ -2041,7 +1973,7 @@ function TransformPage() {
                                     onClick={() =>
                                       dlDocx(
                                         tab,
-                                        clean,
+                                        toPlainText(clean),
                                         buildFilename(ws.companyName, userName, tab, "docx"),
                                       )
                                     }
@@ -2069,7 +2001,7 @@ function TransformPage() {
                                     onClick={() =>
                                       dlPdf(
                                         tab,
-                                        clean,
+                                        toPlainText(clean),
                                         buildFilename(ws.companyName, userName, tab, "pdf"),
                                       )
                                     }
@@ -2399,7 +2331,7 @@ function TransformPage() {
               ) : (
                 historyEntries.map((entry) => {
                   const raw = safeExtract(entry.content, entry.format);
-                  const preview = raw.replace(/\n+/g, " ").trim().slice(0, 120);
+                  const preview = previewText(raw, 120);
                   const kindColor =
                     entry.format === "Article"
                       ? "rgba(255,255,255,0.24)"

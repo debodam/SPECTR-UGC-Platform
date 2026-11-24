@@ -3656,6 +3656,110 @@ select.gx-input {
   margin: 16px auto 0;
 }
 
+/* ── Rendered Markdown in generated content (Transform, history, queue, demo) ── */
+.md {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.md > * {
+  margin: 0;
+}
+.md > * + * {
+  margin-top: 14px;
+}
+.md .md-h1 {
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+.md .md-h2 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #ffffff;
+}
+.md .md-h3 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #ffffff;
+}
+.md > .md-h + * {
+  margin-top: 8px;
+}
+.md > * + .md-h2,
+.md > * + .md-h3 {
+  margin-top: 26px;
+}
+.md ul,
+.md ol {
+  padding-left: 22px;
+}
+.md li + li {
+  margin-top: 6px;
+}
+.md li::marker {
+  color: rgba(255, 255, 255, 0.7);
+}
+.md strong {
+  font-weight: 600;
+  color: #ffffff;
+}
+.md em {
+  font-style: italic;
+}
+.md a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.md code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.92em;
+}
+.md blockquote {
+  padding-left: 14px;
+  border-left: 2px solid rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.88);
+}
+.md hr {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+.md-article {
+  margin-top: 26px;
+}
+.md-article > .md-h1 + * {
+  margin-top: 20px;
+}
+.md-post {
+  margin-top: 10px;
+  font-size: 15px;
+}
+.md--compact {
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.md--compact > * + * {
+  margin-top: 6px;
+}
+.md--compact .md-h1,
+.md--compact .md-h2,
+.md--compact .md-h3 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.md-scene {
+  margin-top: 5px;
+}
+
 /* ── Demo mode (only rendered under /demo) ───────────────────────────── */
 .demo-on {
   --demo-banner-h: 44px;
@@ -4012,4 +4116,11 @@ select.gx-input {
 }
 .lp-cta--ghost:hover {
   background: rgba(255, 255, 255, 0.12) !important;
+}
+.md.ds-item-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.md.ds-item-text > * + * {
+  margin-top: 2px;
 }

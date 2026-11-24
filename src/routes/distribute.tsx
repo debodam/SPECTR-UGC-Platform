@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Markdown } from "@/components/spectr/Markdown";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Calendar, Check, CheckCheck, Copy, ExternalLink, Plus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -618,7 +619,9 @@ function DistributePage() {
                           <span>{fmtWhen(q)}</span>
                           {q.playId && <span className="ds-from">From a play</span>}
                         </div>
-                        {q.content && <p className="ds-item-text">{q.content}</p>}
+                        {q.content && (
+                          <Markdown text={q.content} compact className="ds-item-text" />
+                        )}
                         {due && (
                           <div className="ds-due-note">
                             Your post is ready. Copy it or open LinkedIn to post.
