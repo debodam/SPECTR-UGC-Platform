@@ -8,6 +8,7 @@ create table if not exists public.saved_contexts (
 
 alter table public.saved_contexts enable row level security;
 
+drop policy if exists "Users manage their own saved contexts" on public.saved_contexts;
 create policy "Users manage their own saved contexts"
   on public.saved_contexts for all
   using (auth.uid() = user_id)

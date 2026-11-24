@@ -16,6 +16,7 @@ create table if not exists public.perf_entries (
 
 alter table public.perf_entries enable row level security;
 
+drop policy if exists "Users can manage own perf_entries" on public.perf_entries;
 create policy "Users can manage own perf_entries"
   on public.perf_entries for all
   using  (auth.uid() = user_id)

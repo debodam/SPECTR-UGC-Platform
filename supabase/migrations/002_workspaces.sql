@@ -19,6 +19,7 @@ create table if not exists public.workspaces (
 alter table public.workspaces enable row level security;
 
 -- Users can only read/write their own workspace rows
+drop policy if exists "Users can manage own workspaces" on public.workspaces;
 create policy "Users can manage own workspaces"
   on public.workspaces for all
   using  (auth.uid() = user_id)

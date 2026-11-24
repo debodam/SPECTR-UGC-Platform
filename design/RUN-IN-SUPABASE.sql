@@ -1,8 +1,167 @@
 -- SPECTR: everything to run once in the Supabase SQL editor (Dashboard > SQL Editor > New query).
--- Combines migrations 009, 010 and 011 in order. Every statement is idempotent, so running it twice is safe.
--- Generated from supabase/migrations on 2026-11-24. The app works before this is run, with growth data kept on the device.
+-- Combines migrations 002 to 011 in order. Every statement is idempotent: tables and columns that already
+-- exist are left alone, so running it twice, or on a database that already has some of these tables, is safe.
+-- 001 (profiles and the signup trigger) is left out on purpose so an existing signup trigger is never replaced.
+-- It all runs in one transaction: if anything fails, nothing is changed.
+-- Generated from supabase/migrations on 2026-11-24.
 
 begin;
+
+-- Preflight: every table below belongs to a company, so public.companies must already exist.
+do $$
+begin
+  if to_regclass('public.companies') is null then
+    raise exception 'public.companies is missing. Create the companies table first, then run this file again.';
+  end if;
+end $$;
+
+-- ═══ supabase/migrations/002_workspaces.sql ═══
+-- Workspace config per user+company (metrics, goals, audience)
+create table if not exists public.workspaces (
+  id                    uuid        primary key default gen_random_uuid(),
+  company_id            uuid        not null references public.companies (id) on delete cascade,
+  user_id               uuid        not null references auth.users (id) on delete cascade,
+  industry              text,
+  primary_platform      text        not null default 'LinkedIn',
+  starting_from_scratch boolean     not null default false,
+  baseline              jsonb       not null default '{}',
+  targets               jsonb       not null default '{}',
+  goal_description      text,
+  audience              jsonb       not null default '{}',
+  setup_complete        boolean     not null default false,
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now(),
+  unique (company_id, user_id)
+);
+
+alter table public.workspaces enable row level security;
+
+-- Users can only read/write their own workspace rows
+drop policy if exists "Users can manage own workspaces" on public.workspaces;
+create policy "Users can manage own workspaces"
+  on public.workspaces for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- ═══ supabase/migrations/003_perf_entries.sql ═══
+-- Performance log entries scoped to a company
+create table if not exists public.perf_entries (
+  id               uuid          primary key default gen_random_uuid(),
+  company_id       uuid          not null references public.companies (id) on delete cascade,
+  user_id          uuid          not null references auth.users (id) on delete cascade,
+  date             date          not null,
+  title            text          not null default '',
+  format           text          not null default 'Article',
+  source           text          not null default 'Transcript',
+  impressions      integer       not null default 0,
+  engagement_rate  numeric(6,2)  not null default 0,
+  followers_gained integer       not null default 0,
+  notes            text          not null default '',
+  created_at       timestamptz   not null default now()
+);
+
+alter table public.perf_entries enable row level security;
+
+drop policy if exists "Users can manage own perf_entries" on public.perf_entries;
+create policy "Users can manage own perf_entries"
+  on public.perf_entries for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Fast lookups by company
+create index if not exists perf_entries_company_date
+  on public.perf_entries (company_id, date desc);
+
+-- ═══ supabase/migrations/004_queue_items.sql ═══
+-- Publish queue entries scoped to a company
+create table if not exists public.queue_items (
+  id         uuid        primary key default gen_random_uuid(),
+  company_id uuid        not null references public.companies (id) on delete cascade,
+  user_id    uuid        not null references auth.users (id) on delete cascade,
+  title      text        not null default '',
+  format     text        not null default 'Article',
+  date       date        not null,
+  time       text        not null default '09:00',
+  status     text        not null default 'Scheduled',
+  created_at timestamptz not null default now()
+);
+
+alter table public.queue_items enable row level security;
+
+drop policy if exists "Users can manage own queue_items" on public.queue_items;
+create policy "Users can manage own queue_items"
+  on public.queue_items for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Fast lookups by company ordered by schedule
+create index if not exists queue_items_company_date
+  on public.queue_items (company_id, date, time);
+
+-- ═══ supabase/migrations/005_company_logo.sql ═══
+alter table public.companies add column if not exists logo_url text;
+
+-- ═══ supabase/migrations/006_generations.sql ═══
+create table if not exists public.generations (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid references public.companies(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  format text not null,
+  content text not null,
+  created_at timestamptz default now() not null
+);
+
+alter table public.generations enable row level security;
+
+drop policy if exists "Users manage their own generations" on public.generations;
+create policy "Users manage their own generations"
+  on public.generations for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create index if not exists generations_company_user_idx
+  on public.generations(company_id, user_id, created_at desc);
+
+-- ═══ supabase/migrations/007_saved_contexts.sql ═══
+create table if not exists public.saved_contexts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  name text not null,
+  text text not null,
+  created_at timestamptz default now() not null
+);
+
+alter table public.saved_contexts enable row level security;
+
+drop policy if exists "Users manage their own saved contexts" on public.saved_contexts;
+create policy "Users manage their own saved contexts"
+  on public.saved_contexts for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create index if not exists saved_contexts_user_idx
+  on public.saved_contexts(user_id, created_at desc);
+
+-- ═══ supabase/migrations/008_transcripts.sql ═══
+create table if not exists public.transcripts (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid references public.companies(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  transcript_text text not null,
+  duration_seconds integer not null default 0,
+  created_at timestamptz default now() not null
+);
+
+alter table public.transcripts enable row level security;
+
+drop policy if exists "Users manage their own transcripts" on public.transcripts;
+create policy "Users manage their own transcripts"
+  on public.transcripts for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create index if not exists transcripts_company_user_idx
+  on public.transcripts(company_id, user_id, created_at desc);
 
 -- ═══ supabase/migrations/009_growth_engine.sql ═══
 -- Growth Engine: plans, weekly plays, experiments and insights.

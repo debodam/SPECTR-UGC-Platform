@@ -92,7 +92,7 @@ The full report is in `design/audit-report.md`. It has 18 findings: 1 blocker, 6
   - the real app's saved state is unchanged after Exit demo
 
 ## 2. What to do first in the morning
-1. **Run the SQL.** Open the Supabase dashboard, go to SQL Editor, then New query. Paste all of `design/RUN-IN-SUPABASE.sql` and run it. It combines migrations 009, 010 and 011 and is safe to run twice. Until then, growth data lives on the device with a small note.
+1. **Run the SQL.** Open the Supabase dashboard, go to SQL Editor, then New query. Paste all of `design/RUN-IN-SUPABASE.sql` and run it. It combines migrations 002 to 011 (production was missing some of the older tables, such as `queue_items`). It is safe to run twice and runs in one transaction, so a failure changes nothing. Until then, growth data lives on the device with a small note.
 2. **Try the demo** at http://localhost:5173/demo (start the server with `npm run dev`). It takes about 4 minutes.
 3. **Make two decisions** from `design/audit-report.md` (bottom section):
    - Should the access code move server side?
