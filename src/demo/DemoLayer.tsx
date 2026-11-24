@@ -124,10 +124,13 @@ export default function DemoLayer() {
         setTour({ i: TOUR.length - 1, status: "closing" });
         return;
       }
+      // Pass over steps that no longer apply, in the direction of travel.
+      const dir = i >= tour.i ? 1 : -1;
+      while (i > 0 && i < TOUR.length - 1 && TOUR[i].skip?.()) i += dir;
       demoEvent("step reached", { step: TOUR[i].id });
       setTour({ i: Math.max(0, i), status: "running" });
     },
-    [setTour],
+    [setTour, tour.i],
   );
 
   const next = useCallback(() => goTo(tour.i + 1), [goTo, tour.i]);
@@ -432,6 +435,16 @@ export default function DemoLayer() {
                       type="button"
                       className="gh-btn gh-btn--primary gh-btn--small"
                       onClick={next}
+                    >
+                      {step.nextLabel ?? "Next"}
+                      <ArrowRight size={14} aria-hidden="true" />
+                    </button>
+                  ) : step.nextWhenDone ? (
+                    <button
+                      type="button"
+                      className="gh-btn gh-btn--primary gh-btn--small"
+                      disabled
+                      title="Available when the take finishes"
                     >
                       {step.nextLabel ?? "Next"}
                       <ArrowRight size={14} aria-hidden="true" />

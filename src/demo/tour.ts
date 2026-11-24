@@ -24,7 +24,15 @@ export interface TourStep {
   click?: string;
   done?: () => boolean;
   nextLabel?: string;
+  /** Show Next on a "wait" step, disabled until done() is true. */
+  nextWhenDone?: boolean;
+  /** Skip this step when it no longer applies (for example the visitor already did it). */
+  skip?: () => boolean;
 }
+
+/** State of the demo's sample take, mirrored by the Record page on <html data-sample>. */
+const sample = () =>
+  typeof document === "undefined" ? "" : document.documentElement.dataset.sample;
 
 export const TOUR: TourStep[] = [
   {
@@ -99,30 +107,32 @@ export const TOUR: TourStep[] = [
     go: `/record?play=${PLAY}`,
     targets: ['[data-tour="sample-recording"]'],
     title: "Record a take",
-    body: "Normally you talk for a minute. Click Use sample recording to play a prepared 58 second take.",
+    body: "Normally you talk for a minute. Click Use sample recording to hear a prepared 43 second take, with sound.",
     advance: "click",
+  },
+  {
+    id: "listening",
+    num: 4,
+    route: "/record",
+    go: `/record?play=${PLAY}`,
+    targets: ['[data-tour="orb-col"]', '[data-tour="live-transcript"]'],
+    title: "Listening. Watch your words appear.",
+    body: "The orb follows the voice and the transcript fills in word by word as it is spoken.",
+    advance: "wait",
+    nextWhenDone: true,
+    // Ended, or the visitor already clicked Stop.
+    done: () => sample() === "ended" || sample() === "stopped",
   },
   {
     id: "stop",
     num: 4,
     route: "/record",
     go: `/record?play=${PLAY}`,
-    targets: ['[data-tour="orb-col"]', '[data-tour="live-transcript"]'],
-    title: "Watch it listen",
-    body: "The orb reacts and the transcript fills in live. When the take finishes, click the orb to stop.",
-    advance: "wait",
-    done: () => !!document.querySelector('[data-tour="new-transcript"]'),
-  },
-  {
-    id: "take",
-    num: 4,
-    route: "/record",
-    go: `/record?play=${PLAY}`,
-    targets: ['[data-tour="new-transcript"]'],
-    click: '[data-tour="take-to-transform"]',
-    title: "Send it to Transform",
-    body: "You can save the take to this play's logs. Then click Take to Transform.",
+    targets: ['[data-tour="stop-recording"]'],
+    title: "That is the whole take",
+    body: "Click Stop to save it. It is linked to this play, then Transform opens with it.",
     advance: "click",
+    skip: () => sample() === "stopped",
   },
   {
     id: "generate",

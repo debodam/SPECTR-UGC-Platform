@@ -36,6 +36,7 @@ function useOrbMotion(
   blobs: React.RefObject<HTMLSpanElement | null>,
   ripples: React.RefObject<HTMLSpanElement | null>,
   listening: boolean,
+  external: React.RefObject<(() => number) | null | undefined>,
 ) {
   useEffect(() => {
     const el = orb.current;
@@ -81,7 +82,9 @@ function useOrbMotion(
         rippleAnims = ripples.current?.getAnimations({ subtree: true }) ?? [];
       }
       let target = 0;
-      if (analyser && buf) {
+      if (external.current) {
+        target = Math.max(0, Math.min(1, external.current()));
+      } else if (analyser && buf) {
         analyser.getFloatTimeDomainData(buf);
         let sum = 0;
         for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
@@ -119,11 +122,14 @@ export function MicHalo({
   state,
   onClick,
   liveAudio = false,
+  level,
 }: {
   state: OrbState;
   onClick: () => void;
   /** React to the live microphone level while recording. */
   liveAudio?: boolean;
+  /** Reads a level 0..1 each frame from another source (the demo's sample recording) instead of the mic. */
+  level?: () => number;
 }) {
   const orb = useRef<HTMLButtonElement>(null);
   const blobs = useRef<HTMLSpanElement>(null);
@@ -132,7 +138,9 @@ export function MicHalo({
   useEffect(() => {
     setNoise(makeNoise());
   }, []);
-  useOrbMotion(orb, blobs, ripples, state === "recording" && liveAudio);
+  const external = useRef(level);
+  external.current = level;
+  useOrbMotion(orb, blobs, ripples, state === "recording" && liveAudio && !level, external);
 
   return (
     <div className="mo-slot">

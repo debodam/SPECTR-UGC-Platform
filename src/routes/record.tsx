@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppGate, AppHeader, AppRail } from "@/components/spectr/AppChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, ChevronDown, Mic, X, Play } from "lucide-react";
+import { Check, Download, ChevronDown, Mic, X, Play, Square, Volume2, VolumeX } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
@@ -12,7 +12,7 @@ import { advancePlay, insertWithLinks, type RepoCtx } from "@/lib/growth-repo";
 import { guidedPrompts } from "@/lib/growth-prompts";
 import { useEscape } from "@/lib/use-escape";
 import { demoEvent, isDemo } from "@/demo/mode";
-import { TOUR_PLAY } from "@/demo/seed/content";
+import { SamplePlayer, SAMPLE_DURATION, SAMPLE_WORDS } from "@/demo/sample-player";
 
 interface SpeechResultEvent {
   resultIndex: number;
@@ -356,15 +356,28 @@ function RecordPage() {
   const stoppedManuallyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const durationRef = useRef(0);
-  const sampleTimers = useRef<number[]>([]);
   const [demo] = useState(isDemo);
+  const playerRef = useRef<SamplePlayer | null>(null);
+  const [sampleWords, setSampleWords] = useState(0);
+  /** idle, playing, ended (audio finished, waiting for Stop) or stopped. Mirrored on <html data-sample> for the tour. */
+  const [sampleState, setSampleState] = useState<"idle" | "playing" | "ended" | "stopped">("idle");
+  const [muted, setMuted] = useState(false);
+  const sampleOn = sampleState === "playing" || sampleState === "ended";
+
+  useEffect(() => {
+    if (!demo) return;
+    document.documentElement.dataset.sample = sampleState;
+    return () => {
+      delete document.documentElement.dataset.sample;
+    };
+  }, [demo, sampleState]);
 
   const clearSample = () => {
-    sampleTimers.current.forEach((t) => clearTimeout(t));
-    sampleTimers.current = [];
+    playerRef.current?.stop();
+    playerRef.current = null;
   };
 
-  /** Demo only: plays the scripted sample take into the live transcript, as if it were being spoken. */
+  /** Demo only: plays the spoken sample take while its transcript appears word by word, in time with the voice. */
   const playSample = () => {
     clearSample();
     setError("");
@@ -375,23 +388,28 @@ function RecordPage() {
     finalRef.current = "";
     stoppedManuallyRef.current = false;
     recognitionRef.current = null;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setSampleWords(0);
+    setSeconds(0);
     setMicReady(true);
     setRecording(true);
-    setSeconds(0);
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+    setSampleState("playing");
     demoEvent("sample recording");
-    let at = 0;
-    for (const c of TOUR_PLAY.sampleRecording.chunks) {
-      at += c.delayMs;
-      sampleTimers.current.push(
-        window.setTimeout(() => {
-          finalRef.current += c.text;
-          setTranscript(finalRef.current);
-        }, at),
-      );
-    }
-    durationRef.current = TOUR_PLAY.sampleRecording.durationSeconds;
+    const player = new SamplePlayer({
+      onWords: setSampleWords,
+      onTime: setSeconds,
+      onEnd: () => setSampleState((s) => (s === "playing" ? "ended" : s)),
+      onMode: (mode) => demoEvent("sample mode", { mode }),
+    });
+    playerRef.current = player;
+    player.setMuted(muted);
+    player.start();
+  };
+
+  const toggleMute = () => {
+    const m = !muted;
+    setMuted(m);
+    playerRef.current?.setMuted(m);
   };
 
   useEffect(() => {
@@ -535,15 +553,40 @@ function RecordPage() {
   };
 
   const stopRecording = () => {
-    const wasSample = sampleTimers.current.length > 0;
-    clearSample();
+    const player = playerRef.current;
+    if (player) {
+      // The sample take: keep what was heard so far (all of it when the audio has ended).
+      const heard = SAMPLE_WORDS.slice(
+        0,
+        sampleState === "ended" ? SAMPLE_WORDS.length : sampleWords,
+      );
+      finalRef.current = heard.join(" ");
+      durationRef.current = Math.min(Math.floor(SAMPLE_DURATION), Math.floor(player.time()));
+      clearSample();
+      setSampleState("stopped");
+    } else {
+      durationRef.current = seconds;
+    }
     stoppedManuallyRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
     recognitionRef.current?.stop();
     setRecording(false);
     setInterimText("");
-    durationRef.current = wasSample ? TOUR_PLAY.sampleRecording.durationSeconds : seconds;
-    setTranscript(finalRef.current.trim());
+    const text = finalRef.current.trim();
+    setTranscript(text);
+    if (player && text) void saveAndContinue(text, durationRef.current);
+  };
+
+  /** Demo sample take: Stop saves it, links it to the play, and moves on to Transform. */
+  const saveAndContinue = async (text: string, duration: number) => {
+    setSaving(true);
+    const ok = await saveTranscript(text, duration);
+    setSaving(false);
+    if (ok) {
+      setSaved(true);
+      toast.success(playId ? "Saved and linked to this play" : "Transcript saved");
+    }
+    window.setTimeout(() => sendToTransform(text), 700);
   };
 
   const handleDelete = async (id: string) => {
@@ -584,6 +627,7 @@ function RecordPage() {
         : "loading"
       : "idle";
   const liveText = transcript + (interimText ? " " + interimText : "");
+  const sampleText = SAMPLE_WORDS.slice(0, sampleWords);
   const hasLogs = logs.length > 0;
 
   const userName = state.user?.name ?? "";
@@ -606,6 +650,7 @@ function RecordPage() {
                 state={orbState}
                 onClick={isRec ? stopRecording : startRecording}
                 liveAudio={!demo}
+                level={sampleOn ? () => playerRef.current?.level() ?? 0 : undefined}
               />
 
               {/* Caption */}
@@ -649,11 +694,13 @@ function RecordPage() {
                       {orbState === "recording" && (
                         <span className="mo-status-dot" aria-hidden="true" />
                       )}
-                      {orbState === "recording"
-                        ? "Recording"
-                        : orbState === "loading"
-                          ? "Requesting microphone"
-                          : "Click to start recording"}
+                      {sampleState === "ended"
+                        ? "Take finished"
+                        : orbState === "recording"
+                          ? "Recording"
+                          : orbState === "loading"
+                            ? "Requesting microphone"
+                            : "Click to start recording"}
                       {orbState === "recording" && (
                         <span
                           style={{
@@ -667,16 +714,29 @@ function RecordPage() {
                       )}
                     </div>
                     <div style={{ marginTop: 6, fontSize: 15, color: "rgba(255,255,255,0.9)" }}>
-                      {orbState === "recording"
-                        ? "Tap the mic to stop"
-                        : orbState === "loading"
-                          ? "Allow access in your browser to begin"
-                          : "Your words become a live transcript"}
+                      {sampleState === "ended"
+                        ? "Click Stop to save it"
+                        : orbState === "recording"
+                          ? "Tap the mic or Stop when you are done"
+                          : orbState === "loading"
+                            ? "Allow access in your browser to begin"
+                            : "Your words become a live transcript"}
                     </div>
                     {error && (
                       <div className="mo-denied" role="alert" style={{ marginTop: 14 }}>
                         {error}
                       </div>
+                    )}
+                    {isRec && (
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn--primary rc-stop"
+                        onClick={stopRecording}
+                        data-tour="stop-recording"
+                      >
+                        <Square size={13} fill="currentColor" aria-hidden="true" />
+                        Stop
+                      </button>
                     )}
                     {demo && !isRec && (
                       <button
@@ -765,130 +825,76 @@ function RecordPage() {
 
               {/* Live transcript while recording */}
               {isRec && (
-                <div
-                  data-tour="live-transcript"
-                  style={{
-                    flexShrink: 0,
-                    marginTop: 16,
-                    boxSizing: "border-box",
-                    padding: "18px 20px",
-                    borderRadius: 20,
-                    background: "#ffffff",
-                    color: "#0b1220",
-                    boxShadow: "0 14px 34px rgba(6,42,92,0.22)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontSize: 13,
-                      fontWeight: 600,
-                    }}
-                  >
-                    <span
-                      className="rc-live"
-                      style={{
-                        width: 9,
-                        height: 9,
-                        borderRadius: "50%",
-                        background: "#d92d20",
-                        display: "inline-block",
-                      }}
-                    />
-                    <span style={{ color: "#0b1220" }}>Live transcript</span>
-                    <span
-                      style={{
-                        marginLeft: "auto",
-                        fontSize: 13,
-                        color: "#475569",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {formatTime(seconds)}
-                    </span>
+                <div data-tour="live-transcript" className="rc-card rc-card--live" aria-live="off">
+                  <div className="rc-card-head">
+                    <span className="rc-live rc-dot" aria-hidden="true" />
+                    <span>Live transcript</span>
+                    {sampleOn && (
+                      <button
+                        type="button"
+                        className="rc-sound"
+                        onClick={toggleMute}
+                        aria-pressed={!muted}
+                        aria-label={muted ? "Sound off. Turn sound on" : "Sound on. Mute"}
+                        data-tour="sound-toggle"
+                      >
+                        {muted ? (
+                          <VolumeX size={14} aria-hidden="true" />
+                        ) : (
+                          <Volume2 size={14} aria-hidden="true" />
+                        )}
+                        {muted ? "Sound off" : "Sound on"}
+                      </button>
+                    )}
+                    <span className="rc-time">{formatTime(seconds)}</span>
                   </div>
-                  <div
-                    style={{
-                      marginTop: 10,
-                      fontSize: 15,
-                      lineHeight: 1.6,
-                      color: "#1c2a3f",
-                      minHeight: 96,
-                    }}
-                  >
-                    {liveText || <span style={{ color: "#94a3b8" }}>Listening...</span>}
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: 2,
-                        height: 16,
-                        marginLeft: 2,
-                        verticalAlign: "-3px",
-                        background: "#0a66c2",
-                      }}
-                    />
+                  <div className="rc-live-text" data-words={sampleOn ? sampleWords : undefined}>
+                    {sampleOn ? (
+                      sampleText.length ? (
+                        sampleText.map((w, k) => (
+                          <span key={k} className="rc-w">
+                            {w}{" "}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="rc-placeholder">Listening...</span>
+                      )
+                    ) : liveText ? (
+                      <>
+                        {transcript}
+                        {interimText && <span className="rc-interim"> {interimText}</span>}
+                      </>
+                    ) : (
+                      <span className="rc-placeholder">Listening...</span>
+                    )}
+                    <span className="rc-caret" aria-hidden="true" />
                   </div>
                 </div>
               )}
 
               {/* Done - save new transcript */}
               {isDone && (
-                <div
-                  data-tour="new-transcript"
-                  style={{
-                    flexShrink: 0,
-                    marginTop: 16,
-                    boxSizing: "border-box",
-                    padding: "18px 20px",
-                    borderRadius: 20,
-                    background: "#ffffff",
-                    color: "#0b1220",
-                    boxShadow: "0 14px 34px rgba(6,42,92,0.22)",
-                  }}
-                >
-                  <div
-                    style={{ fontSize: 13, fontWeight: 600, color: "#0b1220", marginBottom: 10 }}
-                  >
-                    New transcript
+                <div data-tour="new-transcript" className="rc-card">
+                  <div className="rc-card-head">
+                    <span>New transcript</span>
+                    {durationRef.current > 0 && (
+                      <span className="rc-time">{formatTime(durationRef.current)}</span>
+                    )}
                   </div>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      lineHeight: 1.6,
-                      color: "#1c2a3f",
-                      maxHeight: 100,
-                      overflow: "hidden",
-                    }}
-                  >
+                  <div className="rc-done-text">
                     {transcript.slice(0, 200)}
                     {transcript.length > 200 ? "..." : ""}
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
                     <button
+                      type="button"
+                      className="gh-btn gh-btn--primary gh-btn--small"
                       onClick={handleSave}
                       disabled={saving || saved}
-                      style={{
-                        height: 34,
-                        padding: "0 16px",
-                        borderRadius: 999,
-                        border: 0,
-                        background: saved ? "#12b76a" : "#0a66c2",
-                        color: "#ffffff",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        opacity: saving || saved ? 0.9 : 1,
-                      }}
                     >
                       {saved ? (
                         <>
-                          <Check size={13} />
+                          <Check size={13} aria-hidden="true" />
                           Saved
                         </>
                       ) : saving ? (
@@ -898,20 +904,10 @@ function RecordPage() {
                       )}
                     </button>
                     <button
+                      type="button"
+                      className="gh-btn gh-btn--ghost gh-btn--small"
                       data-tour="take-to-transform"
                       onClick={() => sendToTransform(transcript)}
-                      style={{
-                        height: 34,
-                        padding: "0 16px",
-                        borderRadius: 999,
-                        border: "1px solid rgba(0,0,0,0.15)",
-                        background: "rgba(0,0,0,0.06)",
-                        color: "#0b1220",
-                        fontSize: 13,
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                      }}
                     >
                       Take to Transform
                     </button>

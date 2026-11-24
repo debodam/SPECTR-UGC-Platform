@@ -3656,6 +3656,125 @@ select.gx-input {
   margin: 16px auto 0;
 }
 
+/* ── Record: live transcript and new transcript cards (glass, white text) ── */
+.rc-card {
+  flex-shrink: 0;
+  margin-top: 16px;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #ffffff;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI", sans-serif;
+}
+.rc-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.rc-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff453a;
+  box-shadow: 0 0 0 3px rgba(255, 69, 58, 0.22);
+  display: inline-block;
+}
+.rc-time {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.72);
+}
+.rc-sound + .rc-time {
+  margin-left: 10px;
+}
+.rc-sound {
+  margin-left: auto;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.rc-sound:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.rc-sound:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+.rc-live-text {
+  margin-top: 10px;
+  min-height: 96px;
+  max-height: 210px;
+  overflow-y: auto;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: #ffffff;
+}
+.rc-w {
+  animation: rc-word-in 250ms ease-out both;
+}
+@keyframes rc-word-in {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.rc-interim,
+.rc-placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+.rc-caret {
+  display: inline-block;
+  width: 2px;
+  height: 17px;
+  margin-left: 1px;
+  vertical-align: -3px;
+  background: #ffffff;
+  animation: rc-caret 1s steps(1) infinite;
+}
+@keyframes rc-caret {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-w,
+  .rc-caret {
+    animation: none;
+  }
+}
+.rc-done-text {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.92);
+  max-height: 100px;
+  overflow: hidden;
+}
+.rc-stop {
+  margin: 16px auto 0;
+}
+
 /* ── Rendered Markdown in generated content (Transform, history, queue, demo) ── */
 .md {
   color: rgba(255, 255, 255, 0.95);
