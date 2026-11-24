@@ -12,6 +12,24 @@ export interface User {
   email: string;
 }
 
+export interface GrowthPrefs {
+  focus: string;
+  weeklyTime: string;
+  formats: string[];
+  topics: string;
+  voice: string;
+  avoid: string;
+}
+
+export const emptyGrowthPrefs: GrowthPrefs = {
+  focus: "",
+  weeklyTime: "",
+  formats: ["Posts", "Articles", "Video scripts"],
+  topics: "",
+  voice: "",
+  avoid: "",
+};
+
 export interface Workspace {
   companyId?: string;
   companyName: string;
@@ -45,6 +63,8 @@ export interface Workspace {
     companySize: string;
     description: string;
   };
+  /** Strategy choices from Setup that shape the growth plan. */
+  growthPrefs: GrowthPrefs;
 }
 
 export interface PerfEntry {
@@ -111,6 +131,7 @@ const emptyWorkspace: Workspace = {
   companyPdfUrl: "",
   companyPdfName: "",
   audience: { jobTitles: "", seniority: "", companySize: "", description: "" },
+  growthPrefs: emptyGrowthPrefs,
 };
 
 const initialState: AppState = {
@@ -158,6 +179,7 @@ function load(): StoredState {
         baseline: { ...emptyWorkspace.baseline, ...(w.baseline || {}) },
         targets: { ...emptyWorkspace.targets, ...(w.targets || {}) },
         audience: { ...emptyWorkspace.audience, ...(w.audience || {}) },
+        growthPrefs: { ...emptyGrowthPrefs, ...(w.growthPrefs || {}) },
       },
       setupComplete: p.setupComplete ?? false,
       setupStep: p.setupStep ?? 1,

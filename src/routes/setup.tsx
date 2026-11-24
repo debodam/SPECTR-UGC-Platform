@@ -4,6 +4,8 @@ import { FileText, Upload, X, Check, ChevronLeft, LoaderCircle, Info } from "luc
 import { useApp, type Workspace } from "@/lib/spectr-store";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
 import supabase from "@/lib/supabase";
+import { errMessage } from "@/lib/utils";
+import { toast } from "sonner";
 import { createGrowthPlan } from "@/lib/growth-service";
 
 type StepProps = {
@@ -152,7 +154,8 @@ const RAIL_ITEMS = [
   { n: 1, title: "Company", sub: "About your business" },
   { n: 2, title: "Goals", sub: "12-week targets" },
   { n: 3, title: "Audience", sub: "Who you reach" },
-  { n: 4, title: "Review", sub: "Check and launch" },
+  { n: 4, title: "Strategy", sub: "How you want to grow" },
+  { n: 5, title: "Review", sub: "Check and build your plan" },
 ];
 
 const STEP_TITLES: Record<number, string> = {
@@ -160,14 +163,16 @@ const STEP_TITLES: Record<number, string> = {
   2: "Where are you starting from?",
   3: "What does success look like?",
   4: "Who are you trying to reach?",
-  5: "You're all set",
+  5: "How do you want to grow?",
+  6: "You're all set",
 };
 const STEP_SUBS: Record<number, string> = {
   1: "SPECTR will use this to calibrate every piece of content it generates.",
   2: "Upload your LinkedIn analytics exports to auto-fill, or enter numbers manually.",
   3: "Set your 12-week targets. SPECTR will track your progress against these.",
   4: "SPECTR uses this to calibrate every content output to your exact audience.",
-  5: "Review your workspace and launch SPECTR.",
+  5: "These choices shape your growth plan: cadence, formats, pillars and voice.",
+  6: "Review your workspace, then build your growth plan.",
 };
 
 function SetupPage() {
@@ -202,29 +207,43 @@ function SetupPage() {
     setStep(n);
   };
 
+  // Final step: save the workspace, then build the growth plan behind an animated progress screen.
+  const [buildPhase, setBuildPhase] = useState<"idle" | "building" | "error">("idle");
+  const [buildStep, setBuildStep] = useState(0);
+  const [buildError, setBuildError] = useState("");
+
   const finish = async () => {
     setSaving(true);
-    let companyId = ws.companyId;
-    if (!companyId && ws.companyName.trim() && state.user?.id) {
-      await supabase
-        .from("profiles")
-        .upsert(
-          { id: state.user.id, full_name: state.user.name, email: state.user.email },
-          { onConflict: "id" },
-        );
-      const { data } = await supabase
-        .from("companies")
-        .insert([{ name: ws.companyName.trim(), created_by: state.user.id }])
-        .select()
-        .limit(1)
-        .single();
-      if (data) {
+    setBuildPhase("building");
+    setBuildStep(0);
+    setBuildError("");
+    const startedAt = Date.now();
+    const ticker = setInterval(
+      () => setBuildStep((n) => Math.min(n + 1, BUILD_STEPS.length - 1)),
+      600,
+    );
+    try {
+      let companyId = ws.companyId;
+      if (!state.user?.id) throw new Error("You are signed out. Sign in again to finish setup.");
+      if (!companyId && ws.companyName.trim()) {
+        await supabase
+          .from("profiles")
+          .upsert(
+            { id: state.user.id, full_name: state.user.name, email: state.user.email },
+            { onConflict: "id" },
+          );
+        const { data, error } = await supabase
+          .from("companies")
+          .insert([{ name: ws.companyName.trim(), created_by: state.user.id }])
+          .select()
+          .limit(1)
+          .single();
+        if (error || !data) throw new Error(error?.message || "Could not create your company.");
         companyId = data.id;
         setWorkspace({ companyId: data.id });
       }
-    }
-    if (state.user?.id && companyId) {
-      await supabase.from("workspaces").upsert(
+      if (!companyId) throw new Error("Add your company name to finish setup.");
+      const { error: wsError } = await supabase.from("workspaces").upsert(
         {
           company_id: companyId,
           user_id: state.user.id,
@@ -240,6 +259,8 @@ function SetupPage() {
         },
         { onConflict: "company_id,user_id" },
       );
+      if (wsError) throw new Error(wsError.message || "Could not save your workspace.");
+      // Optional columns: saved separately so a database without them still saves the workspace above.
       supabase
         .from("workspaces")
         .update({
@@ -249,30 +270,67 @@ function SetupPage() {
         .eq("company_id", companyId)
         .eq("user_id", state.user.id)
         .then(() => {});
-    }
-    if (state.user?.id && companyId) {
-      // Plan generation never blocks launch: it falls back to a deterministic plan, and Growth home can retry.
+      supabase
+        .from("workspaces")
+        .update({ growth_prefs: ws.growthPrefs })
+        .eq("company_id", companyId)
+        .eq("user_id", state.user.id)
+        .then(() => {});
+
+      // Plan generation never blocks the user: AI failure falls back to a deterministic plan.
+      let fallback = false;
       try {
-        await createGrowthPlan({ companyId, userId: state.user.id }, { ...ws, companyId });
+        const r = await createGrowthPlan(
+          { companyId, userId: state.user.id },
+          { ...ws, companyId },
+        );
+        fallback = r.source === "fallback";
       } catch (e) {
         console.error("Growth plan:", e);
+        fallback = true;
       }
+      // Keep the progress screen up long enough for every step to be seen, even when the plan builds instantly.
+      const remaining = 2400 - (Date.now() - startedAt);
+      if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
+      clearInterval(ticker);
+      setBuildStep(BUILD_STEPS.length);
+      await new Promise((r) => setTimeout(r, 450));
+      update({ setupComplete: true });
+      navigate({ to: "/" });
+      if (fallback) {
+        toast("Your growth plan is ready", {
+          description:
+            "It was built from your setup answers. You can refine it any time on the Growth Plan page.",
+        });
+      }
+    } catch (e) {
+      clearInterval(ticker);
+      setBuildError(errMessage(e) ?? "Something went wrong while saving.");
+      setBuildPhase("error");
+    } finally {
+      setSaving(false);
     }
-    update({ setupComplete: true });
-    navigate({ to: "/" });
   };
 
   if (!state.isAuthenticated) return null;
   if (state.authLoading) return <div style={{ minHeight: "100vh" }} />;
 
   // Rail mapping: steps 1→rail1, 2-3→rail2, 4→rail3, 5→rail4
-  const railNum = step === 1 ? 1 : step <= 3 ? 2 : step === 4 ? 3 : 4;
+  const railNum = step === 1 ? 1 : step <= 3 ? 2 : step === 4 ? 3 : step === 5 ? 4 : 5;
   const railDone = (n: number) =>
-    n === 1 ? step > 1 : n === 2 ? step > 3 : n === 3 ? step > 4 : false;
+    n === 1 ? step > 1 : n === 2 ? step > 3 : n === 3 ? step > 4 : n === 4 ? step > 5 : false;
   const railCur = (n: number) =>
-    n === 1 ? step === 1 : n === 2 ? step === 2 || step === 3 : n === 3 ? step === 4 : step === 5;
+    n === 1
+      ? step === 1
+      : n === 2
+        ? step === 2 || step === 3
+        : n === 3
+          ? step === 4
+          : n === 4
+            ? step === 5
+            : step === 6;
 
-  const isLaunch = step === 5;
+  const isLaunch = step === 6;
   const showBack = step > 1;
   const showSkip = step === 2 || step === 3;
   const canNext =
@@ -284,12 +342,14 @@ function SetupPage() {
         )
       : step === 3
         ? !!ws.goalDescription.trim()
-        : true;
+        : step === 5
+          ? !!(ws.growthPrefs.focus && ws.growthPrefs.formats.length)
+          : true;
   const nextLabel = isLaunch
     ? saving
       ? "Building your growth plan"
-      : "Launch SPECTR"
-    : step === 4
+      : "Build my growth plan"
+    : step === 5
       ? "Review"
       : "Continue";
 
@@ -368,7 +428,7 @@ function SetupPage() {
           >
             <div
               style={{
-                width: `${(railNum / 4) * 100}%`,
+                width: `${(railNum / 5) * 100}%`,
                 height: "100%",
                 borderRadius: 3,
                 background: "#ffffff",
@@ -377,7 +437,7 @@ function SetupPage() {
             />
           </div>
           <div style={{ marginTop: 10, fontSize: 13, color: "rgba(255,255,255,0.9)" }}>
-            Step {railNum} of 4
+            Step {railNum} of 5
           </div>
         </div>
 
@@ -421,7 +481,7 @@ function SetupPage() {
                     <span>{r.n}</span>
                   )}
                 </div>
-                {r.n !== 4 && (
+                {r.n !== 5 && (
                   <div
                     style={{
                       position: "absolute",
@@ -497,7 +557,7 @@ function SetupPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {step === 5 && (
+            {step === 6 && (
               <div
                 style={{
                   width: 48,
@@ -547,6 +607,9 @@ function SetupPage() {
             )}
             {step === 4 && <StepAudience ws={ws} setWorkspace={setWorkspace} />}
             {step === 5 && (
+              <StepStrategy ws={ws} setWorkspace={setWorkspace} showErrors={showErrors} />
+            )}
+            {step === 6 && (
               <StepReview
                 ws={ws}
                 onEdit={(s) => {
@@ -669,9 +732,95 @@ function SetupPage() {
           </div>
         </div>
       </section>
+
+      {buildPhase !== "idle" && (
+        <div className="su-build">
+          <div
+            className="su-build-card"
+            role={buildPhase === "error" ? "alertdialog" : "dialog"}
+            aria-modal="true"
+            aria-labelledby="su-build-h"
+            aria-busy={buildPhase === "building"}
+          >
+            {buildPhase === "building" ? (
+              <>
+                <h2 id="su-build-h" className="su-build-title">
+                  Building your growth plan
+                </h2>
+                <ul className="su-build-steps" aria-live="polite">
+                  {BUILD_STEPS.map((label, i) => {
+                    const done = i < buildStep,
+                      on = i === buildStep;
+                    return (
+                      <li key={label} className={done ? "is-done" : on ? "is-on" : ""}>
+                        <span className="su-build-dot">
+                          {done ? (
+                            <Check size={15} strokeWidth={3} aria-hidden="true" />
+                          ) : on ? (
+                            <LoaderCircle
+                              size={15}
+                              strokeWidth={2.6}
+                              className="spectr-spin"
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                        </span>
+                        {label}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            ) : (
+              <>
+                <h2 id="su-build-h" className="su-build-title">
+                  We could not save your workspace
+                </h2>
+                <p
+                  style={{
+                    margin: "12px 0 0",
+                    fontSize: 14.5,
+                    lineHeight: 1.5,
+                    color: "rgba(255,255,255,0.9)",
+                  }}
+                >
+                  {buildError} Your answers are still here.
+                </p>
+                <div
+                  style={{
+                    marginTop: 22,
+                    display: "flex",
+                    gap: 10,
+                    justifyContent: "flex-end",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="gh-btn gh-btn--ghost"
+                    onClick={() => setBuildPhase("idle")}
+                  >
+                    Back to review
+                  </button>
+                  <button type="button" className="gh-btn gh-btn--primary" onClick={finish}>
+                    Try again
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const BUILD_STEPS = [
+  "Reading your goals",
+  "Studying your audience",
+  "Choosing your content pillars",
+  "Drafting this week's plays",
+];
 
 /* ── Step 1: Company ── */
 function StepCompany({ ws, setWorkspace, showErrors, userId }: StepProps) {
@@ -1018,7 +1167,173 @@ function StepAudience({ ws, setWorkspace }: StepProps) {
   );
 }
 
-/* ── Step 5: Review ── */
+/* ── Step 5: Strategy ── */
+const FOCUS_OPTIONS = [
+  "Grow followers",
+  "Generate leads",
+  "Hire talent",
+  "Build investor credibility",
+  "Launch a product",
+];
+const TIME_OPTIONS = ["1 to 2 hours", "3 to 5 hours", "6 plus hours"];
+const FORMAT_OPTIONS = ["Posts", "Articles", "Video scripts"];
+const VOICE_OPTIONS = ["Direct", "Warm", "Analytical", "Bold"];
+
+function OptionalTag() {
+  return <span className="su-optional">Optional</span>;
+}
+
+function StepStrategy({ ws, setWorkspace, showErrors }: StepProps) {
+  const prefs = ws.growthPrefs;
+  const set = (patch: Partial<Workspace["growthPrefs"]>) =>
+    setWorkspace({ growthPrefs: { ...prefs, ...patch } });
+  const focusErr = showErrors && !prefs.focus;
+  const formatErr = showErrors && !prefs.formats.length;
+  const toggle = (f: string) =>
+    set({
+      formats: prefs.formats.includes(f)
+        ? prefs.formats.filter((x) => x !== f)
+        : [...prefs.formats, f],
+    });
+  const topicCount = prefs.topics
+    .split(/[,;\n]/)
+    .map((t) => t.trim())
+    .filter(Boolean).length;
+  return (
+    <div>
+      <div
+        className="su-grid"
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}
+      >
+        <div>
+          <label className="spectr-label" htmlFor="su-focus">
+            Growth focus <span style={{ color: "#d92d20" }}>*</span>
+          </label>
+          <select
+            id="su-focus"
+            className="spectr-input spectr-select"
+            value={prefs.focus}
+            onChange={(e) => set({ focus: e.target.value })}
+            aria-invalid={focusErr}
+            style={{ border: focusErr ? "1px solid #d92d20" : undefined }}
+          >
+            <option value="">Select a focus...</option>
+            {FOCUS_OPTIONS.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>
+          {focusErr && <div className="su-err">Choose what this plan should grow</div>}
+        </div>
+        <div>
+          <label className="spectr-label" htmlFor="su-time">
+            Time you can give each week <OptionalTag />
+          </label>
+          <select
+            id="su-time"
+            className="spectr-input spectr-select"
+            value={prefs.weeklyTime}
+            onChange={(e) => set({ weeklyTime: e.target.value })}
+          >
+            <option value="">Select time...</option>
+            {TIME_OPTIONS.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>
+          <div className="su-hint">Sets how many pieces a week the plan asks for.</div>
+        </div>
+      </div>
+
+      <fieldset style={{ marginTop: 26, border: 0, padding: 0 }}>
+        <legend className="spectr-label">
+          Formats you will make <span style={{ color: "#d92d20" }}>*</span>
+        </legend>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {FORMAT_OPTIONS.map((f) => {
+            const on = prefs.formats.includes(f);
+            return (
+              <button
+                key={f}
+                type="button"
+                className={`su-chip${on ? " is-on" : ""}`}
+                aria-pressed={on}
+                onClick={() => toggle(f)}
+              >
+                {on && <Check size={15} strokeWidth={2.6} aria-hidden="true" />}
+                {f}
+              </button>
+            );
+          })}
+        </div>
+        {formatErr ? (
+          <div className="su-err">Pick at least one format</div>
+        ) : (
+          <div className="su-hint">The plan only suggests plays in these formats.</div>
+        )}
+      </fieldset>
+
+      <div style={{ marginTop: 26 }}>
+        <label className="spectr-label" htmlFor="su-topics">
+          Topics you want to be known for <OptionalTag />
+        </label>
+        <input
+          id="su-topics"
+          className="spectr-input"
+          placeholder="For example: customer onboarding, time to first value, founder lessons"
+          value={prefs.topics}
+          onChange={(e) => set({ topics: e.target.value })}
+        />
+        <div className="su-hint">
+          {topicCount >= 3
+            ? `${topicCount} topics. These become your content pillars.`
+            : "Add 3 to 5, separated by commas. They become your content pillars."}
+        </div>
+      </div>
+
+      <div
+        className="su-grid"
+        style={{
+          marginTop: 26,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 20,
+          alignItems: "start",
+        }}
+      >
+        <div>
+          <label className="spectr-label" htmlFor="su-voice">
+            Voice <OptionalTag />
+          </label>
+          <select
+            id="su-voice"
+            className="spectr-input spectr-select"
+            value={prefs.voice}
+            onChange={(e) => set({ voice: e.target.value })}
+          >
+            <option value="">Select a voice...</option>
+            {VOICE_OPTIONS.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>
+          <div className="su-hint">Used for every hook in your plays.</div>
+        </div>
+        <div>
+          <label className="spectr-label" htmlFor="su-avoid">
+            Accounts to avoid sounding like <OptionalTag />
+          </label>
+          <input
+            id="su-avoid"
+            className="spectr-input"
+            placeholder="Inspiration or competitors"
+            value={prefs.avoid}
+            onChange={(e) => set({ avoid: e.target.value })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Step 6: Review ── */
 function StepReview({ ws, onEdit }: { ws: Workspace; onEdit: (step: number) => void }) {
   const row = (label: string, value: string) => ({
     label,
@@ -1063,6 +1378,18 @@ function StepReview({ ws, onEdit }: { ws: Workspace; onEdit: (step: number) => v
         row("Seniority", ws.audience.seniority),
         row("Company size", ws.audience.companySize),
         row("Audience description", ws.audience.description),
+      ],
+    },
+    {
+      title: "Strategy",
+      editStep: 5,
+      rows: [
+        row("Growth focus", ws.growthPrefs.focus),
+        row("Weekly time", ws.growthPrefs.weeklyTime),
+        row("Formats", ws.growthPrefs.formats.join(", ")),
+        row("Topics", ws.growthPrefs.topics),
+        row("Voice", ws.growthPrefs.voice),
+        row("Avoid sounding like", ws.growthPrefs.avoid),
       ],
     },
   ];
@@ -1117,7 +1444,7 @@ function StepReview({ ws, onEdit }: { ws: Workspace; onEdit: (step: number) => v
         style={{
           marginTop: 16,
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
           gap: 16,
           alignItems: "stretch",
         }}

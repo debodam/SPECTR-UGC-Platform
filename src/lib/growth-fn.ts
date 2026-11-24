@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { errMessage } from "./utils";
 import { AiPlanSchema, type AiPlan, type PlanInputs } from "./growth-types";
-import { buildFallbackPlan } from "./growth-plan";
+import { applyPrefs, buildFallbackPlan } from "./growth-plan";
 
 export interface PlanResult {
   plan: AiPlan;
@@ -26,6 +26,15 @@ function planPrompt(i: PlanInputs) {
     i.startingFromScratch && "They are starting from scratch on LinkedIn.",
     i.learnings?.length &&
       `What has already worked for them (build on this): ${i.learnings.join(" | ")}`,
+    i.growthPrefs?.focus && `Growth focus: ${i.growthPrefs.focus}`,
+    i.growthPrefs?.weeklyTime &&
+      `Time they can give each week: ${i.growthPrefs.weeklyTime}. Set cadence to fit it.`,
+    i.growthPrefs?.formats?.length &&
+      `Formats they will make (use only these): ${i.growthPrefs.formats.join(", ")}`,
+    i.growthPrefs?.topics &&
+      `Topics they want to be known for (base the pillars on these): ${i.growthPrefs.topics}`,
+    i.growthPrefs?.voice && `Voice for every hook: ${i.growthPrefs.voice}`,
+    i.growthPrefs?.avoid && `Do not sound like: ${i.growthPrefs.avoid}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -112,7 +121,7 @@ export const generateGrowthPlan = createServerFn({ method: "POST" })
         return fallback(
           `AI response failed validation: ${parsed.error.issues[0]?.message ?? "invalid"}`,
         );
-      return { plan: sanitize(parsed.data), source: "ai" };
+      return { plan: applyPrefs(sanitize(parsed.data), data), source: "ai" };
     } catch (err) {
       console.error("Growth plan error:", err);
       return fallback(errMessage(err) ?? "AI call failed");

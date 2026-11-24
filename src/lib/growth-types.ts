@@ -135,6 +135,15 @@ export interface PlanInputs {
   startingFromScratch: boolean;
   /** Learnings from experiments and applied insights, used when regenerating. */
   learnings?: string[];
+  /** Strategy choices from Setup: focus, weekly time, formats, topics, voice, accounts to avoid sounding like. */
+  growthPrefs?: {
+    focus: string;
+    weeklyTime: string;
+    formats: string[];
+    topics: string;
+    voice: string;
+    avoid: string;
+  };
 }
 
 // ── AI output contract (validated with zod) ──

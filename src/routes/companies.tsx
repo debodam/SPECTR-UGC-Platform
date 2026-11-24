@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import supabase from "@/lib/supabase";
-import { useApp } from "@/lib/spectr-store";
+import { emptyGrowthPrefs, useApp } from "@/lib/spectr-store";
 import { Building2, Trash2, Plus, LogOut, LoaderCircle } from "lucide-react";
 
 interface Company {
@@ -339,6 +339,7 @@ function CompaniesPage() {
       update({
         setupComplete: true,
         workspace: {
+          growthPrefs: { ...emptyGrowthPrefs, ...(data.growth_prefs || {}) },
           companyId: c.id,
           companyName: c.name,
           industry: data.industry || "",
@@ -420,6 +421,7 @@ function CompaniesPage() {
       update({
         setupComplete: false,
         workspace: {
+          growthPrefs: emptyGrowthPrefs,
           companyId: undefined,
           companyName: "",
           industry: "",

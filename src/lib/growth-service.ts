@@ -32,6 +32,7 @@ export function planInputsFromWorkspace(ws: Workspace, learnings: string[] = [])
     targets: ws.targets,
     startingFromScratch: ws.startingFromScratch,
     learnings,
+    growthPrefs: ws.growthPrefs,
   };
 }
 
