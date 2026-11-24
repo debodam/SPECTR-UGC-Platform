@@ -357,3 +357,27 @@ The one left is Chrome creating an AudioContext on a headless machine. It takes 
 
 ### First thing to click after the deploy
 `https://tryspectr.online/welcome`, then **Try the demo**, and walk the tour to the closing card.
+
+## 11 demo polish
+- **Live.** Commit `a668721` deployed to production on Vercel. `https://tryspectr.online/welcome`, `/demo` and `/api/health` all return 200; the bare domain redirects to `www`.
+- **Live check in headless Chrome, at 390x844 and 1440x900:**
+  - the demo bar fits
+  - the spotlight glides, through 21 to 22 intermediate positions between steps
+  - the closing card links to https://debodam.com
+  - screenshots are in `design/e2e/live/`
+- **What changed.**
+  - **Spotlight.** It now glides in every browser, Safari and iPhone included. It is a requestAnimationFrame tween (`src/demo/useGlidingSpotlight.ts`), replacing the Chrome-only CSS `d` transition and the layout-heavy width and height transitions.
+  - **Tour card.** It is placed while hidden, so it never shows at a stale position.
+  - **Entrances.** The dim layer fades in, the closing card fades and lifts in, and the Resume chip fades in. The blurred layers never animate themselves.
+  - **Live transcript.** The box has a fixed height and scrolls itself, so nothing below it shifts.
+  - **Demo bar.** Verified at 5 widths, from 360 to 1440. The check is now `npm run e2e:demo-bar`.
+- **Perf.** Tour frames under 20 ms: 99.7% at 1440x900 and 99.9% at 390x844 (target 95%). The worst frame dropped from 233 and 417 ms to 150 ms. Details are in `design/perf-report.md`.
+- **Checks.**
+  - Typecheck passes, lint has 0 errors, and the Vercel build passes.
+  - `e2e` passes 16 of 16.
+  - `e2e:demo` passes at all 4 sizes.
+  - `e2e:landing` passes 4 of 4 and `e2e:demo-bar` 5 of 5.
+- **Left.**
+  - **Root URL.** `https://tryspectr.online/` still sends signed-out visitors to the login page, so share `/welcome`.
+  - **One long task.** Opening Record shows a 170 to 200 ms task in headless Chrome. It is mostly the one-time audio setup, which takes 13 ms in a real browser.
+  - **Not tested live.** Real sign-in and a real generation on the live site, which need your account.
