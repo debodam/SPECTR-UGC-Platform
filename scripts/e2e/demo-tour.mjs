@@ -229,6 +229,14 @@ for (const [width, height] of sizes) {
         if (!(await h.ev(`document.documentElement.dataset.sample === 'ended'`)))
           issues.push("Stop step showed before the take ended");
       }
+      if (c.id === "changed") {
+        // The tour says athlete wins moved from 20 to 25 percent: the plan must show exactly that.
+        const share = await h.ev(
+          `[...document.querySelectorAll('[data-tour="growth-pillars"] *')].find(e => e.children.length === 0 && /Athlete wins/.test(e.textContent))?.closest('div')?.parentElement?.innerText || document.querySelector('[data-tour="growth-pillars"]')?.innerText || ''`,
+        );
+        if (!/25%[\s\S]{0,40}Athlete wins|Athlete wins[\s\S]{0,40}25%/.test(share))
+          issues.push("after Apply, athlete wins is not shown at 25%");
+      }
       if (c.id === "output") await markdownCheck("Transform output");
       if (c.id === "queue") await markdownCheck("Distribute queue");
       if (c.advance === "button") await mouse(".demo-card .gh-btn--primary:not([disabled])");

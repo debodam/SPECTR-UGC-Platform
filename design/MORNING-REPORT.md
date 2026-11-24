@@ -404,4 +404,4 @@ The one left is Chrome creating an AudioContext on a headless machine. It takes 
 - **Live.** Commit `b88b157` deployed. The same stall walks ran against https://www.tryspectr.online at both sizes and all reached the closing card, with "See what else I've built" and "Built by Debojeet Dam" linking to debodam.com. Screenshots are in `design/e2e/live/` and `design/e2e/demo-stall-*/`.
 - **Left.**
   1. **Insight step after a reload.** If you reload while on it, the Apply target sometimes cannot be measured. The fallback card offers Next instead of the Apply click.
-  2. **Pillar share wording.** Applying the insight shows "20% to 24%", because the shares are renormalized to 100, while the tour card says "20 to 25 percent".
+  2. ~~Pillar share wording.~~ Fixed after 12: applying an insight now gives the named pillar exactly the promised share (20 to 25%). The other pillars share the rest by largest remainder, so the total stays 100 (40/20/20/20 becomes 37/25/19/19). The demo e2e checks it.

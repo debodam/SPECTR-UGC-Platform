@@ -208,15 +208,25 @@ export function experimentLearning(
 export function shiftPillarShare(pillars: Pillar[], name: string, delta: number): Pillar[] {
   const target = pillars.find((p) => p.name === name);
   if (!target) return pillars;
-  const newShare = Math.min(80, target.share + delta);
   const others = pillars.filter((p) => p.name !== name);
-  const othersTotal = others.reduce((s, p) => s + p.share, 0) || 1;
+  // The pillar the insight names gets exactly the share it promises (20 + 5 = 25, not 24 after rounding).
+  const newShare = Math.max(5, Math.min(80, target.share + delta, 100 - 5 * others.length));
   const remaining = 100 - newShare;
-  const shifted = pillars.map((p) =>
-    p.name === name
-      ? { ...p, share: newShare }
-      : { ...p, share: Math.max(5, Math.round((p.share / othersTotal) * remaining)) },
-  );
-  const drift = 100 - shifted.reduce((s, p) => s + p.share, 0);
-  return shifted.map((p) => (p.name === name ? { ...p, share: p.share + drift } : p));
+  const othersTotal = others.reduce((s, p) => s + p.share, 0) || 1;
+  // The rest is split in proportion and rounded by largest remainder, so the shares always total exactly 100.
+  const raw = others.map((p) => ({ name: p.name, value: (p.share / othersTotal) * remaining }));
+  const floored = raw.map((r) => ({ ...r, share: Math.floor(r.value) }));
+  let left = remaining - floored.reduce((s, r) => s + r.share, 0);
+  for (const r of [...floored].sort(
+    (a, b) => b.value - Math.floor(b.value) - (a.value - Math.floor(a.value)),
+  )) {
+    if (left <= 0) break;
+    r.share += 1;
+    left -= 1;
+  }
+  const shareOf = new Map(floored.map((r) => [r.name, r.share]));
+  return pillars.map((p) => ({
+    ...p,
+    share: p.name === name ? newShare : (shareOf.get(p.name) ?? p.share),
+  }));
 }
