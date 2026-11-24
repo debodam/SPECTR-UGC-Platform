@@ -407,32 +407,42 @@ function Dashboard() {
                         )}
                       </div>
                       <div className="db-note">Last 7 days vs the 7 before</div>
-                      <svg
-                        aria-hidden="true"
-                        className="db-spark"
-                        width="100%"
-                        height="72"
-                        viewBox="0 0 240 72"
-                        preserveAspectRatio="none"
-                        style={{ display: "block", overflow: "visible" }}
-                      >
-                        <defs>
-                          <linearGradient id="spk" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0" stopColor="#ffffff" stopOpacity="0.38" />
-                            <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-                        <path d={spark.area} fill="url(#spk)" />
-                        <path
-                          d={spark.line}
-                          fill="none"
-                          stroke="#ffffff"
-                          strokeWidth="2.4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                      <div className="db-spark-wrap">
+                        <svg
+                          aria-hidden="true"
+                          className="db-spark"
+                          width="100%"
+                          height="72"
+                          viewBox="0 0 240 72"
+                          preserveAspectRatio="none"
+                          style={{ display: "block", overflow: "visible" }}
+                        >
+                          <defs>
+                            <linearGradient id="spk" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0" stopColor="#ffffff" stopOpacity="0.38" />
+                              <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          <path d={spark.area} fill="url(#spk)" />
+                          <path
+                            d={spark.line}
+                            fill="none"
+                            stroke="#ffffff"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                        </svg>
+                        {/* The end point is an HTML dot, so it stays round while the chart stretches to the card. */}
+                        <span
+                          className="db-spark-dot"
+                          style={{
+                            left: `${(spark.last[0] / 240) * 100}%`,
+                            top: `${(spark.last[1] / 72) * 100}%`,
+                          }}
                         />
-                        <circle cx={spark.last[0]} cy={spark.last[1]} r="4.5" fill="#ffffff" />
-                      </svg>
+                      </div>
                       <div className="db-chips">
                         <span>
                           Followers <b>{currentFollowers.toLocaleString()}</b>
