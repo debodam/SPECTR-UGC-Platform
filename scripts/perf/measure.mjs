@@ -75,7 +75,7 @@ const results = [];
 try {
   if (!tourOnly) {
     // 1. Landing: two full carousel cycles plus a pill click.
-    await h.go("/welcome", 3000);
+    await h.go("/", 3000);
     await start();
     await h.sleep(9000);
     await mouse(".ld-pill:nth-child(3)");

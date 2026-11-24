@@ -22,7 +22,7 @@ const OFF_ROUTE_MS = 4000;
 /** When to (re)try sending the visitor to the step's page: the first push, then up to 4 retries. */
 const NAV_RETRY_AT = [900, 2100, 3300, 4500, 5700];
 const ROUTE_NAME: Record<string, string> = {
-  "/": "the Dashboard",
+  "/dashboard": "the Dashboard",
   "/growth": "the Growth plan",
   "/record": "Record",
   "/transform": "Transform",
@@ -326,7 +326,7 @@ export default function DemoLayer() {
     demoEvent("tour replayed");
     startDemo();
     sessionStorage.setItem(DEMO_KEYS.tour, JSON.stringify({ i: 0, status: "running" }));
-    window.location.assign("/");
+    window.location.assign("/dashboard");
   }, []);
 
   const [avoidBoxes, setAvoidBoxes] = useState<Box[]>([]);

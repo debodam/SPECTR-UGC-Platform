@@ -20,7 +20,7 @@ const setVal = (sel, v) =>
 
 try {
   // 1. Dashboard builds a growth plan.
-  await h.go("/", 6000);
+  await h.go("/dashboard", 6000);
   const plan = await text(".gp-card");
   step("Dashboard shows a growth plan", plan && !/Could not/.test(plan), plan?.slice(0, 120));
   await h.shot("01-dashboard.png");
@@ -132,7 +132,7 @@ try {
   await h.shot("08-results.png");
 
   // 9. Back on the Dashboard.
-  await h.go("/", 3000);
+  await h.go("/dashboard", 3000);
   await h.shot("09-dashboard-after.png");
   step("No uncaught errors", h.consoleErrors.length === 0, h.consoleErrors.join(" / ") || "none");
 } catch (e) {

@@ -129,7 +129,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
         >
           {/* Logo */}
           <Link
-            to="/welcome"
+            to="/"
             aria-label="SPECTR home"
             style={{
               display: "flex",

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as CompaniesRouteImport } from './routes/companies'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DistributeRouteImport } from './routes/distribute'
 import { Route as GrowthRouteImport } from './routes/growth'
@@ -39,6 +40,11 @@ const AccessRoute = AccessRouteImport.update({
 const CompaniesRoute = CompaniesRouteImport.update({
   id: '/companies',
   path: '/companies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
   '/growth': typeof GrowthRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
   '/growth': typeof GrowthRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/companies': typeof CompaniesRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/distribute': typeof DistributeRoute
   '/growth': typeof GrowthRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/companies'
+    | '/dashboard'
     | '/demo'
     | '/distribute'
     | '/growth'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/companies'
+    | '/dashboard'
     | '/demo'
     | '/distribute'
     | '/growth'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/companies'
+    | '/dashboard'
     | '/demo'
     | '/distribute'
     | '/growth'
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessRoute: typeof AccessRoute
   CompaniesRoute: typeof CompaniesRoute
+  DashboardRoute: typeof DashboardRoute
   DemoRoute: typeof DemoRoute
   DistributeRoute: typeof DistributeRoute
   GrowthRoute: typeof GrowthRoute
@@ -259,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/companies'
       fullPath: '/companies'
       preLoaderRoute: typeof CompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRoute: AccessRoute,
   CompaniesRoute: CompaniesRoute,
+  DashboardRoute: DashboardRoute,
   DemoRoute: DemoRoute,
   DistributeRoute: DistributeRoute,
   GrowthRoute: GrowthRoute,

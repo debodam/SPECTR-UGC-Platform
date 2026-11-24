@@ -19,10 +19,10 @@ export const DEMO_TIP = "Disabled in demo";
  * Where the SPECTR logo links. In the demo it stays inside the app (the Dashboard); only Exit demo leads back to
  * the landing page. Read after mount so the server render and the first client render agree.
  */
-export function useHomeLink(): "/" | "/welcome" {
+export function useHomeLink(): "/" | "/dashboard" {
   const [demo, setDemo] = useState(false);
   useEffect(() => setDemo(isDemo()), []);
-  return demo ? "/" : "/welcome";
+  return demo ? "/dashboard" : "/";
 }
 
 export function isDemo(): boolean {
@@ -120,7 +120,7 @@ export function installDemoGuard() {
 }
 
 /** Leaves the demo and returns to the landing page with a full reload, so no demo state survives. */
-export function exitDemo(to = "/welcome") {
+export function exitDemo(to = "/") {
   demoEvent("demo exited");
   clearDemoKeys();
   sessionStorage.removeItem(FLAG);

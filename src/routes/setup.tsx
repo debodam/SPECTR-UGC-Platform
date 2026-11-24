@@ -187,7 +187,7 @@ function SetupPage() {
   useEffect(() => {
     if (state.authLoading) return;
     if (!state.isAuthenticated) navigate({ to: "/login" });
-    else if (state.setupComplete) navigate({ to: "/" });
+    else if (state.setupComplete) navigate({ to: "/dashboard" });
   }, [state.authLoading, state.isAuthenticated, state.setupComplete, navigate]);
 
   useEffect(() => {
@@ -298,7 +298,7 @@ function SetupPage() {
       setBuildStep(BUILD_STEPS.length);
       await new Promise((r) => setTimeout(r, 450));
       update({ setupComplete: true });
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
       if (fallback) {
         toast("Your growth plan is ready", {
           description:

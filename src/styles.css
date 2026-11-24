@@ -1771,7 +1771,7 @@ body > div {
   }
 }
 
-/* ── Landing (/welcome): one screen for recruiters, the product shown rather than described ── */
+/* ── Landing (/, the site root): one screen for recruiters, the product shown rather than described ── */
 .ld {
   position: fixed;
   inset: 0;

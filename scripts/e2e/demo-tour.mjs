@@ -31,7 +31,7 @@ const timings = JSON.parse(
 const STARTS = timings.words.map((w) => w.t / 1000);
 const BLOCKED = /\/_serverFn\/|anthropic\.com|supabase\.(co|in)/i;
 const ROUTES = [
-  ["dashboard", "/"],
+  ["dashboard", "/dashboard"],
   ["growth", "/growth"],
   ["transform", "/transform"],
   ["record", "/record"],
@@ -116,7 +116,7 @@ for (const [width, height] of sizes) {
   const mark = () => h.requests.length;
   const aiCalls = (from) => h.requests.slice(from).filter((u) => BLOCKED.test(u));
   const realStateBefore = await (async () => {
-    await h.go("/welcome", 1500);
+    await h.go("/", 1500);
     return h.ev(`localStorage.getItem('spectr-state-v1')`);
   })();
   await h.send("Browser.grantPermissions", {
@@ -322,13 +322,13 @@ for (const [width, height] of sizes) {
         );
       if (f.railOut === false) issues.push(`${name}: the rail's Exit demo button is clipped`);
     }
-    // The landing page is outside the demo: the logo stays in the app and /welcome sends you back.
-    await h.go("/", 2200);
+    // The landing page (/) is outside the demo: the logo stays in the app and / sends you back to the Dashboard.
+    await h.go("/dashboard", 2200);
     const logo = await h.ev(`document.querySelector('.sx-rail-logo')?.getAttribute('href')`);
-    if (logo !== "/") issues.push(`rail logo links to ${logo} in the demo`);
-    await h.go("/welcome", 2500);
+    if (logo !== "/dashboard") issues.push(`rail logo links to ${logo} in the demo`);
+    await h.go("/", 2500);
     const landed = await h.ev(`location.pathname`);
-    if (landed !== "/") issues.push(`/welcome in the demo stayed on ${landed}`);
+    if (landed !== "/dashboard") issues.push(`/ in the demo stayed on ${landed}`);
     // Transform result view and the closing card.
     await h.go("/transform?play=demo-play-sixweek", 2500);
     await h.type(
@@ -364,9 +364,9 @@ for (const [width, height] of sizes) {
     if (after.demo || after.bar) issues.push("demo flag or banner survived Exit demo");
     if (after.state !== realStateBefore)
       issues.push("real app saved state changed during the demo");
-    if (after.path !== "/welcome") issues.push("Exit demo landed on " + after.path);
+    if (after.path !== "/") issues.push("Exit demo landed on " + after.path);
     for (const [name, route] of [
-      ["real dashboard", "/"],
+      ["real dashboard", "/dashboard"],
       ["real transform", "/transform"],
     ]) {
       await h.go(route, 2500);

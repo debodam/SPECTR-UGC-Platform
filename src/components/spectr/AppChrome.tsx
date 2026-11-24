@@ -18,10 +18,10 @@ import supabase from "@/lib/supabase";
 import { exitDemo, isDemo, useHomeLink } from "@/demo/mode";
 
 export type RailPath =
-  "/" | "/growth" | "/transform" | "/record" | "/results" | "/distribute" | "/settings";
+  "/dashboard" | "/growth" | "/transform" | "/record" | "/results" | "/distribute" | "/settings";
 
 const NAV: { to: RailPath; label: string; icon: LucideIcon }[] = [
-  { to: "/", label: "Dashboard", icon: House },
+  { to: "/dashboard", label: "Dashboard", icon: House },
   { to: "/growth", label: "Growth plan", icon: Compass },
   { to: "/transform", label: "Transform", icon: Sparkles },
   { to: "/record", label: "Record", icon: Mic },
@@ -68,7 +68,7 @@ export function AppRail({ active }: { active: RailPath }) {
               title={n.label}
               aria-current={on ? "page" : undefined}
               className={`sx-rail-btn${on ? " is-active" : ""}`}
-              data-tour={`nav-${n.to === "/" ? "dashboard" : n.to.slice(1)}`}
+              data-tour={`nav-${n.to.slice(1)}`}
             >
               <n.icon size={22} strokeWidth={1.8} aria-hidden="true" />
             </Link>

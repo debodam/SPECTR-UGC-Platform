@@ -72,7 +72,7 @@ Health check: `https://tryspectr.online/api/health` returns `{"ok":true,...}`.
 
 ## 4. Smoke test after deploy
 
-- [ ] **Landing page:** `https://tryspectr.online/welcome` fits the screen with no scrollbar on a laptop. The screenshot carousel rotates.
+- [ ] **Landing page:** `https://tryspectr.online/` (the landing page; `/welcome` redirects there) fits the screen with no scrollbar on a laptop. The screenshot carousel rotates.
 - [ ] **Demo, start to finish:** **Try the demo** opens the guided tour.
   - [ ] Walk it to the end. The sample recording plays with sound and its transcript keeps up.
   - [ ] Stop moves you on to Transform.

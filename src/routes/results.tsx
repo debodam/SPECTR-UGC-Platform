@@ -463,7 +463,7 @@ function TrackPage() {
                   <button
                     type="button"
                     className="gh-btn gh-btn--primary"
-                    onClick={() => navigate({ to: "/" })}
+                    onClick={() => navigate({ to: "/dashboard" })}
                   >
                     Back to Growth
                   </button>

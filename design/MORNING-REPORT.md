@@ -405,3 +405,15 @@ The one left is Chrome creating an AudioContext on a headless machine. It takes 
 - **Left.**
   1. **Insight step after a reload.** If you reload while on it, the Apply target sometimes cannot be measured. The fallback card offers Next instead of the Apply click.
   2. ~~Pillar share wording.~~ Fixed after 12: applying an insight now gives the named pillar exactly the promised share (20 to 25%). The other pillars share the rest by largest remainder, so the total stays 100 (40/20/20/20 becomes 37/25/19/19). The demo e2e checks it.
+
+## Root is the landing page
+- **Moved.**
+  - `https://tryspectr.online/` is now the recruiter landing page.
+  - The signed-in Dashboard moved to `/dashboard`.
+  - Old `/welcome` links redirect to `/`.
+- **Updated to match.**
+  - The rail and the 404 page's "Go to app" link.
+  - The redirects after setup, picking a company and Results.
+  - The guided tour (it now starts on `/dashboard`), Replay tour, and Exit demo (now lands on `/`).
+  - All e2e, shots and perf scripts. The landing e2e also checks the `/welcome` redirect.
+- **Unchanged.** Open app works the same way: the Dashboard if you're signed in, otherwise the access code page.

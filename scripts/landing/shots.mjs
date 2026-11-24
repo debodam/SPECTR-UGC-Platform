@@ -74,7 +74,7 @@ try {
     `sessionStorage.setItem('spectr-demo-tour', JSON.stringify({ i: 0, status: 'skipped' }))`,
   );
 
-  await go("/");
+  await go("/dashboard");
   await shoot("dashboard");
 
   await go("/growth");

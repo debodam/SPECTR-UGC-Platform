@@ -25,7 +25,7 @@ function NotFoundComponent() {
         <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
           This page doesn't exist.
         </p>
-        <Link to="/" className="mt-6 inline-block spectr-btn-primary px-4">
+        <Link to="/dashboard" className="mt-6 inline-block spectr-btn-primary px-4">
           Go to app
         </Link>
       </div>

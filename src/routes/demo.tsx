@@ -9,7 +9,7 @@ function DemoStart() {
   useEffect(() => {
     startDemo();
     sessionStorage.setItem(DEMO_KEYS.tour, JSON.stringify({ i: 0, status: "running" }));
-    window.location.replace("/");
+    window.location.replace("/dashboard");
   }, []);
   return (
     <div className="sx-gate" aria-busy="true">

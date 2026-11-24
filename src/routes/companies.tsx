@@ -381,7 +381,7 @@ function CompaniesPage() {
           },
         },
       });
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
     } else {
       setWorkspace({ companyId: c.id, companyName: c.name });
       update({ setupComplete: false, setupStep: 1 });

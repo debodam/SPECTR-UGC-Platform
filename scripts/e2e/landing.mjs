@@ -1,4 +1,4 @@
-// Checks the one screen landing page (/welcome).
+// Checks the one screen landing page (the site root, /).
 //   node scripts/e2e/landing.mjs     (needs the dev server and Google Chrome)
 // Desktop (1280x720, 1440x900, 1920x1080): no scrolling, every part inside the viewport, the four shots load,
 // pills switch shots and stop the slideshow, links point where they should.
@@ -24,7 +24,7 @@ for (const [width, height] of sizes) {
   const h = await launch({ out, width, height, port: 9700 + (width % 89) });
   const issues = [];
   try {
-    await h.go("/welcome", 3000);
+    await h.go("/", 3000);
     await h.sleep(800);
     const r = await h.ev(`(() => {
       const box = (sel) => { const e = document.querySelector(sel); if (!e) return null; const b = e.getBoundingClientRect();
@@ -66,6 +66,13 @@ for (const [width, height] of sizes) {
         if (!inView(b)) issues.push(`${k} not fully inside the viewport`);
     }
     await h.shot(`${tag}.png`);
+    // Old links: /welcome now redirects to the root.
+    if (width === 1440) {
+      await h.go("/welcome", 2500);
+      const at = await h.ev(`location.pathname`);
+      if (at !== "/") issues.push(`/welcome did not redirect to / (at ${at})`);
+      await h.go("/", 2500);
+    }
 
     // All four shots load after first paint, at their declared size.
     await h.sleep(1500);

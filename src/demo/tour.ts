@@ -44,7 +44,7 @@ export const TOUR: TourStep[] = [
   {
     id: "welcome",
     num: 1,
-    route: "/",
+    route: "/dashboard",
     title: "Welcome to SPECTR",
     body: "SPECTR turns a few minutes of talking into a week of LinkedIn content, then learns from the results. This tour takes about 4 minutes and uses a made up company called Fastbreak AI, an AI coach for basketball and team athletes.",
     advance: "button",
@@ -53,7 +53,7 @@ export const TOUR: TourStep[] = [
   {
     id: "plan-card",
     num: 2,
-    route: "/",
+    route: "/dashboard",
     targets: ['[data-tour="growth-card"]'],
     title: "Everything starts from a growth plan",
     body: "The plan has one north star metric. For Fastbreak AI it is followers from coaches, performance staff and club directors: 3,123 today against a 4,000 target. The forecast line projects the current pace to the end of the 12 weeks.",
@@ -62,7 +62,7 @@ export const TOUR: TourStep[] = [
   {
     id: "open-plan",
     num: 2,
-    route: "/",
+    route: "/dashboard",
     targets: ['[data-tour="view-growth"]'],
     title: "Open the full plan",
     body: "Click View full growth plan.",
