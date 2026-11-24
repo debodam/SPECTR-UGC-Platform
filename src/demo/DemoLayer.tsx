@@ -521,20 +521,21 @@ export default function DemoLayer() {
     <>
       <div className="demo-bar" role="region" aria-label="Demo mode">
         <span className="demo-bar-msg">
-          <strong>Demo mode.</strong> Nothing here is saved.
+          <strong>Demo mode.</strong>
+          <span className="demo-bar-note"> Nothing here is saved.</span>
         </span>
         <span className="demo-bar-actions">
-          <button type="button" onClick={replay}>
+          <button type="button" onClick={replay} aria-label="Replay tour">
             <RotateCcw size={14} aria-hidden="true" />
-            Replay tour
+            <span className="demo-btn-label">Replay tour</span>
           </button>
-          <button type="button" onClick={finish}>
+          <button type="button" onClick={finish} aria-label="Finish demo">
             <Flag size={14} aria-hidden="true" />
-            Finish demo
+            <span className="demo-btn-label">Finish demo</span>
           </button>
-          <button type="button" onClick={() => exitDemo()}>
+          <button type="button" onClick={() => exitDemo()} aria-label="Exit demo">
             <X size={14} aria-hidden="true" />
-            Exit demo
+            <span className="demo-btn-label">Exit demo</span>
           </button>
         </span>
         <a
