@@ -181,14 +181,14 @@ function buildOrbLayers(isRec: boolean) {
 
 // --- Nav ---
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { label: string; to: string; d1: string; d2: string; active?: boolean }[] = [
   { label: "Home", to: "/", d1: "M4 11l8-7 8 7", d2: "M6 10v10h12V10" },
   { label: "Transform", to: "/transform", d1: "M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z", d2: "M18 16v4M16 18h4" },
   { label: "Record", to: "/record", d1: "M9 4h6v8a3 3 0 0 1-6 0z", d2: "M6 11a6 6 0 0 0 12 0M12 17v3", active: true },
   { label: "Track", to: "/track", d1: "M5 20V11M11 20V5M17 20v-7", d2: "M3 20h18" },
   { label: "Distribute", to: "/distribute", d1: "M5 6h14v14H5z", d2: "M5 10h14M9 3v4M15 3v4" },
   { label: "Settings", to: "/settings", d1: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z", d2: "M19 12l2-1-1-3-2.3.5-1.4-1.4.5-2.3-3-1-1 2h-2l-1-2-3 1 .5 2.3-1.4 1.4L3 8l-1 3 2 1v2l-2 1 1 3 2.3-.5 1.4 1.4-.5 2.3 3 1 1-2h2l1 2 3-1-.5-2.3 1.4-1.4L21 16l1-3-2-1z" },
-] as const;
+];
 
 // --- Log Entry ---
 
@@ -443,23 +443,11 @@ function RecordPage() {
 
   return (
     <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "linear-gradient(160deg,#b9d6f8 0%,#4d92e0 48%,#0a4a94 100%)",
+      position: "fixed", inset: 0, overflow: "hidden",
+      background: "radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
       fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif",
       color: "#ffffff",
     }}>
-      <div style={{
-        position: "relative",
-        width: 1360,
-        height: 880,
-        borderRadius: 44,
-        overflow: "hidden",
-        background: "radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
-        boxShadow: "0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)",
-      }}>
 
         {/* Left rail */}
         <aside style={{
@@ -726,7 +714,6 @@ function RecordPage() {
           )}
         </div>
 
-      </div>
     </div>
   );
 }

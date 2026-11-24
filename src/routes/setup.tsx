@@ -150,13 +150,10 @@ function SetupPage() {
   const handleSkip = () => { setShowErrors(false); next(); };
 
   return (
-    <div style={{ height: "100vh", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{
-        position: "relative", width: 1280, height: 840, display: "flex", borderRadius: 44, overflow: "hidden",
-        background: "linear-gradient(160deg,rgba(40,100,190,0.34),rgba(20,70,150,0.3))",
-        border: "1px solid rgba(255,255,255,0.4)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-        boxShadow: "0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)", color: "#ffffff",
-      }}>
+    <div style={{
+      position: "fixed", inset: 0, display: "flex", overflow: "hidden", color: "#ffffff",
+      background: "linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
+    }}>
 
         {/* Left sidebar */}
         <aside style={{ position: "relative", width: 340, flexShrink: 0, boxSizing: "border-box", padding: "40px 36px", background: "rgba(255,255,255,0.1)", borderRight: "1px solid rgba(255,255,255,0.28)" }}>
@@ -272,7 +269,6 @@ function SetupPage() {
             </div>
           </div>
         </section>
-      </div>
     </div>
   );
 }

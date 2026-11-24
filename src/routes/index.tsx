@@ -170,13 +170,11 @@ function Dashboard() {
   };
 
   return (
-    <div style={{ height: "100vh", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{
-        position: "relative", width: 1360, height: 880, borderRadius: 44, overflow: "hidden", color: "#ffffff",
-        background: "radial-gradient(700px 520px at 30% 45%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
-        boxShadow: "0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)",
-        fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif",
-      }}>
+    <div style={{
+      position: "fixed", inset: 0, overflow: "hidden", color: "#ffffff",
+      background: "radial-gradient(700px 520px at 30% 45%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
+      fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif",
+    }}>
 
         {/* ── Left rail ── */}
         <aside style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 88, boxSizing: "border-box", borderRight: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", padding: "26px 0" }}>
@@ -440,7 +438,6 @@ function Dashboard() {
           </button>
         </div>
 
-      </div>
     </div>
   );
 }
