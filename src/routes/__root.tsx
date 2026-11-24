@@ -13,6 +13,7 @@ import {
 import appCss from "../styles.css?url";
 import { SpectrProvider } from "@/lib/spectr-store";
 import { Toaster } from "@/components/ui/sonner";
+import { friendlyError } from "@/lib/utils";
 
 function NotFoundComponent() {
   return (
@@ -22,7 +23,7 @@ function NotFoundComponent() {
         <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
           This page doesn't exist.
         </p>
-        <Link to="/transform" className="mt-6 inline-block spectr-btn-primary px-4">
+        <Link to="/" className="mt-6 inline-block spectr-btn-primary px-4">
           Go to app
         </Link>
       </div>
@@ -32,12 +33,13 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
+  console.error(error);
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="max-w-md text-center spectr-card p-8">
         <h1 className="text-xl font-semibold">Something went wrong</h1>
         <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          {error instanceof Error ? error.message : String(error)}
+          {friendlyError(error, "This page hit an unexpected problem. Your saved work is safe.")}
         </p>
         <button
           onClick={() => {

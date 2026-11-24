@@ -11,7 +11,7 @@ import { advancePlay, type RepoCtx } from "@/lib/growth-repo";
 import { createGrowthPlan } from "@/lib/growth-service";
 import { computeForecast } from "@/lib/growth-forecast";
 import { weekStartOf, type Play } from "@/lib/growth-types";
-import { errMessage } from "@/lib/utils";
+import { errMessage, friendlyError } from "@/lib/utils";
 import { isDue, normalizeStatus, type PostItem } from "@/lib/posting";
 
 export const Route = createFileRoute("/")({ component: RootPage });
@@ -137,7 +137,7 @@ function Dashboard() {
       await createGrowthPlan(ctx, ws);
       await g.reload();
     } catch (e) {
-      setGenError(errMessage(e) ?? "Could not build your growth plan");
+      setGenError(friendlyError(e, "Could not build your growth plan. Try again."));
     } finally {
       setGenerating(false);
     }

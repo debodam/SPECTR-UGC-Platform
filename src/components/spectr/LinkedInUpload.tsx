@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { Workspace } from "@/lib/spectr-store";
-import { errMessage } from "@/lib/utils";
+import { errMessage, friendlyError } from "@/lib/utils";
 import { Upload, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { parseLinkedInFile, type LinkedInFileType, type ParsedMetrics } from "@/lib/linkedin-xls";
 
@@ -75,7 +75,13 @@ export function LinkedInUploadSlots({ ws, setWorkspace }: Props) {
       setWorkspace({ baseline: { ...ws.baseline, ...metrics } });
       patch(type, { status: "done", parsed: metrics });
     } catch (err) {
-      patch(type, { status: "error", message: errMessage(err) ?? "Parse failed." });
+      patch(type, {
+        status: "error",
+        message: friendlyError(
+          err,
+          "Could not read that file. Check it is a LinkedIn analytics export.",
+        ),
+      });
     }
   }
 

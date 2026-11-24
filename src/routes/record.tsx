@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AppHeader, AppRail } from "@/components/spectr/AppChrome";
+import { AppGate, AppHeader, AppRail } from "@/components/spectr/AppChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, ChevronDown, Mic } from "lucide-react";
+import { Check, Download, ChevronDown, Mic, X } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 import { toast } from "sonner";
@@ -33,7 +33,11 @@ type SpeechWindow = {
 };
 
 export const Route = createFileRoute("/record")({
-  component: RecordPage,
+  component: () => (
+    <AppGate>
+      <RecordPage />
+    </AppGate>
+  ),
   validateSearch: playSearch,
 });
 
@@ -339,6 +343,9 @@ function RecordPage() {
   const [logs, setLogs] = useState<TranscriptLog[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [typedErr, setTypedErr] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognizer | null>(null);
   const finalRef = useRef("");
@@ -405,7 +412,10 @@ function RecordPage() {
       setSaved(true);
       toast.success("Transcript saved.");
     } else {
-      toast.error("Failed to save transcript. Check the browser console for details.");
+      toast.error("Could not save the transcript", {
+        description: "Your text is still here.",
+        action: { label: "Retry", onClick: () => handleSave() },
+      });
     }
   };
 
@@ -414,7 +424,9 @@ function RecordPage() {
       (window as unknown as SpeechWindow).SpeechRecognition ||
       (window as unknown as SpeechWindow).webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) {
-      setError("Speech recognition is not supported in this browser. Try Chrome or Edge.");
+      setError(
+        "Live transcription is not supported in this browser. Use Chrome or Edge, or paste your text instead.",
+      );
       return;
     }
     setError("");
@@ -441,12 +453,25 @@ function RecordPage() {
       setInterimText(interim);
     };
     recognition.onerror = (event) => {
-      if (event.error === "not-allowed") {
-        setError("Microphone access denied. Please allow microphone access and try again.");
-        setMicDenied(true);
+      const stop = (message: string) => {
+        stoppedManuallyRef.current = true;
+        setError(message);
         setRecording(false);
         if (timerRef.current) clearInterval(timerRef.current);
+        durationRef.current = seconds;
+        setTranscript(finalRef.current.trim());
+      };
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        stop("Microphone access denied. Please allow microphone access and try again.");
+        setMicDenied(true);
+      } else if (event.error === "audio-capture") {
+        stop("No microphone was found. Connect one and try again, or paste your text instead.");
+      } else if (event.error === "network") {
+        stop(
+          "The transcription service could not be reached. Anything captured so far is kept below. You can try again or paste your text instead.",
+        );
       }
+      // "no-speech" and "aborted" are normal pauses; recognition restarts on its own.
     };
     recognition.onend = () => {
       if (stoppedManuallyRef.current) {
@@ -485,6 +510,24 @@ function RecordPage() {
   const sendToTransform = (text: string) => {
     sessionStorage.setItem("pendingTranscript", text);
     navigate({ to: "/transform", search: playId ? { play: playId } : {} });
+  };
+
+  const saveTyped = async () => {
+    const text = typed.trim();
+    if (!text) {
+      setTypedErr(true);
+      return;
+    }
+    setSaving(true);
+    const ok = await saveTranscript(text, 0);
+    setSaving(false);
+    if (!ok) {
+      toast.error("Could not save it", { description: "Your text is still here. Try again." });
+      return;
+    }
+    toast.success("Added to your logs");
+    setTyping(false);
+    setTyped("");
   };
 
   const isRec = recording;
@@ -540,6 +583,11 @@ function RecordPage() {
                       Try again
                     </button>
                   </div>
+                ) : null}
+                {orbState === "denied" ? (
+                  <button type="button" className="rc-paste" onClick={() => setTyping(true)}>
+                    Paste or type instead
+                  </button>
                 ) : (
                   <>
                     <div
@@ -585,6 +633,16 @@ function RecordPage() {
                       <div className="mo-denied" role="alert" style={{ marginTop: 14 }}>
                         {error}
                       </div>
+                    )}
+                    {!isRec && (
+                      <button
+                        type="button"
+                        className="rc-paste"
+                        onClick={() => setTyping(true)}
+                        data-tour="paste-instead"
+                      >
+                        Paste or type instead
+                      </button>
                     )}
                   </>
                 )}
@@ -875,6 +933,74 @@ function RecordPage() {
           </div>
         </div>
       </main>
+      {typing && (
+        <div
+          className="gx-overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setTyping(false);
+          }}
+        >
+          <div className="gx-dialog" role="dialog" aria-modal="true" aria-labelledby="rc-type-h">
+            <div className="gx-head">
+              <h2 id="rc-type-h" className="gh-h2">
+                Paste or type instead
+              </h2>
+              <button
+                type="button"
+                className="gx-close"
+                aria-label="Close"
+                onClick={() => setTyping(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="gx-sub">
+              Paste a transcript or notes, or type your thoughts. It works exactly like a recording
+              {play ? " and is linked to this play" : ""}.
+            </p>
+            <label className="gx-label" htmlFor="rc-typed">
+              Your text
+            </label>
+            <textarea
+              id="rc-typed"
+              autoFocus
+              className="tf-in gx-input"
+              rows={8}
+              value={typed}
+              aria-invalid={typedErr}
+              onChange={(e) => {
+                setTyped(e.target.value);
+                setTypedErr(false);
+              }}
+              placeholder="Start typing or paste here"
+            />
+            {typedErr && <div className="ds-err">Add some text first</div>}
+            <div className="gx-actions">
+              <button
+                type="button"
+                className="gh-btn gh-btn--ghost"
+                disabled={saving}
+                onClick={saveTyped}
+              >
+                {saving ? "Saving" : "Save to logs"}
+              </button>
+              <button
+                type="button"
+                className="gh-btn gh-btn--primary"
+                onClick={() => {
+                  if (!typed.trim()) {
+                    setTypedErr(true);
+                    return;
+                  }
+                  sendToTransform(typed.trim());
+                }}
+              >
+                Take to Transform
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

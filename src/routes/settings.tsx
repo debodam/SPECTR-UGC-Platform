@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AppHeader, AppRail } from "@/components/spectr/AppChrome";
+import { AppGate, AppHeader, AppRail } from "@/components/spectr/AppChrome";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useApp, type Workspace } from "@/lib/spectr-store";
@@ -16,10 +16,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import supabase from "@/lib/supabase";
 import { createGrowthPlan } from "@/lib/growth-service";
-import { errMessage } from "@/lib/utils";
+import { errMessage, friendlyError } from "@/lib/utils";
 import { deleteAccount as deleteAccountFn } from "@/lib/delete-account-fn";
 
-export const Route = createFileRoute("/settings")({ component: Settings });
+export const Route = createFileRoute("/settings")({
+  component: () => (
+    <AppGate>
+      <Settings />
+    </AppGate>
+  ),
+});
 
 const SIZES = ["Startup", "SMB", "Mid-Market", "Enterprise", "All Sizes"];
 const TABS: [string, string, string][] = [
@@ -174,7 +180,7 @@ function Settings() {
     ]);
     setSaving(false);
     if (coErr || wsErr) {
-      toast.error((coErr ?? wsErr)!.message || "Failed to save settings.");
+      toast.error(friendlyError(coErr ?? wsErr, "Could not save your settings. Try again."));
       return;
     }
     // Audience, goals and targets feed the growth plan, so offer to rebuild it.
@@ -192,7 +198,7 @@ function Settings() {
                 }),
               )
               .catch((e) =>
-                toast.error("Could not regenerate the plan", { description: errMessage(e) }),
+                toast.error("Could not regenerate the plan", { description: friendlyError(e) }),
               );
           },
         },

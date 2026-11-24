@@ -12,7 +12,7 @@ import { applyInsight, createGrowthPlan, declareWinner } from "@/lib/growth-serv
 import { computeForecast, formatMetric } from "@/lib/growth-forecast";
 import { variantResult } from "@/lib/growth-insights";
 import type { Experiment, Insight, Play, PlayFormat } from "@/lib/growth-types";
-import { errMessage } from "@/lib/utils";
+import { errMessage, friendlyError } from "@/lib/utils";
 
 export const Route = createFileRoute("/growth")({ component: RootPage });
 
@@ -98,7 +98,7 @@ function GrowthPlanPage() {
       });
       await g.reload();
     } catch (e) {
-      toast.error("Could not build your plan", { description: errMessage(e) });
+      toast.error("Could not build your plan", { description: friendlyError(e) });
     } finally {
       setBuilding(false);
     }
@@ -123,7 +123,7 @@ function GrowthPlanPage() {
       toast.success("Plan updated", { description: await applyInsight(ctx, g.plan, i) });
       await g.reload();
     } catch (e) {
-      toast.error("Could not apply", { description: errMessage(e) });
+      toast.error("Could not apply", { description: friendlyError(e) });
     } finally {
       setBusy(null);
     }
@@ -139,7 +139,7 @@ function GrowthPlanPage() {
       });
       await g.reload();
     } catch (e) {
-      toast.error("Could not declare a winner", { description: errMessage(e) });
+      toast.error("Could not declare a winner", { description: friendlyError(e) });
     } finally {
       setBusy(null);
     }

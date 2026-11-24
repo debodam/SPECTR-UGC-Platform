@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AppHeader, AppRail } from "@/components/spectr/AppChrome";
-import { errMessage } from "@/lib/utils";
+import { AppGate, AppHeader, AppRail } from "@/components/spectr/AppChrome";
+import { errMessage, friendlyError } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Check, X, Plus, SquarePen, Trash2 } from "lucide-react";
@@ -19,7 +19,11 @@ import { syncPlayResults } from "@/lib/growth-service";
 import { toAppFormat, type Play } from "@/lib/growth-types";
 
 export const Route = createFileRoute("/results")({
-  component: TrackPage,
+  component: () => (
+    <AppGate>
+      <TrackPage />
+    </AppGate>
+  ),
   validateSearch: playSearch,
 });
 
@@ -268,7 +272,7 @@ function TrackPage() {
       toast.success("Plan updated", { description: await applyInsight(ctx, g.plan, i) });
       await g.reload();
     } catch (e) {
-      toast.error("Could not apply", { description: errMessage(e) });
+      toast.error("Could not apply", { description: friendlyError(e) });
     } finally {
       setBusy(null);
     }
@@ -284,7 +288,7 @@ function TrackPage() {
       });
       await g.reload();
     } catch (e) {
-      toast.error("Could not declare a winner", { description: errMessage(e) });
+      toast.error("Could not declare a winner", { description: friendlyError(e) });
     } finally {
       setBusy(null);
     }
@@ -395,7 +399,7 @@ function TrackPage() {
       p.store === "db" ? { pending: false, play_id: p.playId } : { play_id: p.playId },
     );
     if (error) {
-      toast.error("Could not save the results", { description: error.message });
+      toast.error("Could not save the results", { description: friendlyError(error) });
       throw new Error(error.message);
     }
     if (p.store === "local") removeLocalPending(companyId, p.id);

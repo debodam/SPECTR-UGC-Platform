@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AppHeader, AppRail } from "@/components/spectr/AppChrome";
-import { errMessage } from "@/lib/utils";
+import { AppGate, AppHeader, AppRail } from "@/components/spectr/AppChrome";
+import { errMessage, friendlyError, copyText, MAX_SOURCE_CHARS } from "@/lib/utils";
 import { PlayBanner } from "@/components/spectr/GrowthCards";
 import { playSearch, usePlay } from "@/lib/use-growth";
 import { advancePlay, insertWithLinks, type RepoCtx } from "@/lib/growth-repo";
@@ -27,7 +27,11 @@ import { transformContent, type TransformInput } from "@/lib/transform-fn";
 import supabase from "@/lib/supabase";
 
 export const Route = createFileRoute("/transform")({
-  component: TransformPage,
+  component: () => (
+    <AppGate>
+      <TransformPage />
+    </AppGate>
+  ),
   validateSearch: playSearch,
 });
 
@@ -924,6 +928,10 @@ function TransformPage() {
       setError("Please upload a document or paste your content.");
       return;
     }
+    if (!file && text.trim().length < 40) {
+      setError("Add a little more to work with. A few sentences is enough.");
+      return;
+    }
     setError("");
     cancelledRef.current = false;
     setProgress(0);
@@ -940,7 +948,12 @@ function TransformPage() {
     try {
       const fileContent = file ? await readFile(file) : {};
       if (cancelledRef.current) return;
-      const content = fileContent.text ?? text;
+      const fullContent = fileContent.text ?? text;
+      const content = fullContent.slice(0, MAX_SOURCE_CHARS);
+      if (fullContent.length > MAX_SOURCE_CHARS)
+        toast.message("Long source trimmed", {
+          description: `Only the first ${MAX_SOURCE_CHARS.toLocaleString()} characters were used.`,
+        });
       const pdfBase64 = fileContent.pdfBase64;
       const src: Source = { content, pdfBase64, context };
       setSource(src);
@@ -990,7 +1003,9 @@ function TransformPage() {
       }
     } catch (err) {
       if (!cancelledRef.current)
-        setError(errMessage(err) ?? "Generation failed. Please try again.");
+        setError(
+          friendlyError(err, "Generation failed. Your source is still here, so you can try again."),
+        );
     } finally {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       setLoading(false);
@@ -1015,7 +1030,9 @@ function TransformPage() {
       setOutputs((o) => (o ? { ...o, [key]: data[jk as keyof typeof data] ?? o[key] } : o));
       toast.success("Regenerated");
     } catch (err) {
-      toast.error(errMessage(err) ?? "Regeneration failed.");
+      toast.error(friendlyError(err, "Regeneration failed."), {
+        action: { label: "Retry", onClick: () => regen(key) },
+      });
     } finally {
       setTabBusy(null);
     }
@@ -1040,15 +1057,18 @@ function TransformPage() {
       setRefineInput((r) => ({ ...r, [key]: "" }));
       toast.success("Output refined");
     } catch (err) {
-      toast.error(errMessage(err) ?? "Refinement failed.");
+      toast.error(friendlyError(err, "Refinement failed."), {
+        action: { label: "Retry", onClick: () => refine(key) },
+      });
     } finally {
       setTabBusy(null);
     }
   };
 
   const copy = (t: string) => {
-    navigator.clipboard.writeText(t);
-    toast.success("Copied to clipboard");
+    copyText(t)
+      .then(() => toast.success("Copied to clipboard"))
+      .catch(() => toast.error("Copy was blocked. Select the text and copy it manually."));
   };
 
   const loadFromHistory = (entry: HistoryEntry) => {
@@ -1523,7 +1543,20 @@ function TransformPage() {
                 />
 
                 {error && (
-                  <div style={{ marginTop: 8, fontSize: 13, color: "#fca5a5" }}>{error}</div>
+                  <div className="tf-err" role="alert">
+                    <span>{error}</span>
+                    {(file || text.trim().length >= 40) && !loading && (
+                      <button type="button" onClick={transform}>
+                        Try again
+                      </button>
+                    )}
+                  </div>
+                )}
+                {!file && text.length > MAX_SOURCE_CHARS && (
+                  <div className="tf-warn">
+                    This source is very long. Only the first {MAX_SOURCE_CHARS.toLocaleString()}{" "}
+                    characters will be used.
+                  </div>
                 )}
 
                 <button

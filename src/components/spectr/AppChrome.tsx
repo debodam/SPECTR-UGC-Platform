@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Bell,
@@ -125,4 +125,28 @@ export function AppHeader({
       </div>
     </header>
   );
+}
+
+/**
+ * Guards an app page: signed-out users (including an expired session) go to login, and users without a finished
+ * workspace go to the workspace picker. Nothing renders until the check passes.
+ */
+export function AppGate({
+  children,
+  needsSetup = true,
+}: {
+  children: ReactNode;
+  needsSetup?: boolean;
+}) {
+  const { state } = useApp();
+  const navigate = useNavigate();
+  const ok =
+    state.isAuthenticated && !!state.workspace.companyId && (!needsSetup || state.setupComplete);
+  useEffect(() => {
+    if (state.authLoading) return;
+    if (!state.isAuthenticated) navigate({ to: "/login" });
+    else if (!ok) navigate({ to: "/companies" });
+  }, [state.authLoading, state.isAuthenticated, ok, navigate]);
+  if (state.authLoading || !ok) return <div className="sx-gate" aria-busy="true" />;
+  return <>{children}</>;
 }

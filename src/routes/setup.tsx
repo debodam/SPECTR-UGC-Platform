@@ -4,7 +4,7 @@ import { FileText, Upload, X, Check, ChevronLeft, LoaderCircle, Info } from "luc
 import { useApp, type Workspace } from "@/lib/spectr-store";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
 import supabase from "@/lib/supabase";
-import { errMessage } from "@/lib/utils";
+import { errMessage, friendlyError } from "@/lib/utils";
 import { toast } from "sonner";
 import { createGrowthPlan } from "@/lib/growth-service";
 
@@ -305,7 +305,7 @@ function SetupPage() {
       }
     } catch (e) {
       clearInterval(ticker);
-      setBuildError(errMessage(e) ?? "Something went wrong while saving.");
+      setBuildError(friendlyError(e, "Something went wrong while saving. Your answers are kept."));
       setBuildPhase("error");
     } finally {
       setSaving(false);
@@ -1563,7 +1563,7 @@ function CompanyBrief({ ws, setWorkspace, userId }: StepProps) {
       .from("company-docs")
       .upload(path, file, { upsert: true });
     if (error) {
-      setUploadError(error.message);
+      setUploadError(friendlyError(error, "Could not upload that file. Try again."));
       setUploading(false);
       return;
     }

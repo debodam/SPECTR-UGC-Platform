@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import supabase from "@/lib/supabase";
 import { emptyGrowthPrefs, useApp } from "@/lib/spectr-store";
 import { Building2, Trash2, Plus, LogOut, LoaderCircle } from "lucide-react";
+import { friendlyError } from "@/lib/utils";
 
 interface Company {
   id: string;
@@ -397,7 +398,7 @@ function CompaniesPage() {
       .single();
     setCreating(false);
     if (error) {
-      setCreateError(error.message);
+      setCreateError(friendlyError(error, "Could not create the company. Try again."));
       return;
     }
     if (data) {

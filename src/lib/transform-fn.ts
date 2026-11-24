@@ -209,7 +209,7 @@ export const transformContent = createServerFn({ method: "POST" })
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey || apiKey === "your-api-key-here") {
-      return { error: "ANTHROPIC_API_KEY is not configured in .env." };
+      return { error: "ANTHROPIC_API_KEY is not configured." };
     }
 
     const client = new Anthropic({ apiKey });
@@ -247,7 +247,12 @@ export const transformContent = createServerFn({ method: "POST" })
                 ],
               },
             ]
-          : [{ role: "user", content: `${prompt}\n\nSource content:\n${data.content ?? ""}` }];
+          : [
+              {
+                role: "user",
+                content: `${prompt}\n\nSource content:\n${(data.content ?? "").slice(0, 60000)}`,
+              },
+            ];
         const maxTok =
           data.format === "Article" ? 3200 : data.format === "Video Script" ? 1500 : 1500;
         const msg = await client.messages.create({
@@ -276,7 +281,12 @@ export const transformContent = createServerFn({ method: "POST" })
               ],
             },
           ]
-        : [{ role: "user", content: `${prompt}\n\nSource content:\n${data.content ?? ""}` }];
+        : [
+            {
+              role: "user",
+              content: `${prompt}\n\nSource content:\n${(data.content ?? "").slice(0, 60000)}`,
+            },
+          ];
       const msg = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 4000,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { errMessage } from "@/lib/utils";
+import { errMessage, friendlyError } from "@/lib/utils";
 import { X } from "lucide-react";
 import type { ExperimentMetric, Play } from "@/lib/growth-types";
 
@@ -60,7 +60,7 @@ export function ExperimentDialog({
         hypothesis: hypothesis.trim() || `Hook B earns more ${metricLabel} than hook A.`,
       });
     } catch (e) {
-      setErr(errMessage(e) ?? "Could not start the experiment");
+      setErr(friendlyError(e, "Could not start the experiment. Try again."));
       setSaving(false);
     }
   };

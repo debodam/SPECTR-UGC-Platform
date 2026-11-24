@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "e2e": "node scripts/e2e/full-loop.mjs",
+    "e2e:migrated": "node scripts/e2e/full-loop.mjs migrated"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",

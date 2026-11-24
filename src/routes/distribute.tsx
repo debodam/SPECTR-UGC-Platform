@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Calendar, Check, CheckCheck, Copy, ExternalLink, Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { AppHeader, AppRail } from "@/components/spectr/AppChrome";
+import { AppGate, AppHeader, AppRail } from "@/components/spectr/AppChrome";
 import { PlayBanner } from "@/components/spectr/GrowthCards";
 import { useApp, type Format } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
@@ -20,10 +20,14 @@ import {
   type PostItem,
   type PostStatus,
 } from "@/lib/posting";
-import { copyText, errMessage } from "@/lib/utils";
+import { copyText, errMessage, friendlyError } from "@/lib/utils";
 
 export const Route = createFileRoute("/distribute")({
-  component: DistributePage,
+  component: () => (
+    <AppGate>
+      <DistributePage />
+    </AppGate>
+  ),
   validateSearch: playSearch,
 });
 
@@ -250,7 +254,7 @@ function DistributePage() {
     });
     setSaving(false);
     if (error || !data) {
-      toast.error("Could not add it to the queue", { description: error?.message });
+      toast.error("Could not add it to the queue", { description: friendlyError(error) });
       return;
     }
     const item = postFromRow({
@@ -320,7 +324,7 @@ function DistributePage() {
       });
     } catch (e) {
       toast.success("Marked as posted", {
-        description: `Log its numbers in Results when they are in. ${errMessage(e) ?? ""}`.trim(),
+        description: "Log its numbers in Results when they are in.",
       });
     }
     setBusy(null);
@@ -329,7 +333,7 @@ function DistributePage() {
   const remove = async (id: string) => {
     const { error } = await supabase.from("queue_items").delete().eq("id", id);
     if (error) {
-      toast.error("Could not remove it", { description: error.message });
+      toast.error("Could not remove it", { description: friendlyError(error) });
       return;
     }
     setQueue((prev) => prev.filter((q) => q.id !== id));
