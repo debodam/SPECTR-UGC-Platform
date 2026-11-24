@@ -72,10 +72,11 @@
   --rail-bg: rgba(255,255,255,0.1);
 }
 
-/* Global font rule - must cover all elements */
+/* Global font rule - must cover all elements incl. browser-defaulted form elements */
 html, body, button, input, textarea, select, option {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', Inter, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', Inter, 'Segoe UI', sans-serif !important;
 }
+* { font-family: inherit; }
 
 @layer base {
   * { border-color: var(--color-border); }
