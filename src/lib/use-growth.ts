@@ -26,6 +26,7 @@ export function perfFromRow(row: Record<string, unknown>): PerfEntry {
     notes: (row.notes as string) || "",
     playId: (row.play_id as string) ?? null,
     variant: (row.variant as "a" | "b") ?? null,
+    pending: row.pending === true,
   };
 }
 
@@ -79,7 +80,7 @@ export function useGrowth(ctx: RepoCtx | null) {
         allPlays,
         experiments,
         insights,
-        entries: (perf.data ?? []).map(perfFromRow),
+        entries: (perf.data ?? []).map(perfFromRow).filter((e) => !e.pending),
       });
       setStatus("ready");
       setError("");

@@ -7,7 +7,7 @@ export const STATUS_LABEL: Record<PlayStatus, string> = {
   "in progress": "In progress",
   recorded: "Recorded",
   transformed: "Transformed",
-  scheduled: "Scheduled",
+  scheduled: "Queued",
   posted: "Posted",
   measured: "Measured",
 };
@@ -41,7 +41,7 @@ export function nextStep(p: Play): {
     case "recorded":
       return { label: "Transform it", to: "/transform" };
     case "transformed":
-      return { label: "Schedule it", to: "/distribute" };
+      return { label: "Add to queue", to: "/distribute" };
     case "scheduled":
     case "posted":
       return { label: "Log results", to: "/results" };

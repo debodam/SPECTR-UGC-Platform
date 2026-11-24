@@ -80,6 +80,8 @@ export interface PerfEntry {
   /** Growth Engine links (optional until migration 009 is applied). */
   playId?: string | null;
   variant?: "a" | "b" | null;
+  /** Created by Mark as posted; waiting for the user to add numbers. Excluded from all stats. */
+  pending?: boolean;
 }
 
 export interface QueueItem {

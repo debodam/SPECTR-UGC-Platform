@@ -12,3 +12,22 @@ export function errMessage(e: unknown): string | undefined {
     return String((e as { message: unknown }).message);
   return typeof e === "string" ? e : undefined;
 }
+
+/** Copies text, falling back to a hidden textarea when the async clipboard API is unavailable or refused. */
+export async function copyText(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    if (!ok) throw new Error("Copy was blocked by the browser");
+  }
+}

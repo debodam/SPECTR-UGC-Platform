@@ -145,7 +145,7 @@ export function computeInsights(opts: {
   if (unmeasured >= 2) {
     out.push({
       kind: "warning",
-      text: `${unmeasured} scheduled or posted plays have no results yet. Log their numbers so the plan can learn from them.`,
+      text: `${unmeasured} queued or posted plays have no results yet. Log their numbers so the plan can learn from them.`,
       evidence: { key: "unmeasured", numbers: { plays: unmeasured } },
     });
   }

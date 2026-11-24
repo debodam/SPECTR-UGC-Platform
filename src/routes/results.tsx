@@ -7,6 +7,8 @@ import { Check, X, Plus, SquarePen, Trash2 } from "lucide-react";
 import { useApp, type PerfEntry, type Format } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 import { ExperimentSummary, InsightRow, PlayBanner } from "@/components/spectr/GrowthCards";
+import { ResultSheet, type ResultValues } from "@/components/spectr/ResultSheet";
+import { loadLocalPending, removeLocalPending, type PendingResult } from "@/lib/posting";
 import { perfFromRow, playSearch, useGrowth, usePlay } from "@/lib/use-growth";
 import { applyInsight, declareWinner, refreshInsights } from "@/lib/growth-service";
 import { variantResult } from "@/lib/growth-insights";
@@ -162,6 +164,8 @@ function TrackPage() {
   const userId = state.user?.id;
 
   const [entries, setEntries] = useState<PerfEntry[]>([]);
+  const [pending, setPending] = useState<PendingResult[]>([]);
+  const [sheetFor, setSheetFor] = useState<PendingResult | null>(null);
   const [loadingEntries, setLoadingEntries] = useState(true);
 
   useEffect(() => {
@@ -177,7 +181,23 @@ function TrackPage() {
       .order("date", { ascending: false })
       .then(({ data, error }) => {
         if (error) toast.error("Failed to load entries");
-        else setEntries((data ?? []).map(perfFromRow));
+        else {
+          const rows = (data ?? []).map(perfFromRow);
+          setEntries(rows.filter((e) => !e.pending));
+          setPending([
+            ...rows
+              .filter((e) => e.pending)
+              .map((e) => ({
+                id: e.id,
+                title: e.title,
+                format: e.format,
+                date: e.date,
+                playId: e.playId ?? null,
+                store: "db" as const,
+              })),
+            ...loadLocalPending(companyId),
+          ]);
+        }
         setLoadingEntries(false);
       });
   }, [companyId]);
@@ -325,6 +345,11 @@ function TrackPage() {
     setDraft(blank());
     setLinkPlayId("");
     toast.success("Entry saved");
+    await afterSave(entry, next);
+  };
+
+  /** Play numbers and insights follow every saved entry. */
+  const afterSave = async (entry: PerfEntry, next: PerfEntry[]) => {
     if (ctx && entry.playId) {
       await syncPlayResults(ctx, entry.playId, next).catch(() => {});
       refreshPlay();
@@ -346,6 +371,42 @@ function TrackPage() {
         .then(() => g.reload())
         .catch(() => {});
     }
+  };
+
+  // Numbers for a post marked as posted in Distribute.
+  const saveSheet = async (p: PendingResult, v: ResultValues) => {
+    if (!companyId || !userId) return;
+    const entry: PerfEntry = {
+      id: p.store === "db" ? p.id : crypto.randomUUID(),
+      date: p.date,
+      title: p.title,
+      format: p.format,
+      source: "Draft",
+      impressions: v.impressions,
+      engagementRate: v.engagementRate,
+      followersGained: v.followersGained,
+      notes: v.notes,
+      playId: p.playId,
+      variant: null,
+    };
+    const { error } = await upsertWithLinks(
+      "perf_entries",
+      toRow(entry, companyId, userId),
+      p.store === "db" ? { pending: false, play_id: p.playId } : { play_id: p.playId },
+    );
+    if (error) {
+      toast.error("Could not save the results", { description: error.message });
+      throw new Error(error.message);
+    }
+    if (p.store === "local") removeLocalPending(companyId, p.id);
+    setPending((prev) => prev.filter((x) => x.id !== p.id));
+    setSheetFor(null);
+    const next = [entry, ...entries].sort((a, b) => b.date.localeCompare(a.date));
+    setEntries(next);
+    toast.success("Results logged", {
+      description: "Your forecast and insights now include them.",
+    });
+    await afterSave(entry, next);
   };
 
   const del = async (id: string) => {
@@ -405,6 +466,40 @@ function TrackPage() {
                 ) : undefined
               }
             />
+          )}
+          {pending.length > 0 && (
+            <section
+              className="sx-glass rs-pending"
+              aria-labelledby="rs-pending-h"
+              data-tour="pending-results"
+            >
+              <h2 id="rs-pending-h" className="gh-h3">
+                Waiting for numbers
+              </h2>
+              <p className="gh-sub" style={{ margin: "4px 0 10px" }}>
+                Posted pieces need their results. Add them 24 to 48 hours after posting.
+              </p>
+              {pending.map((p) => (
+                <div key={p.id} className="rs-pending-row">
+                  <span className="rs-pending-title">{p.title}</span>
+                  <span className="ds-pill">{p.format}</span>
+                  <span className="rs-pending-date">
+                    Posted{" "}
+                    {new Date(p.date + "T00:00:00").toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    className="gh-btn gh-btn--small gh-btn--primary"
+                    onClick={() => setSheetFor(p)}
+                  >
+                    Log numbers
+                  </button>
+                </div>
+              ))}
+            </section>
           )}
           {/* KPI row */}
           <div className="tr-kpis">
@@ -1035,6 +1130,14 @@ function TrackPage() {
           </div>
         </div>
       </main>
+      {sheetFor && (
+        <ResultSheet
+          title={sheetFor.title}
+          format={sheetFor.format}
+          onCancel={() => setSheetFor(null)}
+          onSave={(v) => saveSheet(sheetFor, v)}
+        />
+      )}
     </div>
   );
 }

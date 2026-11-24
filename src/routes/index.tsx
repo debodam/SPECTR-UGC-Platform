@@ -12,6 +12,7 @@ import { createGrowthPlan } from "@/lib/growth-service";
 import { computeForecast } from "@/lib/growth-forecast";
 import { weekStartOf, type Play } from "@/lib/growth-types";
 import { errMessage } from "@/lib/utils";
+import { isDue, normalizeStatus, type PostItem } from "@/lib/posting";
 
 export const Route = createFileRoute("/")({ component: RootPage });
 
@@ -78,6 +79,7 @@ function sparklinePath(data: number[], W = 240, H = 72) {
 
 interface QueueRow {
   date: string;
+  time: string;
   status: string;
 }
 interface DraftRow {
@@ -155,7 +157,7 @@ function Dashboard() {
     if (!ctx) return;
     supabase
       .from("queue_items")
-      .select("date, status")
+      .select("date, time, status")
       .eq("company_id", ctx.companyId)
       .then(({ data }) => setQueue((data ?? []) as QueueRow[]));
     supabase
@@ -218,6 +220,9 @@ function Dashboard() {
     return { name, count: queue.filter((q) => q.date === day).length, isToday: day === todayIso };
   });
   const plannedThisWeek = week.reduce((s, d) => s + d.count, 0);
+  const dueNow = queue.filter((q) =>
+    isDue({ date: q.date, time: q.time, status: normalizeStatus(q.status) } as PostItem),
+  ).length;
 
   const startPlay = async (p: Play) => {
     if (ctx && p.status === "suggested")
@@ -583,7 +588,13 @@ function Dashboard() {
                   onKeyDown={goKey("/distribute")}
                 >
                   <div className="db-tile-head">
-                    <div className="db-tile-title">Distribute</div>
+                    <div
+                      className="db-tile-title"
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      Distribute
+                      {dueNow > 0 && <span className="ds-badge ds-badge--due">{dueNow} due</span>}
+                    </div>
                     <div className="db-arrow">
                       <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden="true" />
                     </div>

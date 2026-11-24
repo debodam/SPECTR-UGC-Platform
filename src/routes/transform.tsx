@@ -1134,7 +1134,7 @@ function TransformPage() {
               play={play}
               note={
                 play.status === "transformed" || play.linkedContentId
-                  ? "Content generated and linked to this play. Schedule it next."
+                  ? "Content generated and linked to this play. Add it to your posting queue next."
                   : `Format set to ${toAppFormat(play.format)} to match this play, and the hook is added to your context.`
               }
               onClear={() => navigate({ to: "/transform", search: {} })}
@@ -1145,7 +1145,7 @@ function TransformPage() {
                     className="gh-btn gh-btn--primary"
                     onClick={() => navigate({ to: "/distribute", search: { play: play.id } })}
                   >
-                    Schedule it
+                    Add to queue
                   </button>
                 ) : undefined
               }
