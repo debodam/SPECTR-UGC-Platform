@@ -708,61 +708,63 @@ function DistributePage() {
               )}
             </section>
 
-            {/* Cadence planner */}
-            <section className="sx-glass ds-panel" aria-labelledby="ds-cad-h">
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: "4px 12px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <h2 id="ds-cad-h" className="ds-h2">
-                  Cadence planner
-                </h2>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.88)" }}>
-                  Two-week view starting from today.
+            <div className="ds-side">
+              {/* Cadence planner */}
+              <section className="sx-glass ds-panel" aria-labelledby="ds-cad-h">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "4px 12px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <h2 id="ds-cad-h" className="ds-h2">
+                    Cadence planner
+                  </h2>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.88)" }}>
+                    Two-week view starting from today.
+                  </div>
                 </div>
-              </div>
-              <CadenceGrid queue={queue} />
-            </section>
+                <CadenceGrid queue={queue} />
+              </section>
 
-            {/* Amplification tips */}
-            <section className="sx-glass ds-panel" aria-labelledby="ds-tips-h">
-              <h2 id="ds-tips-h" className="ds-h2">
-                Amplification tips
-              </h2>
-              <ul
-                style={{
-                  listStyle: "none",
-                  margin: "14px 0 0",
-                  padding: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                }}
-              >
-                {TIPS.map((tip) => (
-                  <li
-                    key={tip}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      lineHeight: 1.45,
-                      fontSize: 14.5,
-                      color: "rgba(255,255,255,0.96)",
-                    }}
-                  >
-                    <span className="ds-tip-dot">
-                      <Check size={13} strokeWidth={2.6} aria-hidden="true" />
-                    </span>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </section>
+              {/* Amplification tips */}
+              <section className="sx-glass ds-panel" aria-labelledby="ds-tips-h">
+                <h2 id="ds-tips-h" className="ds-h2">
+                  Amplification tips
+                </h2>
+                <ul
+                  style={{
+                    listStyle: "none",
+                    margin: "14px 0 0",
+                    padding: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  {TIPS.map((tip) => (
+                    <li
+                      key={tip}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        lineHeight: 1.45,
+                        fontSize: 14.5,
+                        color: "rgba(255,255,255,0.96)",
+                      }}
+                    >
+                      <span className="ds-tip-dot">
+                        <Check size={13} strokeWidth={2.6} aria-hidden="true" />
+                      </span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
           </div>
         </div>
       </main>

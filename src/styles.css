@@ -908,15 +908,21 @@ option {
   flex: 1 1 0;
   display: grid;
   grid-template-columns: minmax(300px, 460px) minmax(0, 1fr);
-  grid-template-rows: minmax(320px, 1fr) auto;
+  align-items: start;
   gap: 20px;
 }
 .ds-queue {
-  grid-row: 1 / 3;
   min-height: 0;
 }
+/* Cadence planner and tips: sized to their content, so a long queue never stretches the calendar. */
+.ds-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
 .ds-cadence-wrap {
-  flex: 1;
+  flex: none;
   min-height: 0;
   display: flex;
   overflow-x: auto;
@@ -1028,8 +1034,8 @@ option {
     grid-row: auto;
     min-height: 380px;
   }
-  .ds-layout > :nth-child(2) {
-    min-height: 420px;
+  .ds-side {
+    min-width: 0;
   }
 }
 
@@ -3532,7 +3538,7 @@ select.gx-input {
 .ds-cal {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: minmax(100px, 1fr) minmax(100px, 1fr);
+  grid-auto-rows: 112px;
   gap: 8px;
 }
 .ds-cal-day {
