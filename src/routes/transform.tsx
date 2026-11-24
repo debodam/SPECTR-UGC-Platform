@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Download, FileText, RefreshCw, Trash2, X } from "lucide-react";
+import { Copy, Download, FileText, RefreshCw, Trash2, X, LogOut, History, ChevronsUpDown, Bell, Save, Upload, Sparkles, Target, MessageSquare, Video, House, Mic, ChartNoAxesColumn, Calendar, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { transformContent, type TransformInput } from "@/lib/transform-fn";
 import supabase from "@/lib/supabase";
@@ -30,13 +30,13 @@ interface Source {
 
 // --- Nav ---
 
-const NAV_ITEMS: { label: string; to: string; d1: string; d2: string; active?: boolean }[] = [
-  { label: "Home", to: "/", d1: "M4 11l8-7 8 7", d2: "M6 10v10h12V10" },
-  { label: "Transform", to: "/transform", d1: "M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z", d2: "M18 16v4M16 18h4", active: true },
-  { label: "Record", to: "/record", d1: "M9 4h6v8a3 3 0 0 1-6 0z", d2: "M6 11a6 6 0 0 0 12 0M12 17v3" },
-  { label: "Track", to: "/track", d1: "M5 20V11M11 20V5M17 20v-7", d2: "M3 20h18" },
-  { label: "Distribute", to: "/distribute", d1: "M5 6h14v14H5z", d2: "M5 10h14M9 3v4M15 3v4" },
-  { label: "Settings", to: "/settings", d1: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z", d2: "M19 12l2-1-1-3-2.3.5-1.4-1.4.5-2.3-3-1-1 2h-2l-1-2-3 1 .5 2.3-1.4 1.4L3 8l-1 3 2 1v2l-2 1 1 3 2.3-.5 1.4 1.4-.5 2.3 3 1 1-2h2l1 2 3-1-.5-2.3 1.4-1.4L21 16l1-3-2-1z" },
+const NAV_ITEMS: { label: string; to: string; icon: LucideIcon; active?: boolean }[] = [
+  { label: "Home", to: "/", icon: House },
+  { label: "Transform", to: "/transform", icon: Sparkles, active: true },
+  { label: "Record", to: "/record", icon: Mic },
+  { label: "Track", to: "/track", icon: ChartNoAxesColumn },
+  { label: "Distribute", to: "/distribute", icon: Calendar },
+  { label: "Settings", to: "/settings", icon: SettingsIcon },
 ];
 
 // --- Content renderers ---
@@ -643,71 +643,60 @@ function TransformPage() {
     flex: 1, border: 0, borderRadius: 11, cursor: "pointer",
     fontFamily: "inherit", fontWeight: 600, transition: "background .15s ease,color .15s ease",
   };
-  const glassCard: React.CSSProperties = {
-    background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.4)",
-    backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" as any,
-    boxShadow: "0 10px 30px rgba(6,42,92,0.14)",
-  };
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, overflow: "hidden",
-      background: "radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
-      fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif",
-      color: "#ffffff",
-    }}>
+    <div className="sx-shell">
 
         {/* Left rail */}
-        <aside style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 88, boxSizing: "border-box", borderRight: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", padding: "26px 0" }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <aside className="sx-rail">
+          <div className="sx-rail-logo">
             <svg width="22" height="22" viewBox="0 0 24 24"><polygon points="12,3 21,21 12,21" fill="#0a66c2"/><polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55"/></svg>
           </div>
-          <nav style={{ marginTop: "auto", marginBottom: "auto", padding: 8, borderRadius: 32, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", flexDirection: "column", gap: 6 }}>
+          <nav className="sx-rail-nav">
             {NAV_ITEMS.map((n) => (
               <button key={n.label} type="button" aria-label={n.label} title={n.label} onClick={() => navigate({ to: n.to as string })}
                 style={{ width: 44, height: 44, borderRadius: "50%", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", background: n.active ? "#0a66c2" : "transparent", color: n.active ? "#ffffff" : "rgba(255,255,255,0.9)", boxShadow: n.active ? "0 8px 20px rgba(6,42,92,0.35)" : "none" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={n.d1} /><path d={n.d2} />
-                </svg>
+                <n.icon size={22} strokeWidth={1.8} aria-hidden="true" />
               </button>
             ))}
           </nav>
-          <button type="button" aria-label="Log out" title="Log out" onClick={handleLogout}
+          <button type="button" className="sx-rail-out" aria-label="Log out" title="Log out" onClick={handleLogout}
             style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>
+            <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
           </button>
         </aside>
 
         {/* Header */}
-        <header style={{ position: "absolute", left: 88, right: 0, top: 0, height: 88, boxSizing: "border-box", padding: "0 40px", borderBottom: "1px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
+        <header className="sx-header">
+          <div className="sx-header-title">
             <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em", lineHeight: 1.1 }}>Transform</div>
-            <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Drop in a transcript, notes, or a document and get publish-ready content.</div>
+            <div className="sx-hide-sm" style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Drop in a transcript, notes, or a document and get publish-ready content.</div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="sx-header-actions">
             <button type="button" onClick={() => { setShowHistory(true); fetchHistory(); }}
               style={{ height: 44, padding: "0 16px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+              <History size={18} strokeWidth={1.9} aria-hidden="true" />
               History
             </button>
             <button type="button" style={{ height: 44, padding: "0 14px 0 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
               <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#ffffff", color: "#0a66c2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{companyInitial}</span>
-              <span>{ws.companyName || "Company"}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9l5-5 5 5"/><path d="M7 15l5 5 5-5"/></svg>
+              <span className="sx-hide-sm">{ws.companyName || "Company"}</span>
+              <ChevronsUpDown size={16} strokeWidth={2} aria-hidden="true" />
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 6, height: 44, padding: "0 5px 0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+              <Bell size={20} strokeWidth={1.8} color="#ffffff" aria-hidden="true" />
               <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(145deg,#ffffff,#b9d6f8)", color: "#0a4a94", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, marginLeft: 6 }}>{userInitials}</div>
             </div>
           </div>
         </header>
 
+        <main className="sx-main"><div className="sx-page">
         {/* ── FORM VIEW ── */}
         {!showOutput && (
-          <div style={{ position: "absolute", left: 128, top: 112, width: 1192, height: 736, boxSizing: "border-box", padding: 32, borderRadius: 28, ...glassCard, display: "flex", gap: 32 }}>
+          <div className="tf-form sx-glass">
 
             {/* Left column: options */}
-            <div style={{ width: 520, flexShrink: 0, display: "flex", flexDirection: "column", gap: 22 }}>
+            <div className="tf-form-left">
               {/* Output type */}
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>Output type</div>
@@ -742,14 +731,14 @@ function TransformPage() {
                 </div>
                 <textarea className="tf-in" placeholder="Add instructions" value={instructions} onChange={(e) => setInstructions(e.target.value)}
                   style={{ ...inStyle, marginTop: 10, height: 112 }} />
-                <div style={{ marginTop: 12, display: "flex", gap: 10 }} ref={ctxMenuRef}>
+                <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }} ref={ctxMenuRef}>
                   <GlassBtn onClick={() => { if (instructions.trim()) setShowSaveInput(v => !v); else toast.error("Add instructions first."); }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h10l3 3v13H6z"/><path d="M9 4v5h6V4M9 20v-6h6v6"/></svg>
+                    <Save size={17} strokeWidth={1.9} aria-hidden="true" />
                     Save
                   </GlassBtn>
                   <div style={{ position: "relative" }}>
                     <GlassBtn onClick={() => setShowCtxMenu(v => !v)}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5"/><path d="M5 19h14"/></svg>
+                      <Upload size={17} strokeWidth={1.9} aria-hidden="true" />
                       Load saved
                       {savedCtxs.length > 0 && (
                         <span style={{ minWidth: 20, height: 20, padding: "0 6px", boxSizing: "border-box", borderRadius: 10, background: "#0a66c2", color: "#ffffff", fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
@@ -787,14 +776,14 @@ function TransformPage() {
             </div>
 
             {/* Right column: upload + paste + generate */}
-            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+            <div className="tf-form-right">
               <div style={{ fontSize: 14, fontWeight: 600 }}>Upload a document</div>
               <label style={{ marginTop: 10, display: "block", cursor: "pointer" }}>
                 <div style={{ height: 148, boxSizing: "border-box", borderRadius: 18, border: "1.5px dashed rgba(255,255,255,0.55)", background: "rgba(255,255,255,0.12)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, transition: "background .15s ease,border-color .15s ease" }}>
                   {!file ? (
                     <>
                       <div style={{ width: 44, height: 44, borderRadius: 14, background: "#ffffff", boxShadow: "0 4px 12px rgba(6,42,92,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a66c2" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5"/><path d="M5 19h14"/></svg>
+                        <Upload size={22} strokeWidth={1.9} color="#0a66c2" aria-hidden="true" />
                       </div>
                       <div style={{ fontSize: 15, fontWeight: 600 }}>Drop a file here, or <span style={{ textDecoration: "underline" }}>browse</span></div>
                       <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>PDF, DOCX, or TXT</div>
@@ -818,13 +807,13 @@ function TransformPage() {
 
               <div style={{ fontSize: 14, fontWeight: 600 }}>Paste your text</div>
               <textarea className="tf-in" placeholder="Paste your transcript, notes, or draft here..." value={text} onChange={(e) => setText(e.target.value)} disabled={!!file}
-                style={{ ...inStyle, marginTop: 10, flex: 1, minHeight: 0, opacity: file ? 0.4 : 1 }} />
+                style={{ ...inStyle, marginTop: 10, flex: 1, minHeight: 200, opacity: file ? 0.4 : 1 }} />
 
               {error && <div style={{ marginTop: 8, fontSize: 13, color: "#fca5a5" }}>{error}</div>}
 
               <button type="button" onClick={transform} disabled={loading}
                 style={{ marginTop: 20, height: 54, borderRadius: 14, border: 0, background: "#ffffff", color: "#0a66c2", fontFamily: "inherit", fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 10px 24px rgba(6,42,92,0.25)", opacity: loading ? 0.7 : 1, flexShrink: 0 }}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z"/><path d="M18 16v4M16 18h4"/></svg>
+                <Sparkles size={19} strokeWidth={1.9} aria-hidden="true" />
                 {loading ? "Generating..." : `Generate ${tab === "Post" ? "Posts" : tab}`}
               </button>
             </div>
@@ -833,9 +822,9 @@ function TransformPage() {
 
         {/* ── RESULT VIEW ── */}
         {showOutput && (
-          <>
+          <div className="tf-result">
             {/* Left compact panel */}
-            <div style={{ position: "absolute", left: 128, top: 112, width: 440, height: 736, boxSizing: "border-box", padding: 22, borderRadius: 28, ...glassCard, display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="sx-glass" style={{ padding: 22, borderRadius: 28, display: "flex", flexDirection: "column", gap: 14 }}>
               {/* Type selector compact */}
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>Output type</div>
@@ -879,7 +868,7 @@ function TransformPage() {
               {/* Upload compact */}
               <label style={{ cursor: "pointer" }}>
                 <div style={{ height: 52, flexShrink: 0, boxSizing: "border-box", padding: "0 14px", borderRadius: 14, border: "1.5px dashed rgba(255,255,255,0.55)", background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", gap: 12 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5"/><path d="M5 19h14"/></svg>
+                  <Upload size={20} strokeWidth={1.9} color="#ffffff" aria-hidden="true" />
                   <span style={{ fontSize: 14, fontWeight: 600 }}>{file ? file.name : "Upload a document"}</span>
                   <span style={{ marginLeft: "auto", fontSize: 12, color: "rgba(255,255,255,0.85)" }}>PDF, DOCX, TXT</span>
                 </div>
@@ -888,21 +877,21 @@ function TransformPage() {
 
               {/* Paste compact */}
               <textarea className="tf-in" placeholder="Paste your transcript, notes, or draft here..." value={text} onChange={(e) => setText(e.target.value)} disabled={!!file}
-                style={{ ...inStyleCompact, flex: 1, minHeight: 0, opacity: file ? 0.4 : 1 }} />
+                style={{ ...inStyleCompact, flex: 1, minHeight: 120, opacity: file ? 0.4 : 1 }} />
 
               {/* Generate compact */}
               <button type="button" onClick={transform} disabled={loading}
                 style={{ flexShrink: 0, height: 50, borderRadius: 14, border: 0, background: "#ffffff", color: "#0a66c2", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 10px 24px rgba(6,42,92,0.25)", opacity: loading ? 0.7 : 1 }}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z"/><path d="M18 16v4M16 18h4"/></svg>
+                <Sparkles size={17} strokeWidth={1.9} aria-hidden="true" />
                 {loading ? "Generating..." : `Generate ${tab === "Post" ? "Posts" : tab}`}
               </button>
             </div>
 
             {/* Right output panel */}
-            <div style={{ position: "absolute", left: 588, top: 112, width: 732, height: 736, borderRadius: 28, ...glassCard, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div className="sx-glass" style={{ borderRadius: 28, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
               {/* Audience banner */}
               <div style={{ flexShrink: 0, boxSizing: "border-box", padding: "14px 28px", background: "rgba(255,255,255,0.14)", borderBottom: "1px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: "#ffffff" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>
+                <Target size={18} strokeWidth={1.9} color="#ffffff" aria-hidden="true" />
                 <span><span style={{ fontWeight: 600 }}>Targeting:</span> {banner.replace("Targeting: ", "")}</span>
               </div>
 
@@ -925,19 +914,19 @@ function TransformPage() {
                   const clean = safeExtract(outputs[tab]!, tab);
                   const tabLabel = tab === "Post" ? "Posts" : tab;
                   const tabIcon = tab === "Article"
-                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M9 8h3"/></svg>
+                    ? <FileText size={18} strokeWidth={1.9} color="#ffffff" aria-hidden="true" />
                     : tab === "Post"
-                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 5h14v10H10l-5 4z"/></svg>
-                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3"/></svg>;
+                    ? <MessageSquare size={18} strokeWidth={1.9} color="#ffffff" aria-hidden="true" />
+                    : <Video size={18} strokeWidth={1.9} color="#ffffff" aria-hidden="true" />;
 
                   return (
                     <>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                         <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>{tabIcon}</div>
                         <div style={{ fontSize: 16, fontWeight: 600 }}>{tabLabel}</div>
                         {tab === "Post" && <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{clean.split(/\n\s*---\s*\n|(?:^|\n)---(?:\n|$)/m).filter(p => p.trim()).length} drafts</span>}
                         {tab === "Video Script" && <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>About 5 minutes</span>}
-                        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
                           {tab !== "Post" && (
                             <button type="button" onClick={() => copy(clean)}
                               style={{ height: 34, padding: "0 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.16)", color: "#ffffff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
@@ -987,8 +976,9 @@ function TransformPage() {
                 </button>
               </div>
             </div>
-          </>
+          </div>
         )}
+        </div></main>
 
         {/* ── GENERATING OVERLAY ── */}
         {loading && (
@@ -1015,7 +1005,7 @@ function TransformPage() {
         {showHistory && (
           <>
             <div onClick={() => setShowHistory(false)} style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, background: "rgba(10,50,110,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" as any, zIndex: 30 }} />
-            <aside role="dialog" aria-label="Generation history" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 440, boxSizing: "border-box", background: "rgba(26,86,168,0.82)", borderLeft: "1px solid rgba(255,255,255,0.4)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" as any, color: "#ffffff", display: "flex", flexDirection: "column", boxShadow: "-20px 0 60px rgba(3,30,70,0.3)", zIndex: 31 }}>
+            <aside role="dialog" aria-label="Generation history" className="tf-history" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 440, boxSizing: "border-box", background: "rgba(26,86,168,0.82)", borderLeft: "1px solid rgba(255,255,255,0.4)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" as any, color: "#ffffff", display: "flex", flexDirection: "column", boxShadow: "-20px 0 60px rgba(3,30,70,0.3)", zIndex: 31 }}>
               <div style={{ flexShrink: 0, boxSizing: "border-box", padding: "28px 28px 20px", display: "flex", alignItems: "center" }}>
                 <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.01em" }}>Generation history</div>
                 <button type="button" aria-label="Close" onClick={() => setShowHistory(false)}

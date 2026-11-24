@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import supabase from "@/lib/supabase";
 import { useApp } from "@/lib/spectr-store";
+import { Building2, Trash2, Plus, LogOut, LoaderCircle } from "lucide-react";
 
 export const Route = createFileRoute("/companies")({ component: CompaniesPage });
 
@@ -59,9 +60,7 @@ function CompanyCircle({
           {company.logo_url ? (
             <img src={company.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: "50%" }} />
           ) : (
-            <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0a66c2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 21V7l8-4 8 4v14" /><path d="M9 21v-6h6v6" /><path d="M9 10h.01M15 10h.01M9 14h.01M15 14h.01" />
-            </svg>
+            <Building2 size={40} strokeWidth={1.6} color="#0a66c2" aria-hidden="true" />
           )}
         </button>
 
@@ -84,9 +83,7 @@ function CompanyCircle({
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
             }}
           >
-            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /><path d="M10 11v6" /><path d="M14 11v6" />
-            </svg>
+            <Trash2 size={18} strokeWidth={1.9} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -121,9 +118,7 @@ function AddCircle({ focused, onEnter, onAdd }: { focused: boolean; onEnter: () 
               : { border: "2px dashed rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.05)", opacity: 0.85 }),
           }}
         >
-          <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M12 5v14" /><path d="M5 12h14" />
-          </svg>
+          <Plus size={32} strokeWidth={1.8} aria-hidden="true" />
         </button>
       </div>
       <div style={focused
@@ -243,33 +238,27 @@ function CompaniesPage() {
   const isEmpty = !loading && companies.length === 0;
 
   return (
-    <div style={{ height: "100vh", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {/* Shell */}
-      <div style={{
-        position: "relative", width: 1240, height: 760, borderRadius: 44, overflow: "hidden",
-        background: "radial-gradient(700px 520px at 30% 45%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
-        boxShadow: "0 0 0 6px rgba(255,255,255,0.92),0 50px 120px rgba(3,30,70,0.38)",
-        color: "#ffffff",
-      }}>
+    <div className="au-shell">
+      <div className="co-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", boxSizing: "border-box", padding: "32px 44px 36px" }}>
 
         {/* Logo top-left */}
-        <div style={{ position: "absolute", left: 44, top: 36, display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <SpectrMark size={36} />
           <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.02em" }}>SPECTR</div>
         </div>
 
         {/* Center content */}
-        <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 64 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "clamp(32px, 6vh, 64px)", padding: "40px 0" }}>
 
           <div style={{ textAlign: "center" }}>
-            <h1 style={{ margin: 0, fontSize: 40, fontWeight: 300, letterSpacing: "-0.02em" }}>Select your workspace</h1>
+            <h1 style={{ margin: 0, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 300, letterSpacing: "-0.02em" }}>Select your workspace</h1>
             <p style={{ margin: "12px 0 0", fontSize: 16, color: "rgba(255,255,255,0.88)" }}>
               {isEmpty ? "Add your first company to get started." : "Choose a company to enter its content workspace."}
             </p>
           </div>
 
           <div
-            style={{ display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 48 }}
+            style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "center", gap: "32px 48px", maxWidth: 1100 }}
             onMouseLeave={() => setFocus(null)}
           >
             {loading ? (
@@ -300,23 +289,21 @@ function CompaniesPage() {
           type="button"
           onClick={async () => { await supabase.auth.signOut(); localStorage.removeItem("spectr-access-verified"); navigate({ to: "/access" }); }}
           style={{
-            position: "absolute", left: 44, bottom: 40, height: 44, padding: "0 20px",
+            alignSelf: "flex-start", flexShrink: 0, height: 44, padding: "0 20px",
             borderRadius: 999, border: "1px solid rgba(255,255,255,0.45)",
             background: "rgba(255,255,255,0.06)", color: "#ffffff",
             fontSize: 14, fontWeight: 600, fontFamily: "inherit",
             display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
           }}
         >
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4" /><path d="M16 8l4 4-4 4" /><path d="M20 12H9" />
-          </svg>
+          <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
           Log out
         </button>
 
         {/* New company modal */}
         {showNew && (
-          <div style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,50,110,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
-            <div role="dialog" aria-label="New company" style={{ width: 420, boxSizing: "border-box", padding: 32, borderRadius: 28, background: "#f7f9fc", color: "#0b1220", boxShadow: "0 40px 100px rgba(0,0,0,0.45)" }}>
+          <div style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 40, padding: 16, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,50,110,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+            <div role="dialog" aria-label="New company" style={{ width: "100%", maxWidth: 420, boxSizing: "border-box", padding: 32, borderRadius: 28, background: "#f7f9fc", color: "#0b1220", boxShadow: "0 40px 100px rgba(0,0,0,0.45)" }}>
               <h2 style={{ margin: 0, fontSize: 24, fontWeight: 300, letterSpacing: "-0.01em" }}>New company</h2>
               <label htmlFor="cname" style={{ display: "block", margin: "22px 0 8px", fontSize: 13, fontWeight: 600 }}>Company name</label>
               <input
@@ -346,9 +333,7 @@ function CompaniesPage() {
                   }}
                 >
                   {creating && (
-                    <svg className="spectr-spin" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round">
-                      <path d="M12 3a9 9 0 1 0 9 9" />
-                    </svg>
+                    <LoaderCircle size={18} strokeWidth={3} color="#ffffff" className="spectr-spin" aria-hidden="true" />
                   )}
                   {creating ? "Creating" : "Create & set up"}
                 </button>
@@ -366,12 +351,10 @@ function CompaniesPage() {
 
         {/* Delete confirmation modal */}
         {confirmDelete && (
-          <div style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,50,110,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+          <div style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 40, padding: 16, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,50,110,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
             <div role="alertdialog" aria-label="Delete company" style={{ width: 440, boxSizing: "border-box", padding: 32, borderRadius: 28, background: "#f7f9fc", color: "#0b1220", boxShadow: "0 40px 100px rgba(0,0,0,0.45)" }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#fef3f2", color: "#d92d20", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /><path d="M10 11v6" /><path d="M14 11v6" />
-                </svg>
+                <Trash2 size={22} strokeWidth={1.9} aria-hidden="true" />
               </div>
               <h2 style={{ margin: "18px 0 0", fontSize: 22, fontWeight: 400, letterSpacing: "-0.01em" }}>Delete "{confirmDelete.name}"?</h2>
               <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.5, color: "#475569" }}>

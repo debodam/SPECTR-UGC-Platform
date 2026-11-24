@@ -10,11 +10,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import supabase from "@/lib/supabase";
 import { deleteAccount as deleteAccountFn } from "@/lib/delete-account-fn";
+import { LogOut, ChevronsUpDown, Bell, House, Sparkles, Mic, ChartNoAxesColumn, Calendar, Settings as SettingsIcon } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({ component: Settings });
 
-const SHELL_BG = "radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)";
-const FONT = "-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif";
 const SIZES = ["Startup", "SMB", "Mid-Market", "Enterprise", "All Sizes"];
 const TABS: [string, string, string][] = [
   ["company", "Company and workspace", "Manage your company name, logo and primary platform."],
@@ -25,12 +24,12 @@ const TABS: [string, string, string][] = [
 ];
 
 const NAV_ITEMS = [
-  { label: "Home",       to: "/",          d: "M4 11l8-7 8 7M6 10v10h12V10",             active: false },
-  { label: "Transform",  to: "/transform", d: "M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z", active: false },
-  { label: "Record",     to: "/record",    d: "M9 4h6v8a3 3 0 0 1-6 0zM6 11a6 6 0 0 0 12 0M12 17v3", active: false },
-  { label: "Track",      to: "/track",     d: "M5 20V11M11 20V5M17 20v-7M3 20h18",        active: false },
-  { label: "Distribute", to: "/distribute",d: "M5 6h14v14H5zM5 10h14M9 3v4M15 3v4",       active: false },
-  { label: "Settings",   to: "/settings",  d: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19 12l2-1-1-3-2.3.5-1.4-1.4.5-2.3-3-1-1 2h-2l-1-2-3 1 .5 2.3-1.4 1.4L3 8l-1 3 2 1v2l-2 1 1 3 2.3-.5 1.4 1.4-.5 2.3 3 1 1-2h2l1 2 3-1-.5-2.3 1.4-1.4L21 16l1-3-2-1z", active: true },
+  { label: "Home",       to: "/",          icon: House,             active: false },
+  { label: "Transform",  to: "/transform", icon: Sparkles, active: false },
+  { label: "Record",     to: "/record",    icon: Mic, active: false },
+  { label: "Track",      to: "/track",     icon: ChartNoAxesColumn,        active: false },
+  { label: "Distribute", to: "/distribute",icon: Calendar,       active: false },
+  { label: "Settings",   to: "/settings",  icon: SettingsIcon, active: true },
 ];
 
 function resizeToDataUrl(file: File, size: number): Promise<string> {
@@ -156,58 +155,57 @@ function Settings() {
   const initials = (ws.companyName || "?").slice(0, 2).toUpperCase();
 
   return (
-    <div style={{ position: "fixed", inset: 0, overflow: "hidden", color: "#ffffff", background: SHELL_BG, fontFamily: FONT }}>
+    <div className="sx-shell">
 
       {/* ── Left rail ── */}
-      <aside style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 88, boxSizing: "border-box", borderRight: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", padding: "26px 0" }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <aside className="sx-rail">
+        <div className="sx-rail-logo">
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24">
             <polygon points="12,3 21,21 12,21" fill="#0a66c2" />
             <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
           </svg>
         </div>
-        <nav style={{ marginTop: "auto", marginBottom: "auto", padding: 8, borderRadius: 32, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", flexDirection: "column", gap: 6 }}>
+        <nav className="sx-rail-nav">
           {NAV_ITEMS.map((n) => (
             <button key={n.to} type="button" aria-label={n.label} title={n.label}
               onClick={() => navigate({ to: n.to as "/" })}
               style={{ width: 44, height: 44, borderRadius: "50%", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: n.active ? "#0a66c2" : "transparent", color: n.active ? "#ffffff" : "rgba(255,255,255,0.9)", boxShadow: n.active ? "0 8px 20px rgba(6,42,92,0.35)" : "none" }}>
-              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d={n.d} />
-              </svg>
+              <n.icon size={22} strokeWidth={1.8} aria-hidden="true" />
             </button>
           ))}
         </nav>
-        <button type="button" aria-label="Log out" title="Log out"
+        <button type="button" className="sx-rail-out" aria-label="Log out" title="Log out"
           onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); }}
           style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4" /><path d="M16 8l4 4-4 4" /><path d="M20 12H9" /></svg>
+          <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
         </button>
       </aside>
 
       {/* ── Header ── */}
-      <header style={{ position: "absolute", left: 88, right: 0, top: 0, height: 88, boxSizing: "border-box", padding: "0 40px", borderBottom: "1px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
+      <header className="sx-header">
+        <div className="sx-header-title">
           <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em", lineHeight: 1.1 }}>Settings</div>
-          <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Manage your workspace, audience and growth targets.</div>
+          <div className="sx-hide-sm" style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Manage your workspace, audience and growth targets.</div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="sx-header-actions">
           <button type="button" style={{ height: 44, padding: "0 14px 0 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
             <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#ffffff", color: "#0a66c2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{initials.slice(0, 1)}</span>
-            <span>{ws.companyName || "Workspace"}</span>
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9l5-5 5 5" /><path d="M7 15l5 5 5-5" /></svg>
+            <span className="sx-hide-sm">{ws.companyName || "Workspace"}</span>
+            <ChevronsUpDown size={16} strokeWidth={2} aria-hidden="true" />
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 6, height: 44, padding: "0 5px 0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)" }}>
-            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>
+            <Bell size={20} strokeWidth={1.8} color="#ffffff" aria-hidden="true" />
             <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(145deg,#ffffff,#b9d6f8)", color: "#0a4a94", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, marginLeft: 6 }}>{initials}</div>
           </div>
         </div>
       </header>
 
+      <main className="sx-main"><div className="sx-page">
       {/* ── Main settings card ── */}
-      <div style={{ position: "absolute", left: 128, top: 112, width: 1192, height: 736, boxSizing: "border-box", borderRadius: 28, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.4)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", boxShadow: "0 10px 30px rgba(6,42,92,0.14)", display: "flex", overflow: "hidden" }}>
+      <div className="sx-glass st-card">
 
         {/* Left sidebar tabs */}
-        <div style={{ width: 244, flexShrink: 0, boxSizing: "border-box", padding: 20, borderRight: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="st-tabs">
           {TABS.map(([id, label]) => (
             <button key={id} type="button" onClick={() => setTab(id)}
               style={{ height: 48, boxSizing: "border-box", padding: "0 14px", borderRadius: 14, border: 0, cursor: "pointer", fontSize: 15, fontWeight: 600, textAlign: "left", display: "flex", alignItems: "center", fontFamily: "inherit", background: tab === id ? "#0a66c2" : "transparent", color: tab === id ? "#ffffff" : "rgba(255,255,255,0.92)", boxShadow: tab === id ? "0 8px 20px rgba(6,42,92,0.3)" : "none" }}>
@@ -219,19 +217,19 @@ function Settings() {
         {/* Right content area */}
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           {/* Tab heading */}
-          <div style={{ flexShrink: 0, boxSizing: "border-box", padding: "26px 36px 18px" }}>
+          <div className="st-pad" style={{ flexShrink: 0, boxSizing: "border-box", padding: "26px 36px 18px" }}>
             <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.01em" }}>{curTab[1]}</div>
             <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.88)" }}>{curTab[2]}</div>
           </div>
 
           {/* Scrollable body */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", boxSizing: "border-box", padding: "6px 36px 24px" }}>
+          <div className="st-pad" style={{ flex: 1, minHeight: 0, overflowY: "auto", boxSizing: "border-box", padding: "6px 36px 24px" }}>
 
             {/* Company tab */}
             {tab === "company" && (
               <div>
                 {/* Logo row */}
-                <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
                   <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#ffffff", color: "#0a66c2", fontSize: 28, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
                     {ws.companyLogoUrl
                       ? <img src={ws.companyLogoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
@@ -259,7 +257,7 @@ function Settings() {
 
                 <div style={{ margin: "22px 0", height: 1, background: "rgba(255,255,255,0.25)" }} />
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <div className="st-grid-2">
                   <div>
                     <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 8 }}>Company name</div>
                     <input style={inStyle} type="text" value={ws.companyName} onChange={(e) => setWs({ companyName: e.target.value })} />
@@ -272,7 +270,7 @@ function Settings() {
 
                 <div style={{ marginTop: 22 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 8 }}>Primary platform</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+                  <div className="st-grid-4">
                     {[
                       { n: "LinkedIn", active: true },
                       { n: "Instagram", active: false },
@@ -297,7 +295,7 @@ function Settings() {
                   <input style={inStyle} type="text" value={ws.audience.jobTitles} onChange={(e) => setWs({ audience: { ...ws.audience, jobTitles: e.target.value } })} />
                   <div style={{ marginTop: 6, fontSize: 13, color: "rgba(255,255,255,0.85)" }}>Separate titles with commas.</div>
                 </div>
-                <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <div className="st-grid-2" style={{ marginTop: 20 }}>
                   <div>
                     <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 8 }}>Seniority level</div>
                     <input style={inStyle} type="text" value={ws.audience.seniority} onChange={(e) => setWs({ audience: { ...ws.audience, seniority: e.target.value } })} />
@@ -384,7 +382,7 @@ function Settings() {
 
           {/* Save footer (hidden on account tab) */}
           {tab !== "account" && (
-            <div style={{ flexShrink: 0, boxSizing: "border-box", padding: "16px 36px", borderTop: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
+            <div className="st-pad" style={{ flexShrink: 0, boxSizing: "border-box", padding: "16px 36px", flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
               <button type="button" disabled={saving}
                 style={{ height: 44, padding: "0 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.16)", color: "#ffffff", fontSize: 15, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", fontFamily: "inherit" }}>
                 Discard changes
@@ -397,6 +395,7 @@ function Settings() {
           )}
         </div>
       </div>
+      </div></main>
 
       {/* Delete account dialog */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={(o) => !deleting && setShowDeleteConfirm(o)}>

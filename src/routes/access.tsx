@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { LoaderCircle, CircleAlert } from "lucide-react";
 
 export const Route = createFileRoute("/access")({ component: AccessPage });
 
@@ -129,9 +130,7 @@ function AccessPage() {
         <div style={{ marginTop: 22, height: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontSize: 14.5 }}>
           {isVerifying && (
             <>
-              <svg className="spectr-spin" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round">
-                <path d="M12 3a9 9 0 1 0 9 9" opacity="0.95" />
-              </svg>
+              <LoaderCircle size={18} strokeWidth={2.6} color="#ffffff" className="spectr-spin" aria-hidden="true" />
               <span>Checking your code</span>
             </>
           )}
@@ -141,9 +140,7 @@ function AccessPage() {
               height: 30, padding: "0 14px", borderRadius: 999,
               background: "#fef3f2", color: "#b42318", fontWeight: 600,
             }}>
-              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                <circle cx="12" cy="12" r="9" /><path d="M12 7.5v5M12 16.5h.01" />
-              </svg>
+              <CircleAlert size={15} strokeWidth={2.4} aria-hidden="true" />
               That code is not valid. Check it and try again.
             </span>
           )}

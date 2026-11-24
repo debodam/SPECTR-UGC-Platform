@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { FileText, Upload, X } from "lucide-react";
+import { FileText, Upload, X, Check, ChevronLeft, LoaderCircle, Info } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import { LinkedInUploadSlots } from "@/components/spectr/LinkedInUpload";
 import supabase from "@/lib/supabase";
@@ -156,7 +156,7 @@ function SetupPage() {
     }}>
 
         {/* Left sidebar */}
-        <aside style={{ position: "relative", width: 340, flexShrink: 0, boxSizing: "border-box", padding: "40px 36px", background: "rgba(255,255,255,0.1)", borderRight: "1px solid rgba(255,255,255,0.28)" }}>
+        <aside className="su-aside" style={{ position: "relative", width: 340, flexShrink: 0, boxSizing: "border-box", padding: "40px 36px", background: "rgba(255,255,255,0.1)", borderRight: "1px solid rgba(255,255,255,0.28)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <SpectrMark />
             <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.02em" }}>SPECTR</span>
@@ -183,7 +183,7 @@ function SetupPage() {
                     ...(done ? { background: "#12b76a" } : cur ? { background: "#0a66c2", color: "#ffffff", boxShadow: "0 0 0 5px rgba(255,255,255,0.4)" } : { border: "1.5px solid rgba(255,255,255,0.6)", color: "rgba(255,255,255,0.78)" }),
                   }}>
                     {done ? (
-                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                      <Check size={16} strokeWidth={3} color="#ffffff" aria-hidden="true" />
                     ) : <span>{r.n}</span>}
                   </div>
                   {r.n !== 4 && (
@@ -203,7 +203,7 @@ function SetupPage() {
             onClick={() => navigate({ to: "/companies" })}
             style={{ position: "absolute", left: 36, bottom: 36, height: 40, padding: "0 16px 0 12px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.06)", color: "#ffffff", fontSize: 14, fontWeight: 600, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
           >
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+            <ChevronLeft size={16} strokeWidth={2} aria-hidden="true" />
             Companies
           </button>
         </aside>
@@ -211,11 +211,11 @@ function SetupPage() {
         {/* Right section */}
         <section style={{ flex: 1, minWidth: 0, position: "relative", overflow: "hidden" }}>
           {/* Scrollable content */}
-          <div className="spectr-scroll" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 88, overflowY: "auto", padding: "44px 48px 32px", boxSizing: "border-box" }}>
+          <div className="spectr-scroll su-body" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 88, overflowY: "auto", padding: "44px 48px 32px", boxSizing: "border-box" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               {step === 5 && (
                 <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#12b76a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 10px 24px rgba(18,183,106,0.3)" }}>
-                  <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                  <Check size={24} strokeWidth={2.8} color="#ffffff" aria-hidden="true" />
                 </div>
               )}
               <div>
@@ -234,11 +234,11 @@ function SetupPage() {
           </div>
 
           {/* Footer bar */}
-          <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 88, boxSizing: "border-box", padding: "0 48px", borderTop: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div className="su-foot" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 88, boxSizing: "border-box", padding: "0 48px", borderTop: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
               {showBack && (
                 <button type="button" onClick={handleBack} style={{ height: 48, padding: "0 18px 0 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.16)", color: "#ffffff", fontSize: 15, fontWeight: 600, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+                  <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
                   Back
                 </button>
               )}
@@ -263,7 +263,7 @@ function SetupPage() {
                   ...(saving ? { opacity: 0.85 } : {}),
                 }}
               >
-                {saving && <svg className="spectr-spin" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a66c2" strokeWidth="3" strokeLinecap="round"><path d="M12 3a9 9 0 1 0 9 9" /></svg>}
+                {saving && <LoaderCircle size={18} strokeWidth={3} color="#0a66c2" className="spectr-spin" aria-hidden="true" />}
                 {nextLabel}
               </button>
             </div>
@@ -278,7 +278,7 @@ function StepCompany({ ws, setWorkspace, showErrors, userId }: any) {
   const nameErr = showErrors && !ws.companyName.trim();
   const industryErr = showErrors && !ws.industry.trim();
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, alignItems: "start" }}>
+    <div className="su-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, alignItems: "start" }}>
       {/* Company name */}
       <div>
         <label className="spectr-label">Company name</label>
@@ -306,7 +306,7 @@ function StepCompany({ ws, setWorkspace, showErrors, userId }: any) {
       {/* Primary platform */}
       <div style={{ gridColumn: "1 / -1" }}>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Primary platform</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>
+        <div className="su-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>
           {[
             { name: "LinkedIn", mark: "in", sel: true },
             { name: "Instagram", mark: "ig", sel: false },
@@ -329,7 +329,7 @@ function StepCompany({ ws, setWorkspace, showErrors, userId }: any) {
               </div>
               {p.sel && (
                 <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#0a66c2", border: "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                  <Check size={12} strokeWidth={3.4} color="#ffffff" aria-hidden="true" />
                 </div>
               )}
             </div>
@@ -379,7 +379,7 @@ function StepGoals({ ws, setWorkspace, showErrors }: any) {
           style={{ height: 112, border: goalErr ? "1px solid #d92d20" : undefined }} />
         {goalErr && <div style={{ marginTop: 6, fontSize: 13, color: "#ffd0cb" }}>Describe your goal to continue</div>}
         <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.18)", fontSize: 14, lineHeight: 1.45 }}>
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 7.5v.01" /></svg>
+          <Info size={18} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
           <div>Your goal determines which targets are required. Be as specific as possible about what you want to achieve on LinkedIn.</div>
         </div>
       </div>
@@ -403,7 +403,7 @@ function StepAudience({ ws, setWorkspace }: any) {
           onChange={(e) => setWorkspace({ audience: { ...ws.audience, jobTitles: e.target.value } })} />
       </div>
 
-      <div style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+      <div className="su-grid" style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
         <div>
           <label className="spectr-label">Seniority level</label>
           <select className="spectr-input spectr-select" value={ws.audience.seniority}
@@ -475,7 +475,7 @@ function StepReview({ ws, onEdit }: { ws: any; onEdit: (step: number) => void })
       </div>
 
       {/* 3-column review cards */}
-      <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, alignItems: "stretch" }}>
+      <div className="su-grid" style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, alignItems: "stretch" }}>
         {sections.map((sec) => (
           <div key={sec.title} style={{ boxSizing: "border-box", padding: 20, borderRadius: 16, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.34)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -576,7 +576,7 @@ function CompanyBrief({ ws, setWorkspace, userId }: any) {
               <div style={{ fontSize: 15, fontWeight: 600 }}>{ws.companyPdfName}</div>
               <div style={{ marginTop: 4, fontSize: 13, color: "rgba(255,255,255,0.88)" }}>Uploaded</div>
               <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, height: 24, padding: "0 10px", borderRadius: 999, background: "#ecfdf3", color: "#067647", fontSize: 12, fontWeight: 600 }}>
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                <Check size={12} strokeWidth={3.2} aria-hidden="true" />
                 Uploaded
               </div>
             </div>
@@ -659,7 +659,7 @@ function NumGrid({ ws, setWorkspace, kind, requiredTargets }: { ws: any; setWork
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "18px 20px" }}>
+    <div className="su-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "18px 20px" }}>
       {fields.map((f) => (
         <div key={f.key}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>

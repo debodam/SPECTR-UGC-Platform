@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, LogOut, ChevronsUpDown, Bell, Plus, SquarePen, Trash2, House, Sparkles, Mic, ChartNoAxesColumn, Calendar, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import { useApp, type PerfEntry, type Format } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 
@@ -56,21 +56,14 @@ function sumByFormat(entries: PerfEntry[]) {
 
 // --- Nav ---
 
-const NAV_ITEMS: { label: string; to: string; d1: string; d2: string; active?: boolean }[] = [
-  { label: "Home", to: "/", d1: "M4 11l8-7 8 7", d2: "M6 10v10h12V10" },
-  { label: "Transform", to: "/transform", d1: "M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4z", d2: "M18 16v4M16 18h4" },
-  { label: "Record", to: "/record", d1: "M9 4h6v8a3 3 0 0 1-6 0z", d2: "M6 11a6 6 0 0 0 12 0M12 17v3" },
-  { label: "Track", to: "/track", d1: "M5 20V11M11 20V5M17 20v-7", d2: "M3 20h18", active: true },
-  { label: "Distribute", to: "/distribute", d1: "M5 6h14v14H5z", d2: "M5 10h14M9 3v4M15 3v4" },
-  { label: "Settings", to: "/settings", d1: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z", d2: "M19 12l2-1-1-3-2.3.5-1.4-1.4.5-2.3-3-1-1 2h-2l-1-2-3 1 .5 2.3-1.4 1.4L3 8l-1 3 2 1v2l-2 1 1 3 2.3-.5 1.4 1.4-.5 2.3 3 1 1-2h2l1 2 3-1-.5-2.3 1.4-1.4L21 16l1-3-2-1z" },
+const NAV_ITEMS: { label: string; to: string; icon: LucideIcon; active?: boolean }[] = [
+  { label: "Home", to: "/", icon: House },
+  { label: "Transform", to: "/transform", icon: Sparkles },
+  { label: "Record", to: "/record", icon: Mic },
+  { label: "Track", to: "/track", icon: ChartNoAxesColumn, active: true },
+  { label: "Distribute", to: "/distribute", icon: Calendar },
+  { label: "Settings", to: "/settings", icon: SettingsIcon },
 ];
-
-// --- Shared glass card style ---
-const glassCard: React.CSSProperties = {
-  background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.4)",
-  backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" as any,
-  boxShadow: "0 10px 30px rgba(6,42,92,0.14)",
-};
 
 // --- Trend chart ---
 
@@ -199,55 +192,49 @@ function TrackPage() {
   const totalImpressionsForShare = FORMATS.reduce((s, f) => s + totals[f].imp, 0);
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, overflow: "hidden",
-      background: "radial-gradient(700px 520px at 28% 52%,rgba(160,205,255,0.45),rgba(160,205,255,0) 70%),linear-gradient(150deg,#5b9be4 0%,#3a82dc 42%,#1a56a8 100%)",
-      fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Segoe UI',sans-serif",
-      color: "#ffffff",
-    }}>
+    <div className="sx-shell">
 
         {/* Left rail */}
-        <aside style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 88, boxSizing: "border-box", borderRight: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", padding: "26px 0" }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <aside className="sx-rail">
+          <div className="sx-rail-logo">
             <svg width="22" height="22" viewBox="0 0 24 24"><polygon points="12,3 21,21 12,21" fill="#0a66c2"/><polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55"/></svg>
           </div>
-          <nav style={{ marginTop: "auto", marginBottom: "auto", padding: 8, borderRadius: 32, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", flexDirection: "column", gap: 6 }}>
+          <nav className="sx-rail-nav">
             {NAV_ITEMS.map((n) => (
               <button key={n.label} type="button" aria-label={n.label} title={n.label} onClick={() => navigate({ to: n.to as string })}
                 style={{ width: 44, height: 44, borderRadius: "50%", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", background: n.active ? "#0a66c2" : "transparent", color: n.active ? "#ffffff" : "rgba(255,255,255,0.9)", boxShadow: n.active ? "0 8px 20px rgba(6,42,92,0.35)" : "none" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={n.d1} /><path d={n.d2} />
-                </svg>
+                <n.icon size={22} strokeWidth={1.8} aria-hidden="true" />
               </button>
             ))}
           </nav>
-          <button type="button" aria-label="Log out" title="Log out" onClick={handleLogout}
+          <button type="button" className="sx-rail-out" aria-label="Log out" title="Log out" onClick={handleLogout}
             style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>
+            <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
           </button>
         </aside>
 
         {/* Header */}
-        <header style={{ position: "absolute", left: 88, right: 0, top: 0, height: 88, boxSizing: "border-box", padding: "0 40px", borderBottom: "1px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
+        <header className="sx-header">
+          <div className="sx-header-title">
             <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: "-0.01em", lineHeight: 1.1 }}>Track</div>
-            <div style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Measure what is working. Double down on what performs.</div>
+            <div className="sx-hide-sm" style={{ marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Measure what is working. Double down on what performs.</div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="sx-header-actions">
             <button type="button" style={{ height: 44, padding: "0 14px 0 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)", color: "#ffffff", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
               <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#ffffff", color: "#0a66c2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{companyInitial}</span>
-              <span>{ws.companyName || "Company"}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9l5-5 5 5"/><path d="M7 15l5 5 5-5"/></svg>
+              <span className="sx-hide-sm">{ws.companyName || "Company"}</span>
+              <ChevronsUpDown size={16} strokeWidth={2} aria-hidden="true" />
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 6, height: 44, padding: "0 5px 0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.14)" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+              <Bell size={20} strokeWidth={1.8} color="#ffffff" aria-hidden="true" />
               <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(145deg,#ffffff,#b9d6f8)", color: "#0a4a94", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, marginLeft: 6 }}>{userInitials}</div>
             </div>
           </div>
         </header>
 
+        <main className="sx-main"><div className="sx-page">
         {/* KPI row */}
-        <div style={{ position: "absolute", left: 128, top: 112, width: 1192, display: "flex", gap: 14 }}>
+        <div className="tr-kpis">
           {kpis.map((k) => {
             const pct = k.target ? Math.min(100, (k.current / k.target) * 100) : 0;
             const gap = k.target ? Math.abs(k.current - k.target) / k.target : 1;
@@ -257,10 +244,10 @@ function TrackPage() {
               : Math.round(k.current).toLocaleString();
             const targetLabel = k.target ? (k.suffix ? k.target + k.suffix : k.target.toLocaleString()) : "-";
             return (
-              <div key={k.name} style={{ flex: 1, minWidth: 0, height: 124, boxSizing: "border-box", padding: "16px 18px", borderRadius: 22, ...glassCard }}>
+              <div key={k.name} className="sx-glass" style={{ minHeight: 124, padding: "16px 18px", borderRadius: 22 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.92)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k.name}</div>
                 <div style={{ marginTop: 6, fontSize: 32, fontWeight: 300, letterSpacing: "-0.02em", lineHeight: 1.1 }}>{val}</div>
-                <div style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12.5, color: "rgba(255,255,255,0.85)" }}>
+                <div style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, fontSize: 12.5, color: "rgba(255,255,255,0.85)" }}>
                   <span>Target {targetLabel}</span>
                   <span style={{ height: 22, padding: "0 9px", borderRadius: 999, fontSize: 11.5, fontWeight: 700, display: "inline-flex", alignItems: "center", flexShrink: 0, background: onTrack ? "#ecfdf3" : "#fef3f2", color: onTrack ? "#067647" : "#b42318" }}>
                     {onTrack ? "On track" : "Behind"}
@@ -275,9 +262,9 @@ function TrackPage() {
         </div>
 
         {/* Content performance log */}
-        <div style={{ position: "absolute", left: 128, top: 250, width: 1192, height: 300, boxSizing: "border-box", padding: "20px 24px", borderRadius: 26, ...glassCard, display: "flex", flexDirection: "column" }}>
+        <div className="sx-glass" style={{ minHeight: 300, padding: "20px 24px", borderRadius: 26, display: "flex", flexDirection: "column" }}>
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, height: 44 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, minHeight: 44 }}>
             <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.01em" }}>Content performance log</div>
             {entries.length > 0 && (
               <span style={{ minWidth: 24, height: 24, padding: "0 8px", boxSizing: "border-box", borderRadius: 12, background: "#ffffff", color: "#0a66c2", fontSize: 13, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
@@ -285,14 +272,15 @@ function TrackPage() {
               </span>
             )}
             <button type="button" onClick={() => { setAdding(true); setDraft(blank()); }}
-              style={{ marginLeft: "auto", height: 44, padding: "0 18px", borderRadius: 12, border: 0, background: "#ffffff", color: "#0a66c2", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", boxShadow: "0 10px 24px rgba(6,42,92,0.22)" }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              style={{ marginLeft: "auto", height: 44, padding: "0 18px", borderRadius: 12, border: 0, background: "#ffffff", color: "#0a66c2", fontFamily: "inherit", fontSize: 15, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, boxShadow: "0 10px 24px rgba(6,42,92,0.22)" }}>
+              <Plus size={17} strokeWidth={2.2} aria-hidden="true" />
               Add entry
             </button>
           </div>
 
+          <div className="tr-table"><div className={`tr-table-inner${entries.length === 0 && !adding ? " is-empty" : ""}`}>
           {/* Column headers */}
-          <div style={{ flexShrink: 0, marginTop: 6, display: "grid", gridTemplateColumns: COLS, gap: 12, padding: "0 12px", height: 30, alignItems: "center", fontSize: 12.5, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+          <div className="tr-cols" style={{ flexShrink: 0, marginTop: 6, display: "grid", gridTemplateColumns: COLS, gap: 12, padding: "0 12px", height: 30, alignItems: "center", fontSize: 12.5, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
             {["Date", "Title", "Format", "Source", "Impressions", "Eng %", "Followers", "Notes", ""].map(h => <span key={h}>{h}</span>)}
           </div>
 
@@ -309,13 +297,13 @@ function TrackPage() {
           )}
 
           {/* Data rows or empty state */}
-          <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
             {loadingEntries ? (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "rgba(255,255,255,0.85)" }}>Loading entries...</div>
             ) : entries.length === 0 && !adding ? (
               <div style={{ flex: 1, marginTop: 6, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 18, border: "1.5px dashed rgba(255,255,255,0.5)" }}>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>No entries yet</div>
-                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.9)" }}>Log your first piece of content to start tracking what works.</div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.9)", textAlign: "center", padding: "0 16px" }}>Log your first piece of content to start tracking what works.</div>
               </div>
             ) : (
               entries.map((e) =>
@@ -336,11 +324,11 @@ function TrackPage() {
                     <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                       <button type="button" onClick={() => { setEditingId(e.id); setDraft(e); }}
                         style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+                        <SquarePen size={13} strokeWidth={2.2} aria-hidden="true" />
                       </button>
                       <button type="button" onClick={() => del(e.id)}
                         style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                        <Trash2 size={13} strokeWidth={2.2} aria-hidden="true" />
                       </button>
                     </span>
                   </div>
@@ -348,19 +336,21 @@ function TrackPage() {
               )
             )}
           </div>
+          </div></div>
         </div>
 
+        <div className="tr-bottom">
         {/* Format intelligence */}
-        <div style={{ position: "absolute", left: 128, top: 564, width: 700 }}>
+        <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em" }}>Format intelligence</div>
-          <div style={{ marginTop: 12, display: "flex", gap: 14 }}>
+          <div className="tr-formats" style={{ marginTop: 12 }}>
             {FORMATS.map((f) => {
               const t = totals[f];
               const pct = totalImpressionsForShare ? Math.round((t.imp / totalImpressionsForShare) * 100) : 0;
               const avgImp = t.count ? Math.round(t.imp / t.count).toLocaleString() : "-";
               const avgEng = t.count ? `${(t.eng / t.count).toFixed(1)}%` : "-";
               return (
-                <div key={f} style={{ flex: 1, minWidth: 0, height: 226, boxSizing: "border-box", padding: 18, borderRadius: 22, ...glassCard }}>
+                <div key={f} className="sx-glass" style={{ minHeight: 226, padding: 18, borderRadius: 22 }}>
                   <span style={{ height: 26, padding: "0 12px", borderRadius: 999, background: "#ffffff", color: "#0a66c2", fontSize: 12.5, fontWeight: 700, display: "inline-flex", alignItems: "center" }}>{f}</span>
                   <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 14, fontSize: 14 }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "rgba(255,255,255,0.88)" }}>Avg impressions</span><span style={{ fontWeight: 600 }}>{avgImp}</span></div>
@@ -380,13 +370,15 @@ function TrackPage() {
         </div>
 
         {/* Weekly trend */}
-        <div style={{ position: "absolute", left: 842, top: 564, width: 478, height: 284, boxSizing: "border-box", padding: "20px 24px", borderRadius: 26, ...glassCard, display: "flex", flexDirection: "column" }}>
+        <div className="sx-glass" style={{ minHeight: 284, padding: "20px 24px", borderRadius: 26, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
             <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em" }}>Weekly trend, followers</div>
             <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>Last 6 weeks</span>
           </div>
           <TrendChart entries={entries} baseline={Number(ws.baseline.followers || 0)} />
         </div>
+        </div>
+        </div></main>
 
     </div>
   );

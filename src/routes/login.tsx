@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, CircleAlert, LoaderCircle } from "lucide-react";
 import { useApp } from "@/lib/spectr-store";
 import supabase from "@/lib/supabase";
 
@@ -93,19 +93,11 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
   const hasError = !!(errs.email || errs.pwd || errs.pwd2 || errs.name);
 
   return (
-    <div style={{ height: "100vh", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>
-      {/* Shell frame */}
-      <div style={{
-        width: 1240, height: 760, display: "flex", borderRadius: 44,
-        background: "linear-gradient(160deg,rgba(40,100,190,0.34),rgba(20,70,150,0.3))",
-        border: "1px solid rgba(255,255,255,0.4)",
-        backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-        boxShadow: "0 0 0 6px rgba(255,255,255,0.92), 0 50px 120px rgba(3,30,70,0.38)",
-        overflow: "hidden",
-      }}>
+    <div className="au-shell">
+      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
 
         {/* Left: form */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", padding: "36px 40px", boxSizing: "border-box" }}>
+        <div className="au-form" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", padding: "36px 40px", boxSizing: "border-box", overflowY: "auto" }}>
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(10,102,194,0.3)" }}>
@@ -121,14 +113,12 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
           </div>
 
           {/* Form content */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ width: 368 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 0" }}>
+            <div style={{ width: "100%", maxWidth: 400 }}>
               {emailSent ? (
                 <div style={{ textAlign: "center" }}>
                   <div style={{ width: 56, height: 56, borderRadius: 18, background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-                    <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
-                    </svg>
+                    <Mail size={28} strokeWidth={1.8} color="#ffffff" aria-hidden="true" />
                   </div>
                   <h1 style={{ margin: 0, fontSize: 28, fontWeight: 300, letterSpacing: "-0.02em" }}>Check your email</h1>
                   <p style={{ marginTop: 10, fontSize: 15, color: "rgba(255,255,255,0.88)", lineHeight: 1.5 }}>
@@ -187,9 +177,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
 
                     {hasError && tab === "login" && (
                       <div className="spectr-alert-error">
-                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                          <circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16.5v.01" />
-                        </svg>
+                        <CircleAlert size={20} strokeWidth={1.8} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
                         <div>Email or password is incorrect. Check them and try again.</div>
                       </div>
                     )}
@@ -201,9 +189,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
                       style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
                     >
                       {loading && (
-                        <svg className="spectr-spin" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a66c2" strokeWidth="3" strokeLinecap="round">
-                          <path d="M12 3a9 9 0 1 0 9 9" />
-                        </svg>
+                        <LoaderCircle size={18} strokeWidth={3} color="#0a66c2" className="spectr-spin" aria-hidden="true" />
                       )}
                       {loading ? (tab === "login" ? "Logging in" : "Creating account") : (tab === "login" ? "Log In" : "Create Account")}
                     </button>
@@ -223,12 +209,12 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
         </div>
 
         {/* Right: decorative blue panel */}
-        <div style={{
-          position: "relative", width: 600, height: 740, margin: "10px 10px 10px 0",
+        <div className="au-art" style={{
+          position: "relative", width: "min(640px, 46%)", margin: 12,
           borderRadius: 34, overflow: "hidden", flexShrink: 0,
           background: "linear-gradient(165deg,#8fc0f7 0%,#3b86dc 34%,#0a66c2 58%,#062a5c 100%)",
         }}>
-          <svg aria-hidden="true" width="600" height="740" viewBox="0 0 600 740" style={{ position: "absolute", left: 0, top: 0 }}>
+          <svg aria-hidden="true" width="100%" height="100%" viewBox="0 0 600 740" preserveAspectRatio="xMidYMid slice" style={{ position: "absolute", left: 0, top: 0 }}>
             <defs>
               <linearGradient id="rb1" x1="0" y1="1" x2="1" y2="0">
                 <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
@@ -266,7 +252,7 @@ export function AuthPage({ initialTab }: { initialTab: "login" | "signup" }) {
               <polygon points="12,3 12,21 3,21" fill="#0a66c2" fillOpacity="0.55" />
             </svg>
           </div>
-          <div style={{ position: "absolute", left: 36, right: 36, bottom: 40, color: "#ffffff", fontSize: 34, lineHeight: 1.2, fontWeight: 300, letterSpacing: "-0.01em" }}>
+          <div style={{ position: "absolute", left: 36, right: 36, bottom: 40, color: "#ffffff", fontSize: "clamp(26px, 2.6vw, 38px)", lineHeight: 1.2, fontWeight: 300, letterSpacing: "-0.01em" }}>
             <div>The growth engine for</div>
             <div style={{ fontWeight: 700 }}>your startup.</div>
           </div>
