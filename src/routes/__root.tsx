@@ -12,9 +12,6 @@ import {
 import appCss from "../styles.css?url";
 import { SpectrProvider } from "@/lib/spectr-store";
 import { Toaster } from "@/components/ui/sonner";
-import { StarBackground } from "@/components/spectr/StarBackground";
-
-const INTERACTIVE_STAR_PATHS = ["/", "/access", "/login", "/signup", "/companies"];
 
 function NotFoundComponent() {
   return (
@@ -78,17 +75,11 @@ function PageTransition() {
   return <div key={pathname} className="spectr-page-in"><Outlet /></div>;
 }
 
-function StarLayer() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return <StarBackground interactive={INTERACTIVE_STAR_PATHS.includes(pathname)} />;
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <SpectrProvider>
-        <StarLayer />
         <PageTransition />
         <Toaster position="bottom-right" />
       </SpectrProvider>

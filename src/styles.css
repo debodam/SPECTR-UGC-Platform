@@ -419,8 +419,8 @@ html, body, button, input, textarea, select, option {
 .spectr-step-enter { animation: spectr-slide-in-right 0.3s ease; }
 
 @keyframes spectr-page-in {
-  from { opacity: 0; transform: translateY(7px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .spectr-page-in { animation: spectr-page-in 0.22s ease forwards; }
 
