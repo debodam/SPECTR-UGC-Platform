@@ -262,7 +262,7 @@ function TrackPage() {
         </div>
 
         {/* Content performance log */}
-        <div className="sx-glass" style={{ minHeight: 300, padding: "20px 24px", borderRadius: 26, display: "flex", flexDirection: "column" }}>
+        <div className="sx-glass" style={{ minHeight: 300, maxHeight: 480, padding: "20px 24px", borderRadius: 26, display: "flex", flexDirection: "column" }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, minHeight: 44 }}>
             <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.01em" }}>Content performance log</div>
@@ -297,7 +297,7 @@ function TrackPage() {
           )}
 
           {/* Data rows or empty state */}
-          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflowY: "auto" }}>
             {loadingEntries ? (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "rgba(255,255,255,0.85)" }}>Loading entries...</div>
             ) : entries.length === 0 && !adding ? (

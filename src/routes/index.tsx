@@ -105,7 +105,7 @@ function Dashboard() {
 
   /* card shared style */
   const cardStyle: React.CSSProperties = {
-    boxSizing: "border-box", minHeight: 270, minWidth: 0, padding: "20px 20px 18px",
+    boxSizing: "border-box", minWidth: 0, padding: "20px 20px 18px",
     borderRadius: 26, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.4)",
     backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
     boxShadow: "0 10px 30px rgba(6,42,92,0.14)", cursor: "pointer",
@@ -162,11 +162,11 @@ function Dashboard() {
           </div>
         </header>
 
-        <main className="sx-main"><div className="sx-page"><div className="db-layout">
+        <main className="sx-main sx-fit sx-fit-db"><div className="sx-page"><div className="db-layout">
         <div className="db-left">
         <div style={{ width: "100%" }}>
           <MicHalo state={isRec ? "recording" : "idle"} onClick={handleMic} />
-          <div style={{ marginTop: 28, textAlign: "center" }}>
+          <div style={{ marginTop: 18, textAlign: "center" }}>
             <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }} aria-live="polite">
               {isRec && <span className="mo-status-dot" aria-hidden="true" />}
               {isRec ? "Recording" : "Tap to record"}
@@ -210,7 +210,7 @@ function Dashboard() {
                   </div>
                 </div>
                 <div style={{ marginTop: 2, fontSize: 13, color: "rgba(255,255,255,0.88)" }}>This week vs last week</div>
-                <svg aria-hidden="true" width="100%" height="72" viewBox="0 0 240 72" preserveAspectRatio="none" style={{ display: "block", marginTop: 12, overflow: "visible" }}>
+                <svg aria-hidden="true" className="db-spark" width="100%" height="72" viewBox="0 0 240 72" preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}>
                   <defs><linearGradient id="spk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" stopOpacity="0.38" /><stop offset="1" stopColor="#ffffff" stopOpacity="0" /></linearGradient></defs>
                   <path d={sparkArea} fill="url(#spk)" />
                   <path d={sparkLine} fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -220,7 +220,7 @@ function Dashboard() {
             ) : (
               <>
                 <div style={{ marginTop: 18, fontSize: 46, fontWeight: 300, letterSpacing: "-0.03em", lineHeight: 1, color: "rgba(255,255,255,0.55)" }}>0</div>
-                <svg aria-hidden="true" width="100%" height="72" viewBox="0 0 240 72" preserveAspectRatio="none" style={{ display: "block", marginTop: 22 }}>
+                <svg aria-hidden="true" className="db-spark" width="100%" height="72" viewBox="0 0 240 72" preserveAspectRatio="none" style={{ display: "block" }}>
                   <path d="M0 56 H240" stroke="#ffffff" strokeOpacity="0.5" strokeWidth="2" strokeDasharray="3 7" strokeLinecap="round" />
                 </svg>
                 <div style={{ marginTop: 16, fontSize: 14, lineHeight: 1.45, color: "rgba(255,255,255,0.92)" }}>Stats show up after your first LinkedIn posts go live.</div>
@@ -237,8 +237,8 @@ function Dashboard() {
             {hasGoal ? (
               <>
                 <div style={{ marginTop: 14, display: "flex", justifyContent: "center" }}>
-                  <div style={{ position: "relative", width: 132, height: 132 }}>
-                    <svg aria-hidden="true" width="132" height="132" viewBox="0 0 132 132" style={{ transform: "rotate(-90deg)" }}>
+                  <div className="db-ring" style={{ position: "relative" }}>
+                    <svg aria-hidden="true" width="100%" height="100%" viewBox="0 0 132 132" style={{ transform: "rotate(-90deg)", display: "block" }}>
                       <circle cx="66" cy="66" r="56" fill="none" stroke="#ffffff" strokeOpacity="0.22" strokeWidth="10" />
                       <circle cx="66" cy="66" r="56" fill="none" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" strokeDasharray={goalDash} style={{ transition: "stroke-dasharray .8s ease", opacity: goalPct > 0 ? 1 : 0.3 }} />
                     </svg>

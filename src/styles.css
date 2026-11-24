@@ -504,8 +504,6 @@ html, body, button, input, textarea, select, option {
   grid-column: 2; grid-row: 2; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden;
   box-sizing: border-box; padding: 24px 40px 32px; display: flex; flex-direction: column;
 }
-.sx-main::-webkit-scrollbar { width: 8px; }
-.sx-main::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
 .sx-page { width: 100%; max-width: 1600px; margin: 0 auto; flex: 1 0 auto; display: flex; flex-direction: column; gap: 18px; min-height: 0; }
 .sx-glass {
   background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.4);
@@ -518,16 +516,19 @@ html, body, button, input, textarea, select, option {
 .db-left { display: flex; flex-direction: column; align-items: center; gap: 20px; min-width: 0; }
 .db-right { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .db-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.db-cards > .db-card { min-height: 250px; }
+.db-spark { height: clamp(36px, 6dvh, 72px); margin-top: clamp(10px, 2dvh, 22px); }
+.db-ring { width: clamp(92px, 14.5dvh, 132px); height: clamp(92px, 14.5dvh, 132px); }
 .db-headline { align-self: stretch; }
 .db-cta { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 
 /* ── Record ── */
-.rc-layout { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 620px); gap: 32px; min-height: 560px; }
+.rc-layout { flex: 1 1 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 620px); grid-template-rows: minmax(0, 1fr); gap: 32px; min-height: 540px; }
 .rc-orbcol { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; }
 .rc-panel { min-height: 0; }
 
 /* ── Transform ── */
-.tf-form { flex: 1; display: flex; gap: 32px; padding: 32px; border-radius: 28px; min-height: 600px; }
+.tf-form { flex: 1 1 0; display: flex; gap: 32px; padding: 32px; border-radius: 28px; min-height: 520px; }
 .tf-form-left { flex: 0 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
 .tf-form-right { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .tf-result { flex: 1; display: grid; grid-template-columns: minmax(320px, 440px) minmax(0, 1fr); gap: 20px; min-height: 620px; }
@@ -535,19 +536,19 @@ html, body, button, input, textarea, select, option {
 
 /* ── Track ── */
 .tr-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-.tr-table { overflow-x: auto; display: flex; flex-direction: column; flex: 1; }
-.tr-table-inner { min-width: 940px; display: flex; flex-direction: column; flex: 1; }
+.tr-table { overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.tr-table-inner { min-width: 940px; display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .tr-bottom { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; }
 .tr-formats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 
 /* ── Distribute ── */
-.ds-layout { flex: 1; display: grid; grid-template-columns: minmax(300px, 460px) minmax(0, 1fr); grid-template-rows: minmax(420px, 1fr) auto; gap: 20px; }
-.ds-queue { grid-row: 1 / 3; }
+.ds-layout { flex: 1 1 0; display: grid; grid-template-columns: minmax(300px, 460px) minmax(0, 1fr); grid-template-rows: minmax(320px, 1fr) auto; gap: 20px; }
+.ds-queue { grid-row: 1 / 3; min-height: 0; }
 .ds-cadence-wrap { flex: 1; min-height: 0; display: flex; overflow-x: auto; }
 .ds-cadence { flex: 1; min-width: 0; }
 
 /* ── Settings ── */
-.st-card { flex: 1; display: flex; border-radius: 28px; overflow: hidden; min-height: 600px; }
+.st-card { flex: 1 1 0; display: flex; border-radius: 28px; overflow: hidden; min-height: 520px; }
 .st-tabs { width: 244px; flex-shrink: 0; box-sizing: border-box; padding: 20px; border-right: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 6px; }
 .st-tabs > button { flex-shrink: 0; }
 .st-pad { padding-left: 36px !important; padding-right: 36px !important; }
@@ -567,23 +568,23 @@ html, body, button, input, textarea, select, option {
   .sx-header, .sx-main { padding-left: 28px; padding-right: 28px; }
   .db-layout { grid-template-columns: minmax(0, 1fr); }
   .db-left .mo-slot { width: min(400px, 100%); }
-  .tf-form { flex-direction: column; min-height: 0; }
+  .tf-form { flex: none; flex-direction: column; min-height: 0; }
   .tf-form-left { flex: none; }
   .tf-result { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .tf-result > :last-child { min-height: 560px; }
   .tr-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tr-bottom { grid-template-columns: minmax(0, 1fr); }
-  .ds-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .ds-layout { flex: none; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
   .ds-queue { grid-row: auto; min-height: 380px; }
   .ds-layout > :nth-child(2) { min-height: 420px; }
 }
 
 /* ── Tablet portrait ── */
 @media (max-width: 980px) {
-  .rc-layout { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .rc-layout { flex: none; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; min-height: 0; }
   .rc-orbcol .mo-slot { width: min(340px, 100%); }
   .rc-panel { min-height: 420px; }
-  .st-card { flex-direction: column; min-height: 0; }
+  .st-card { flex: none; flex-direction: column; min-height: 0; }
   .st-tabs { width: auto; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.3); padding: 12px; }
   .st-tabs > button { height: 42px !important; white-space: nowrap; }
   .st-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -645,7 +646,7 @@ html, body, button, input, textarea, select, option {
    Mic orb: soft filled light only (gradients, blur, glow). No outlines.
    Sizes are in cqw against the orb's own width (460px on desktop).
    ══════════════════════════════════════════════════════════════ */
-.mo-slot { position: relative; width: min(460px, 100%); aspect-ratio: 1; margin: 0 auto; }
+.mo-slot { position: relative; width: min(100%, clamp(240px, min(46dvh, 36vw), 460px)); aspect-ratio: 1; margin: 0 auto; flex-shrink: 0; }
 .mo {
   position: absolute; inset: 0; container-type: inline-size; isolation: isolate;
   border: 0; padding: 0; margin: 0; background: transparent; border-radius: 50%; cursor: pointer;
@@ -659,7 +660,8 @@ html, body, button, input, textarea, select, option {
 .mo-x { inset: 0; }
 .mo-l { inset: 0; border-radius: 50%; animation: mo-breathe 7s ease-in-out infinite; }
 
-.mo-ambient { inset: -45% !important; background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 35%, rgba(255,255,255,0) 68%); filter: blur(60px); opacity: .85; transition: opacity .35s ease; }
+/* Drawn as shadow so the glow paints past the orb without ever adding scrollable area. */
+.mo-ambient { inset: 8%; border-radius: 50%; background: rgba(255,255,255,0.06); box-shadow: 0 0 26cqw 16cqw rgba(255,255,255,0.16), 0 0 60cqw 28cqw rgba(255,255,255,0.07); opacity: .85; transition: opacity .35s ease; }
 .mo-ripple {
   inset: 2%; border-radius: 50%; opacity: 0;
   background: radial-gradient(circle, rgba(255,255,255,0.55) 0%, rgba(185,214,248,0.38) 42%, rgba(185,214,248,0) 70%);
@@ -668,7 +670,7 @@ html, body, button, input, textarea, select, option {
 .mo-ripple:nth-child(2) { animation-delay: -1.4s; }
 .mo-ripple:nth-child(3) { animation-delay: -2.8s; }
 .mo-aura {
-  background: radial-gradient(circle, #0a4a94 0%, #0a5ab4 26%, #0a66c2 42%, #3f88dc 58%, #7fb3ec 72%, rgba(185,214,248,0.8) 85%, rgba(185,214,248,0) 100%);
+  background: radial-gradient(circle, #0a4a94 0%, #0a5ab4 26%, #0a66c2 42%, #3f88dc 58%, rgba(111,167,230,0.85) 72%, rgba(185,214,248,0.38) 86%, rgba(185,214,248,0) 100%);
   filter: blur(12px);
 }
 .mo-core {
@@ -683,7 +685,6 @@ html, body, button, input, textarea, select, option {
   -webkit-mask-image: radial-gradient(circle, #000 35%, rgba(0,0,0,0) 72%); mask-image: radial-gradient(circle, #000 35%, rgba(0,0,0,0) 72%);
   filter: blur(6px); animation: mo-spin 40s linear infinite;
 }
-.mo-rim { inset: 5%; border-radius: 50%; box-shadow: inset 0 0 10cqw 0.6cqw rgba(255,255,255,0.4); filter: blur(8px); }
 .mo-grain {
   inset: 0 !important; border-radius: 50%; opacity: .04; mix-blend-mode: overlay; background-size: 96px 96px;
   -webkit-mask-image: radial-gradient(circle, #000 60%, rgba(0,0,0,0) 72%); mask-image: radial-gradient(circle, #000 60%, rgba(0,0,0,0) 72%);
@@ -743,7 +744,6 @@ html, body, button, input, textarea, select, option {
 .mo-ambient { animation: mo-breathe 8.4s ease-in-out -1.2s infinite; }
 .mo-aura    { animation-duration: 6.2s; animation-delay: -2.1s; }
 .mo-core    { animation: mo-breathe 7.6s ease-in-out -4.3s infinite; }
-.mo-rim     { animation: mo-breathe 9s ease-in-out -0.7s infinite; }
 
 .mo--loading .mo-orbcore { animation-duration: 1.6s; opacity: .85; }
 .mo--denied .mo-orbcore { opacity: .55; }
@@ -771,4 +771,45 @@ html, body, button, input, textarea, select, option {
   .mo, .mo *, .mo-status-dot, .rc-live { animation: none !important; transition: none !important; }
   .mo-ripple { opacity: 0 !important; }
   .mo:hover, .mo:active { transform: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Viewport fit: the document never scrolls. Each shell is exactly
+   the window (100dvh) and only its content area scrolls, and only
+   when content is genuinely taller than the space.
+   ══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none;
+  background: #0a4a94 linear-gradient(160deg, #b9d6f8 0%, #4d92e0 48%, #0a4a94 100%) fixed;
+}
+body > div { height: 100%; }
+.sx-shell, .au-shell { top: 0; left: 0; right: 0; bottom: auto; height: 100vh; height: 100dvh; }
+
+/* Thin translucent scrollbars, visible only while hovering the scroll area */
+* { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+*:hover { scrollbar-color: rgba(255,255,255,0.35) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+*:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); }
+
+/* ── Fit-to-screen pages (Record, Dashboard): content area never scrolls on desktop.
+   The orb sizes to the available height and the side cards take what is left. ── */
+@media (min-width: 981px) and (min-height: 600px) {
+  .sx-fit-rc { overflow: hidden; }
+  .sx-fit-rc > .sx-page { flex: 1 1 0; min-height: 0; }
+  .sx-fit-rc .rc-layout { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .sx-fit-rc .rc-orbcol { min-height: 0; }
+  .sx-fit-rc .rc-panel { height: 100%; min-height: 0; }
+}
+@media (min-width: 1181px) and (min-height: 600px) {
+  .sx-fit-db { overflow: hidden; }
+  .sx-fit-db > .sx-page { flex: 1 1 0; min-height: 0; }
+  .sx-fit-db .db-layout { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  .sx-fit-db .db-left { justify-content: center; min-height: 0; gap: 18px; }
+  .sx-fit-db .db-right { min-height: 0; justify-content: center; }
+  .sx-fit-db .db-cards { flex: 0 1 auto; min-height: 0; max-height: 600px; height: 100%; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .sx-fit-db .db-cards > .db-card { min-height: 0; }
 }

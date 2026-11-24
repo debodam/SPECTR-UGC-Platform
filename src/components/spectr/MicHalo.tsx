@@ -124,7 +124,6 @@ export function MicHalo({ state, onClick, liveAudio = false }: {
         <span className="mo-x mo-aurax"><span className="mo-l mo-aura" /></span>
         <span className="mo-l mo-core" />
         <span className="mo-sheen" />
-        <span className="mo-l mo-rim" />
         <span className="mo-grain" style={noise ? { backgroundImage: `url(${noise})` } : undefined} />
         <span className="mo-orbcore">
           <span className="mo-cbloom" />

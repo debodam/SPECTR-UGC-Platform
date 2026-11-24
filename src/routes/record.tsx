@@ -433,13 +433,13 @@ function RecordPage() {
           </div>
         </header>
 
-        <main className="sx-main"><div className="sx-page"><div className="rc-layout">
+        <main className="sx-main sx-fit sx-fit-rc"><div className="sx-page"><div className="rc-layout">
         <div className="rc-orbcol">
         {/* Orb */}
         <MicHalo state={orbState} onClick={isRec ? stopRecording : startRecording} liveAudio />
 
         {/* Caption */}
-        <div style={{ marginTop: 28, position: "relative", width: "100%", maxWidth: 460, textAlign: "center" }}>
+        <div style={{ marginTop: 18, position: "relative", width: "100%", maxWidth: 460, textAlign: "center" }}>
           {orbState === "denied" ? (
             <div className="mo-denied" role="alert">
               <span style={{ flex: "1 1 220px" }}>Microphone access is blocked. Allow it in your browser settings and try again.</span>

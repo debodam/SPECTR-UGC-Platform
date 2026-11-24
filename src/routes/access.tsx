@@ -59,9 +59,9 @@ function AccessPage() {
   const activeIdx = isVerifying || isErr ? -1 : Math.min(code.length, 5);
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+    <div className="au-shell" style={{ overflowY: "auto", alignItems: "center", padding: "24px 16px" }}>
       <div style={{
-        width: 640, boxSizing: "border-box", padding: "48px 48px 44px",
+        width: "100%", maxWidth: 640, margin: "auto", boxSizing: "border-box", padding: "clamp(28px, 6vw, 48px) clamp(20px, 6vw, 48px) clamp(26px, 5vw, 44px)",
         borderRadius: 36, background: "rgba(255,255,255,0.16)",
         border: "1px solid rgba(255,255,255,0.4)",
         backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
@@ -90,16 +90,16 @@ function AccessPage() {
         </div>
 
         {/* OTP boxes */}
-        <div style={{ position: "relative", margin: "34px auto 0", width: 492, height: 80 }}>
-          <div className={shaking ? "spectr-shake" : ""} style={{ display: "flex", gap: 12 }}>
+        <div style={{ position: "relative", margin: "34px auto 0", width: "100%", maxWidth: 492, height: "clamp(52px, 15vw, 80px)" }}>
+          <div className={shaking ? "spectr-shake" : ""} style={{ display: "flex", gap: "clamp(6px, 2vw, 12px)", height: "100%" }}>
             {[0,1,2,3,4,5].map((i) => {
               const ch = code[i] || "";
               const isActive = i === activeIdx && !ch;
               return (
                 <div key={i} style={{
-                  width: 72, height: 80, borderRadius: 18, boxSizing: "border-box",
+                  flex: "1 1 0", minWidth: 0, maxWidth: 72, height: "100%", borderRadius: 18, boxSizing: "border-box",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 32, fontWeight: 300, flexShrink: 0,
+                  fontSize: "clamp(22px, 6vw, 32px)", fontWeight: 300,
                   transition: "all 0.15s ease",
                   background: `rgba(255,255,255,${ch ? 0.26 : 0.16})`,
                   border: `1.5px solid ${isErr ? "#ffb4ab" : i === activeIdx ? "#ffffff" : "rgba(255,255,255,0.4)"}`,
