@@ -118,13 +118,28 @@ writeFileSync(
   ),
 );
 
-// 5. Routing: static files first, then SSR catch-all
+// 5. Routing: security headers, then static files, then SSR catch-all.
+const SECURITY_HEADERS = {
+  // Nobody can put SPECTR in a frame (clickjacking).
+  "Content-Security-Policy": "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  // Record needs the microphone on this site only; nothing else is allowed.
+  "Permissions-Policy": "microphone=(self), camera=(), geolocation=(), payment=(), usb=()",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+};
 writeFileSync(
   `${out}/config.json`,
   JSON.stringify(
     {
       version: 3,
-      routes: [{ handle: "filesystem" }, { src: "/(.*)", dest: "/__catch__" }],
+      routes: [
+        // Security headers on every response, pages and static files alike.
+        { src: "/(.*)", headers: SECURITY_HEADERS, continue: true },
+        { handle: "filesystem" },
+        { src: "/(.*)", dest: "/__catch__" },
+      ],
     },
     null,
     2,
